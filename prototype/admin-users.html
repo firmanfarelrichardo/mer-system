@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manajemen Pengguna - Sistem MER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FEFFD3',
+                        primary: '#2E7D32',
+                        'primary-dark': '#1B5E20',
+                        'primary-light': '#4CAF50',
+                        sage: '#A5D6A7',
+                        'sage-light': '#C8E6C9',
+                        'status-red': '#E53935',
+                        'status-orange': '#FB8C00',
+                        'status-green': '#43A047'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #FEFFD3; }
+        .sidebar-link.active { background: rgba(165,214,167,.3); border-right: 3px solid #2E7D32; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Mobile Header -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-primary text-white shadow-md">
+        <div class="flex items-center justify-between px-4 py-3">
+            <button id="menuToggle" class="p-1 rounded hover:bg-primary-dark transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <span class="font-bold text-lg">Sistem MER</span>
+            <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white text-sm font-bold">AD</div>
+        </div>
+    </header>
+
+    <!-- Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+        <!-- Logo -->
+        <div class="p-5 border-b border-gray-100 bg-primary">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-white text-lg leading-tight">Sistem MER</h1>
+                    <p class="text-xs text-white/80">Panel Administrator</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 py-4 overflow-y-auto">
+            <div class="px-4 mb-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu Utama</p>
+            </div>
+
+            <a href="admin-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
+                </svg>
+                Dashboard
+            </a>
+
+            <a href="admin-users.html" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 text-primary font-semibold text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                Manajemen Pengguna
+            </a>
+
+            <a href="admin-laporan.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6"/>
+                </svg>
+                Semua Laporan
+            </a>
+
+            <div class="px-4 mt-6 mb-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pengaturan</p>
+            </div>
+
+            <a href="admin-pengaturan.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Pengaturan Sistem
+            </a>
+        </nav>
+
+        <!-- Keluar -->
+        <div class="p-4 border-t border-gray-100">
+            <a href="login.html" class="flex items-center gap-3 px-4 py-2.5 text-status-red text-sm font-medium hover:bg-red-50 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
+                </svg>
+                Keluar
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+        <!-- Page Header -->
+        <div class="bg-gray-50 border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5 lg:h-[84px] flex items-center">
+            <div class="flex items-center justify-between w-full">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-600">Manajemen Pengguna</h2>
+                    <p class="text-gray-500 text-sm mt-1">Panel Administrator</p>
+                </div>
+                <!-- User Profile -->
+                <div class="hidden lg:flex items-center gap-3">
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm text-right">Admin Sistem</p>
+                        <p class="text-xs text-gray-500 text-right">Administrator</p>
+                    </div>
+                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        AD
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+
+            <!-- Summary Info -->
+            <div class="mb-4">
+                <p class="text-sm text-gray-600" id="summaryInfo">Menampilkan 0 dari 0 pengguna</p>
+            </div>
+
+            <!-- Action Bar -->
+            <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+                <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                    <!-- Tambah Pengguna Button -->
+                    <button onclick="openAddModal()" class="inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white px-4 py-2.5 rounded-lg text-sm font-semibold transition shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Tambah Pengguna
+                    </button>
+
+                    <!-- Search -->
+                    <div class="relative flex-1">
+                        <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        <input type="text" id="searchInput" placeholder="Cari pengguna..." oninput="applyFilters()" class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                    </div>
+
+                    <!-- Filter Role -->
+                    <select id="filterRole" onchange="applyFilters()" class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                        <option value="">Semua Peran</option>
+                        <option value="nakes">Perawat</option>
+                        <option value="manager">Manajer</option>
+                        <option value="komite">Komite</option>
+                        <option value="admin">Admin</option>
+                    </select>
+
+                    <!-- Filter Status -->
+                    <select id="filterStatus" onchange="applyFilters()" class="border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                        <option value="">Semua Status</option>
+                        <option value="aktif">Aktif</option>
+                        <option value="nonaktif">Nonaktif</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-100">
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 w-12">No</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600">Nama</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600">Username</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600">Peran</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600">Unit</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600">Status</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 w-36">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <!-- Rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty state -->
+                <div id="emptyState" class="hidden py-12 text-center">
+                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+                    </svg>
+                    <p class="text-gray-400 text-sm">Tidak ada pengguna ditemukan</p>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p class="text-sm text-gray-500" id="paginationInfo">Halaman 1 dari 1</p>
+                <div class="flex items-center gap-2">
+                    <button id="btnPrev" onclick="changePage(-1)" disabled class="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed">Sebelumnya</button>
+                    <div id="pageNumbers" class="flex items-center gap-1"></div>
+                    <button id="btnNext" onclick="changePage(1)" disabled class="px-4 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition disabled:opacity-40 disabled:cursor-not-allowed">Selanjutnya</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add User Modal -->
+    <div id="addModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" onclick="closeAddModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-800">Tambah Pengguna Baru</h3>
+                    <button onclick="closeAddModal()" class="p-1 hover:bg-gray-100 rounded-lg transition">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <form id="addForm" onsubmit="handleAdd(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <input type="text" id="addNama" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Masukkan nama lengkap">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Username <span class="text-red-500">*</span></label>
+                    <input type="text" id="addUsername" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Masukkan username">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kata Sandi <span class="text-red-500">*</span></label>
+                    <input type="password" id="addPassword" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Masukkan kata sandi">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Peran <span class="text-red-500">*</span></label>
+                        <select id="addRole" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <option value="">Pilih Peran</option>
+                            <option value="nakes">Perawat</option>
+                            <option value="manager">Manajer</option>
+                            <option value="komite">Komite</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit <span class="text-red-500">*</span></label>
+                        <select id="addUnit" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <option value="">Pilih Unit</option>
+                            <option value="ICU">ICU</option>
+                            <option value="IGD">IGD</option>
+                            <option value="Rawat Inap">Rawat Inap</option>
+                            <option value="Bedah">Bedah</option>
+                            <option value="Anak">Anak</option>
+                            <option value="Farmasi">Farmasi</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="addEmail" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Masukkan email">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon</label>
+                    <input type="tel" id="addTelepon" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Masukkan nomor telepon">
+                </div>
+                <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
+                    <button type="submit" class="flex-1 bg-primary hover:bg-primary-dark text-white py-2.5 rounded-lg text-sm font-semibold transition">Simpan</button>
+                    <button type="button" onclick="closeAddModal()" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" onclick="closeEditModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-bold text-gray-800">Edit Pengguna</h3>
+                    <button onclick="closeEditModal()" class="p-1 hover:bg-gray-100 rounded-lg transition">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <form id="editForm" onsubmit="handleEdit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="editId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap <span class="text-red-500">*</span></label>
+                    <input type="text" id="editNama" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Username <span class="text-red-500">*</span></label>
+                    <input type="text" id="editUsername" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kata Sandi <span class="text-xs text-gray-400 font-normal">(kosongkan jika tidak diubah)</span></label>
+                    <input type="password" id="editPassword" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" placeholder="Masukkan kata sandi baru">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Peran <span class="text-red-500">*</span></label>
+                        <select id="editRole" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <option value="nakes">Perawat</option>
+                            <option value="manager">Manajer</option>
+                            <option value="komite">Komite</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Unit <span class="text-red-500">*</span></label>
+                        <select id="editUnit" required class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                            <option value="ICU">ICU</option>
+                            <option value="IGD">IGD</option>
+                            <option value="Rawat Inap">Rawat Inap</option>
+                            <option value="Bedah">Bedah</option>
+                            <option value="Anak">Anak</option>
+                            <option value="Farmasi">Farmasi</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="editEmail" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon</label>
+                    <input type="tel" id="editTelepon" class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <div class="flex items-center gap-4 mt-1">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="editStatus" value="aktif" checked class="w-4 h-4 text-primary focus:ring-primary">
+                            <span class="text-sm text-gray-700">Aktif</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="editStatus" value="nonaktif" class="w-4 h-4 text-primary focus:ring-primary">
+                            <span class="text-sm text-gray-700">Nonaktif</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
+                    <button type="submit" class="flex-1 bg-primary hover:bg-primary-dark text-white py-2.5 rounded-lg text-sm font-semibold transition">Simpan Perubahan</button>
+                    <button type="button" onclick="closeEditModal()" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition">Batal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirm Modal -->
+    <div id="deleteModal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/50" onclick="closeDeleteModal()"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="p-6 text-center">
+                <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-7 h-7 text-status-red" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Hapus Pengguna</h3>
+                <p class="text-sm text-gray-500 mb-6">Yakin ingin menghapus pengguna ini? Tindakan ini tidak dapat dibatalkan.</p>
+                <input type="hidden" id="deleteId">
+                <div class="flex items-center gap-3">
+                    <button onclick="confirmDelete()" class="flex-1 bg-status-red hover:bg-red-700 text-white py-2.5 rounded-lg text-sm font-semibold transition">Hapus</button>
+                    <button onclick="closeDeleteModal()" class="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-lg text-sm font-semibold hover:bg-gray-50 transition">Batal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 z-[70] transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-gray-800 text-white px-5 py-3 rounded-xl shadow-lg text-sm flex items-center gap-3">
+            <svg class="w-5 h-5 text-green-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span id="toastMessage">Berhasil</span>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+        // State
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentPage = 1;
+        const perPage = 10;
+
+        // Init
+        document.addEventListener('DOMContentLoaded', function() {
+            MER.init();
+            loadUsers();
+        });
+
+        // Sidebar toggle
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.remove('-translate-x-full');
+            document.getElementById('overlay').classList.remove('hidden');
+        });
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('overlay').classList.add('hidden');
+        }
+
+        // Load & render users
+        function loadUsers() {
+            allUsers = MER.getUsers();
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const roleFilter = document.getElementById('filterRole').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+
+            filteredUsers = allUsers.filter(u => {
+                const matchSearch = !search ||
+                    u.nama.toLowerCase().includes(search) ||
+                    (u.nip || '').toLowerCase().includes(search) ||
+                    (u.email || '').toLowerCase().includes(search) ||
+                    (u.unit || '').toLowerCase().includes(search);
+                const matchRole = !roleFilter || u.role === roleFilter;
+                const normalizedStatus = (u.status === 'aktif') ? 'aktif' : 'nonaktif';
+                const matchStatus = !statusFilter || normalizedStatus === statusFilter;
+                return matchSearch && matchRole && matchStatus;
+            });
+
+            currentPage = 1;
+            renderTable();
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('usersTableBody');
+            const totalPages = Math.max(1, Math.ceil(filteredUsers.length / perPage));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const start = (currentPage - 1) * perPage;
+            const end = start + perPage;
+            const pageUsers = filteredUsers.slice(start, end);
+
+            // Summary
+            document.getElementById('summaryInfo').textContent = 'Menampilkan ' + pageUsers.length + ' dari ' + filteredUsers.length + ' pengguna';
+
+            // Empty state
+            document.getElementById('emptyState').classList.toggle('hidden', pageUsers.length > 0);
+
+            // Role labels & colors
+            const roleLabelMap = { nakes: 'Perawat', manager: 'Manajer', komite: 'Komite', admin: 'Admin' };
+            const roleColorMap = {
+                nakes: 'bg-green-100 text-green-700',
+                manager: 'bg-sage-light text-primary-dark',
+                komite: 'bg-primary/10 text-primary-dark',
+                admin: 'bg-red-100 text-red-700'
+            };
+
+            let html = '';
+            pageUsers.forEach(function(u, i) {
+                const no = start + i + 1;
+                const roleLabel = roleLabelMap[u.role] || u.role;
+                const roleColor = roleColorMap[u.role] || 'bg-gray-100 text-gray-700';
+                const isActive = u.status === 'aktif';
+                const statusLabel = isActive ? 'Aktif' : 'Nonaktif';
+                const statusColor = isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
+
+                html += '<tr class="border-b border-gray-50 hover:bg-cream/30 transition">';
+                html += '<td class="px-4 py-3 text-gray-500">' + no + '</td>';
+                html += '<td class="px-4 py-3 font-medium text-gray-800">' + escapeHtml(u.nama) + '</td>';
+                html += '<td class="px-4 py-3 text-gray-600">' + escapeHtml(u.nip || '-') + '</td>';
+                html += '<td class="px-4 py-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ' + roleColor + '">' + roleLabel + '</span></td>';
+                html += '<td class="px-4 py-3 text-gray-600">' + escapeHtml(u.unit || '-') + '</td>';
+                html += '<td class="px-4 py-3"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ' + statusColor + '">' + statusLabel + '</span></td>';
+                html += '<td class="px-4 py-3">';
+                html += '<div class="flex items-center gap-2">';
+                html += '<button onclick="openEditModal(' + u.id + ')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-sage-light/50 text-primary rounded-lg text-xs font-semibold hover:bg-sage-light transition">';
+                html += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/></svg>';
+                html += 'Edit</button>';
+                html += '<button onclick="openDeleteModal(' + u.id + ')" class="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-semibold hover:bg-red-100 transition">';
+                html += '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>';
+                html += 'Hapus</button>';
+                html += '</div>';
+                html += '</td>';
+                html += '</tr>';
+            });
+
+            tbody.innerHTML = html;
+
+            // Pagination
+            document.getElementById('btnPrev').disabled = currentPage <= 1;
+            document.getElementById('btnNext').disabled = currentPage >= totalPages;
+            document.getElementById('paginationInfo').textContent = 'Halaman ' + currentPage + ' dari ' + totalPages;
+
+            // Page numbers
+            let pagesHtml = '';
+            for (let p = 1; p <= totalPages; p++) {
+                if (p === currentPage) {
+                    pagesHtml += '<button class="w-9 h-9 rounded-lg text-sm font-semibold bg-primary text-white">' + p + '</button>';
+                } else {
+                    pagesHtml += '<button onclick="goToPage(' + p + ')" class="w-9 h-9 rounded-lg text-sm font-semibold text-gray-600 hover:bg-gray-100 transition">' + p + '</button>';
+                }
+            }
+            document.getElementById('pageNumbers').innerHTML = pagesHtml;
+        }
+
+        function changePage(dir) {
+            const totalPages = Math.ceil(filteredUsers.length / perPage);
+            const newPage = currentPage + dir;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderTable();
+            }
+        }
+
+        function goToPage(p) {
+            currentPage = p;
+            renderTable();
+        }
+
+        // Add Modal
+        function openAddModal() {
+            document.getElementById('addForm').reset();
+            document.getElementById('addModal').classList.remove('hidden');
+            document.getElementById('addModal').classList.add('flex');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+            document.getElementById('addModal').classList.remove('flex');
+        }
+
+        function handleAdd(e) {
+            e.preventDefault();
+            const user = {
+                nama: document.getElementById('addNama').value.trim(),
+                nip: document.getElementById('addUsername').value.trim(),
+                password: document.getElementById('addPassword').value,
+                role: document.getElementById('addRole').value,
+                unit: document.getElementById('addUnit').value,
+                email: document.getElementById('addEmail').value.trim(),
+                telepon: document.getElementById('addTelepon').value.trim(),
+                status: 'aktif',
+                shift: 'pagi'
+            };
+            MER.addUser(user);
+            closeAddModal();
+            loadUsers();
+            showToast('Pengguna berhasil ditambahkan');
+        }
+
+        // Edit Modal
+        function openEditModal(id) {
+            const user = allUsers.find(function(u) { return u.id === id; });
+            if (!user) return;
+
+            document.getElementById('editId').value = user.id;
+            document.getElementById('editNama').value = user.nama || '';
+            document.getElementById('editUsername').value = user.nip || '';
+            document.getElementById('editPassword').value = '';
+            document.getElementById('editRole').value = user.role || 'nakes';
+            document.getElementById('editUnit').value = user.unit || 'ICU';
+            document.getElementById('editEmail').value = user.email || '';
+            document.getElementById('editTelepon').value = user.telepon || '';
+
+            const statusRadios = document.querySelectorAll('input[name="editStatus"]');
+            const normalizedStatus = (user.status === 'aktif') ? 'aktif' : 'nonaktif';
+            statusRadios.forEach(function(r) {
+                r.checked = r.value === normalizedStatus;
+            });
+
+            document.getElementById('editModal').classList.remove('hidden');
+            document.getElementById('editModal').classList.add('flex');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.add('hidden');
+            document.getElementById('editModal').classList.remove('flex');
+        }
+
+        function handleEdit(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editId').value);
+            const updates = {
+                nama: document.getElementById('editNama').value.trim(),
+                nip: document.getElementById('editUsername').value.trim(),
+                role: document.getElementById('editRole').value,
+                unit: document.getElementById('editUnit').value,
+                email: document.getElementById('editEmail').value.trim(),
+                telepon: document.getElementById('editTelepon').value.trim(),
+                status: document.querySelector('input[name="editStatus"]:checked').value
+            };
+            const pw = document.getElementById('editPassword').value;
+            if (pw) updates.password = pw;
+
+            MER.updateUser(id, updates);
+            closeEditModal();
+            loadUsers();
+            showToast('Pengguna berhasil diperbarui');
+        }
+
+        // Delete Modal
+        function openDeleteModal(id) {
+            document.getElementById('deleteId').value = id;
+            document.getElementById('deleteModal').classList.remove('hidden');
+            document.getElementById('deleteModal').classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+            document.getElementById('deleteModal').classList.remove('flex');
+        }
+
+        function confirmDelete() {
+            const id = parseInt(document.getElementById('deleteId').value);
+            MER.hapusUser(id);
+            closeDeleteModal();
+            loadUsers();
+            showToast('Pengguna berhasil dihapus');
+        }
+
+        // Toast
+        function showToast(msg) {
+            var toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(function() {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        // Utility
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

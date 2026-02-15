@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulir Pelaporan - Sistem MER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FEFFD3',
+                        primary: '#2E7D32',
+                        'primary-dark': '#1B5E20',
+                        'primary-light': '#4CAF50',
+                        sage: '#A5D6A7',
+                        'sage-light': '#C8E6C9',
+                        'status-red': '#E53935',
+                        'status-orange': '#FB8C00',
+                        'status-green': '#43A047'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #FEFFD3; }
+        .sidebar-link.active { background: rgba(165,214,167,.3); border-right: 3px solid #2E7D32; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Mobile Header -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-primary text-white shadow-md">
+        <div class="flex items-center justify-between px-4 py-3">
+            <button id="menuToggle" class="p-1 rounded hover:bg-primary-dark transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <span class="font-bold text-lg">Sistem MER</span>
+            <div class="w-8 h-8 bg-sage rounded-full flex items-center justify-center text-primary-dark text-sm font-bold">NS</div>
+        </div>
+    </header>
+
+    <!-- Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+        <!-- Logo -->
+        <div class="p-5 border-b border-gray-100 bg-primary">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-white text-lg leading-tight">Sistem MER</h1>
+                    <p class="text-xs text-white/80">Pelaporan Insiden Obat</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 py-4 overflow-y-auto">
+            <div class="px-4 mb-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu Utama</p>
+            </div>
+
+            <!-- Dashboard -->
+            <a href="nakes-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
+                </svg>
+                Dashboard
+            </a>
+
+            <!-- Buat Laporan (active) -->
+            <a href="form-pelaporan.html" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 text-primary font-semibold text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                Buat Laporan
+            </a>
+
+            <!-- Riwayat Laporan -->
+            <a href="nakes-riwayat.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6"/>
+                </svg>
+                Riwayat Laporan
+            </a>
+
+            <!-- Notifikasi -->
+            <a href="nakes-notifikasi.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                Notifikasi
+                <span class="ml-auto bg-status-red text-white text-xs font-bold px-2 py-0.5 rounded-full">3</span>
+            </a>
+
+            <div class="px-4 mt-6 mb-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pengaturan</p>
+            </div>
+
+            <!-- Profil Saya -->
+            <a href="nakes-profil.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                Profil Saya
+            </a>
+
+            <!-- Pengaturan -->
+            <a href="nakes-pengaturan.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Pengaturan
+            </a>
+        </nav>
+
+        <!-- Keluar -->
+        <div class="p-4 border-t border-gray-100">
+            <a href="login.html" class="flex items-center gap-3 px-4 py-2.5 text-status-red text-sm font-medium hover:bg-red-50 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
+                </svg>
+                Keluar
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+        <!-- Page Header -->
+        <div class="bg-gray-50 border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5 lg:h-[84px] flex items-center">
+            <div class="flex items-center justify-between w-full">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-600">Formulir Pelaporan Insiden</h2>
+                    <p class="text-gray-500 text-sm mt-1">Sistem Pelaporan Insiden Obat</p>
+                </div>
+                <!-- User Profile -->
+                <div class="hidden lg:flex items-center gap-3">
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm text-right">Ns. Sari Dewi</p>
+                        <p class="text-xs text-gray-500 text-right">Perawat - ICU</p>
+                    </div>
+                    <div class="w-10 h-10 bg-sage rounded-full flex items-center justify-center text-primary-dark font-bold text-sm">
+                        NS
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+
+            <!-- Step Indicators -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
+                <div class="flex items-center justify-between">
+                    <!-- Step 1 -->
+                    <div class="flex flex-col items-center flex-1">
+                        <div id="stepCircle1" class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm mb-2 transition-all">
+                            1
+                        </div>
+                        <p id="stepLabel1" class="text-xs font-semibold text-primary text-center">Data Demografis</p>
+                    </div>
+                    <!-- Line -->
+                    <div id="stepLine1" class="flex-1 h-0.5 bg-gray-200 -mt-6 mx-2 transition-all"></div>
+                    <!-- Step 2 -->
+                    <div class="flex flex-col items-center flex-1">
+                        <div id="stepCircle2" class="w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-sm mb-2 transition-all">
+                            2
+                        </div>
+                        <p id="stepLabel2" class="text-xs font-semibold text-gray-400 text-center">Detail Insiden</p>
+                    </div>
+                    <!-- Line -->
+                    <div id="stepLine2" class="flex-1 h-0.5 bg-gray-200 -mt-6 mx-2 transition-all"></div>
+                    <!-- Step 3 -->
+                    <div class="flex flex-col items-center flex-1">
+                        <div id="stepCircle3" class="w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-sm mb-2 transition-all">
+                            3
+                        </div>
+                        <p id="stepLabel3" class="text-xs font-semibold text-gray-400 text-center">Narasi</p>
+                    </div>
+                    <!-- Line -->
+                    <div id="stepLine3" class="flex-1 h-0.5 bg-gray-200 -mt-6 mx-2 transition-all"></div>
+                    <!-- Step 4 -->
+                    <div class="flex flex-col items-center flex-1">
+                        <div id="stepCircle4" class="w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-sm mb-2 transition-all">
+                            4
+                        </div>
+                        <p id="stepLabel4" class="text-xs font-semibold text-gray-400 text-center">Konfirmasi</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form id="formPelaporan" novalidate>
+
+                <!-- ==================== STEP 1 ==================== -->
+                <div id="step1" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6">
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">Bagian A - Data Demografis</h3>
+                    <p class="text-sm text-gray-500 mb-6">Lengkapi data dasar pasien dan kejadian</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                        <!-- Nama Pasien -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Pasien <span class="text-status-red">*</span></label>
+                            <input type="text" id="namaPasien" placeholder="Masukkan nama lengkap pasien" required
+                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                        </div>
+                        <!-- No. Rekam Medis -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">No. Rekam Medis <span class="text-status-red">*</span></label>
+                            <input type="text" id="noRM" placeholder="Contoh: RM-20260001" required
+                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                        <!-- Lokasi Kejadian -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Lokasi Kejadian <span class="text-status-red">*</span></label>
+                            <select id="lokasi" required
+                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition bg-white">
+                                <option value="">Pilih lokasi</option>
+                                <option value="ICU">ICU</option>
+                                <option value="IGD">IGD</option>
+                                <option value="NICU">NICU</option>
+                                <option value="Bedah">Bedah</option>
+                                <option value="Interna">Interna</option>
+                                <option value="Anak">Anak</option>
+                                <option value="Farmasi">Farmasi</option>
+                                <option value="Rawat Jalan">Rawat Jalan</option>
+                            </select>
+                        </div>
+                        <!-- Tanggal Kejadian -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Kejadian <span class="text-status-red">*</span></label>
+                            <input type="date" id="tanggalKejadian" required
+                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                        </div>
+                        <!-- Waktu Kejadian -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Waktu Kejadian <span class="text-status-red">*</span></label>
+                            <input type="time" id="waktuKejadian" required
+                                class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                        </div>
+                    </div>
+
+                    <!-- Jenis Insiden -->
+                    <div class="mt-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Jenis Insiden <span class="text-status-red">*</span></label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- KTD -->
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="tipeInsiden" value="ktd" class="peer sr-only" required>
+                                <div class="border-2 border-gray-200 rounded-xl p-4 transition-all peer-checked:border-primary peer-checked:bg-green-50 hover:border-gray-300">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-5 h-5 mt-0.5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0 peer-checked:border-primary transition">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-primary scale-0 peer-checked:scale-100 transition"></div>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-gray-800 text-sm">KTD (Kejadian Tidak Diharapkan)</p>
+                                            <p class="text-xs text-gray-500 mt-1">Insiden yang menyebabkan cedera</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            <!-- KNC -->
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="tipeInsiden" value="knc" class="peer sr-only" required>
+                                <div class="border-2 border-gray-200 rounded-xl p-4 transition-all peer-checked:border-primary peer-checked:bg-green-50 hover:border-gray-300">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-5 h-5 mt-0.5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0 peer-checked:border-primary transition">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-primary scale-0 peer-checked:scale-100 transition"></div>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-gray-800 text-sm">KNC (Kejadian Nyaris Cedera)</p>
+                                            <p class="text-xs text-gray-500 mt-1">Insiden yang hampir terjadi</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Identitas Pelapor (Opsional) -->
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Identitas Pelapor <span class="text-gray-400">(Opsional)</span></label>
+                        <p class="text-xs text-gray-500 mb-3">Jika Anda ingin identitas Anda diketahui, silakan isi informasi berikut. Jika tidak, Anda dapat mengosongkannya untuk pelaporan anonim.</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Nama Pelapor</label>
+                                <input type="text" id="namaPelapor" placeholder="Nama lengkap (opsional)"
+                                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Kontak Pelapor</label>
+                                <input type="text" id="kontakPelapor" placeholder="Email atau No. HP (opsional)"
+                                    class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== STEP 2 ==================== -->
+                <div id="step2" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 hidden">
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">Bagian B - Karakteristik Insiden</h3>
+                    <p class="text-sm text-gray-500 mb-6">Detail jenis kesalahan, cedera, faktor penyebab, dan intervensi pasien</p>
+
+                    <!-- Details - Jenis Kesalahan -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-primary rounded text-white flex items-center justify-center text-xs">1</span>
+                            Details - Jenis Kesalahan <span class="text-status-red">*</span>
+                        </label>
+                        <p class="text-xs text-gray-500 mb-3">Pilih semua jenis kesalahan yang terjadi</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="salah_pasien" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Salah Pasien</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="salah_obat" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Salah Obat</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="salah_dosis_frekuensi" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Salah Dosis/Frekuensi</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="salah_formula" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Salah Formula</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="salah_rute" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Salah Rute</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="salah_nomor" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Salah Nomor</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="salah_label" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Salah Label</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="kontraindikasi" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Kontraindikasi</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="salah_penyimpanan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Salah Penyimpanan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="obat_terlewat" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Obat Terlewat/Dosis Tidak Diberikan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="obat_kadaluarsa" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Obat Kadaluarsa</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="jenisError" value="reaksi_obat_merugikan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Reaksi Obat Merugikan</span>
+                            </label>
+                        </div>
+                        <div class="mt-2">
+                            <input type="text" id="errorLainnya" placeholder="Lainnya, sebutkan..." 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                        </div>
+                    </div>
+
+                    <!-- Injuries - Cedera yang Terjadi -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-primary rounded text-white flex items-center justify-center text-xs">2</span>
+                            Injuries - Cedera yang Terjadi <span class="text-status-red">*</span>
+                        </label>
+                        <p class="text-xs text-gray-500 mb-3">Pilih semua dampak cedera yang dialami pasien</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="tidak_ada" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Tidak Ada Cedera</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="blister" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Blister</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="kehilangan_darah" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Kehilangan Darah</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="luka_bakar" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Luka Bakar</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="perubahan_kesadaran" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Perubahan Kesadaran</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="meninggal" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700 font-semibold text-red-600">Meninggal</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="edema" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Edema</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="hematologi" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Hematologi</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="gatal" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Gatal-gatal</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="hipoksia" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Hipoksia</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="nyeri" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Nyeri</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="infiltrasi_ekstravasasi" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Infiltrasi/Ekstravasasi</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="kegagalan_jalur_iv" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Kegagalan Jalur IV</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="mual" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Mual</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="perubahan_lab" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Perubahan Nilai Lab Signifikan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="cedera" value="perubahan_tanda_vital" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Perubahan Tanda Vital</span>
+                            </label>
+                        </div>
+                        <div class="mt-2">
+                            <input type="text" id="cederaLainnya" placeholder="Lainnya, sebutkan..." 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                        </div>
+                    </div>
+
+                    <!-- Contributing Factors - Faktor Penyebab -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-primary rounded text-white flex items-center justify-center text-xs">3</span>
+                            Contributing Factors - Faktor Penyebab
+                        </label>
+                        <p class="text-xs text-gray-500 mb-3">Pilih faktor-faktor yang berkontribusi terhadap insiden</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="kesalahan_charting" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Kesalahan Charting</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="kesalahan_kalkulasi_dosis" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Kesalahan Kalkulasi Dosis</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="distraksi" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Distraksi (Manusia)</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="masalah_peralatan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Masalah Peralatan (Mekanik)</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="gagal_ikuti_kebijakan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Gagal Mengikuti Kebijakan/Prosedur</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="gagal_baca_label" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Gagal Membaca Label</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="order_tidak_terbaca" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Order Tidak Terbaca</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="monitoring_tidak_adekuat" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Monitoring Tidak Adekuat</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="defisit_pengetahuan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Defisit Pengetahuan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="masalah_labeling" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Masalah Labeling</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="masalah_order_dokter" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Masalah Order Dokter</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="order_perawat" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Order Perawat</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="tidak_ditranskripsikan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Tidak Ditranskripsikan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="masalah_stocking_delivery" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Masalah Stocking/Delivery</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="salah_transkrip_perawat" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Salah Transkrip - Perawat</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="faktorPenyebab" value="salah_transkrip_farmasi" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Salah Transkrip - Farmasi</span>
+                            </label>
+                        </div>
+                        <div class="mt-2">
+                            <input type="text" id="faktorLainnya" placeholder="Lainnya, sebutkan..." 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                        </div>
+                    </div>
+
+                    <!-- Patient Interventions - Intervensi Pasien -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-primary rounded text-white flex items-center justify-center text-xs">4</span>
+                            Patient Interventions - Intervensi Pasien
+                        </label>
+                        <p class="text-xs text-gray-500 mb-3">Pilih tindakan yang dilakukan terhadap pasien</p>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="transfusi_darah" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Transfusi Darah Diperintahkan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="lab_tambahan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Lab Tambahan Diperintahkan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="prosedur_tambahan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Prosedur Tambahan Dilakukan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="konsultasi_layanan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Konsultasi Layanan Tambahan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="kunjungan_tambahan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Kunjungan Tambahan Dilakukan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="dirawat_rs" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Dirawat di RS</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="konsultasi_customer_service" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Konsultasi Layanan Pelanggan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="monitoring_ditingkatkan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Monitoring Ditingkatkan</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="dilusi" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Dilusi</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="ke_ugd" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Dibawa ke UGD</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="ke_ok" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Dibawa ke OK</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="transfer_icu" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Transfer ke ICU/Ruang Monitor</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="lama_rawat_bertambah" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Lama Rawat Bertambah</span>
+                            </label>
+                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
+                                <input type="checkbox" name="intervensiPasien" value="memerlukan_pengobatan" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                <span class="text-xs text-gray-700">Memerlukan Pengobatan</span>
+                            </label>
+                        </div>
+                        <div class="mt-2">
+                            <input type="text" id="intervensiLainnya" placeholder="Lainnya, sebutkan..." 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                        </div>
+                    </div>
+
+                    <!-- Nama Obat -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Obat yang Terlibat <span class="text-status-red">*</span></label>
+                        <input type="text" id="namaObat" placeholder="Contoh: Amoxicillin 500mg" required
+                            class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition">
+                    </div>
+                </div>
+
+                <!-- ==================== STEP 3 ==================== -->
+                <div id="step3" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 hidden">
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">Bagian C - Narasi & Komentar</h3>
+                    <p class="text-sm text-gray-500 mb-6">Ceritakan kronologi kejadian secara lengkap</p>
+
+                    <!-- Kronologi -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Kronologi Kejadian <span class="text-status-red">*</span></label>
+                        <textarea id="kronologi" rows="8" maxlength="2000" required
+                            placeholder="Jelaskan secara detail kronologi kejadian insiden, termasuk waktu, situasi, pihak yang terlibat, dan tindakan yang sudah dilakukan..."
+                            class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary outline-none transition resize-none"></textarea>
+                        <div class="flex justify-end mt-1">
+                            <span class="text-xs text-gray-400"><span id="charCount">0</span> / 2000 karakter</span>
+                        </div>
+                    </div>
+
+                    <!-- Warning Box -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                        <div class="flex gap-3">
+                            <div class="flex-shrink-0 mt-0.5">
+                                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-semibold text-amber-800 mb-1">Kebijakan Non-Hukuman</h4>
+                                <p class="text-xs text-amber-700 leading-relaxed">Pelaporan insiden ini bersifat rahasia dan non-hukuman (non-punitive). Laporan ini ditujukan semata-mata untuk pembelajaran dan perbaikan sistem, bukan untuk menyalahkan individu. Identitas pelapor dilindungi sesuai kebijakan keselamatan pasien rumah sakit.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirmation Checkbox -->
+                    <label class="flex items-start gap-3 cursor-pointer">
+                        <input type="checkbox" id="konfirmasi" required
+                            class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                        <span class="text-sm text-gray-700">Saya menyatakan bahwa informasi yang saya berikan adalah benar dan akurat sesuai dengan kejadian yang terjadi. Saya memahami bahwa laporan ini bersifat rahasia dan non-hukuman.</span>
+                    </label>
+                </div>
+
+                <!-- ==================== STEP 4 - SUMMARY ==================== -->
+                <div id="step4" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-6 hidden">
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">Ringkasan Laporan</h3>
+                    <p class="text-sm text-gray-500 mb-6">Periksa kembali informasi laporan sebelum dikirim</p>
+
+                    <!-- Data Demografis -->
+                    <div class="mb-5">
+                        <h4 class="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-primary rounded-full text-white flex items-center justify-center text-xs">1</span>
+                            Data Demografis
+                        </h4>
+                        <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+                            <div class="flex">
+                                <span class="text-xs font-medium text-gray-500 w-32">Nama Pasien:</span>
+                                <span id="sumNamaPasien" class="text-xs text-gray-800 font-medium">-</span>
+                            </div>
+                            <div class="flex">
+                                <span class="text-xs font-medium text-gray-500 w-32">No. Rekam Medis:</span>
+                                <span id="sumNoRM" class="text-xs text-gray-800 font-medium">-</span>
+                            </div>
+                            <div class="flex">
+                                <span class="text-xs font-medium text-gray-500 w-32">Lokasi:</span>
+                                <span id="sumLokasi" class="text-xs text-gray-800">-</span>
+                            </div>
+                            <div class="flex">
+                                <span class="text-xs font-medium text-gray-500 w-32">Waktu Kejadian:</span>
+                                <span id="sumWaktu" class="text-xs text-gray-800">-</span>
+                            </div>
+                            <div class="flex">
+                                <span class="text-xs font-medium text-gray-500 w-32">Jenis Insiden:</span>
+                                <span id="sumTipeInsiden" class="text-xs text-gray-800">-</span>
+                            </div>
+                            <div class="pt-2 border-t border-gray-200">
+                                <div class="flex mb-2">
+                                    <span class="text-xs font-medium text-gray-500 w-32">Waktu Pelaporan:</span>
+                                    <span id="sumWaktuLapor" class="text-xs text-gray-800 italic">Otomatis tercatat saat pengiriman</span>
+                                </div>
+                            </div>
+                            <div id="sumPelaporInDemografis" class="pt-2 border-t border-gray-200" style="display: none;">
+                                <div class="flex mb-2">
+                                    <span class="text-xs font-medium text-gray-500 w-32">Pelapor:</span>
+                                    <span id="sumNamaPelapor" class="text-xs text-gray-800">-</span>
+                                </div>
+                                <div class="flex">
+                                    <span class="text-xs font-medium text-gray-500 w-32">Kontak Pelapor:</span>
+                                    <span id="sumKontakPelapor" class="text-xs text-gray-800">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detail Insiden -->
+                    <div class="mb-5">
+                        <h4 class="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-primary rounded-full text-white flex items-center justify-center text-xs">2</span>
+                            Detail Insiden
+                        </h4>
+                        <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+                            <div>
+                                <span class="text-xs font-semibold text-gray-700">Jenis Kesalahan:</span>
+                                <p id="sumJenisError" class="text-xs text-gray-800 mt-1">-</p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-semibold text-gray-700">Cedera yang Terjadi:</span>
+                                <p id="sumCedera" class="text-xs text-gray-800 mt-1">-</p>
+                            </div>
+                            <div id="sumFaktorSection" style="display: none;">
+                                <span class="text-xs font-semibold text-gray-700">Faktor Penyebab:</span>
+                                <p id="sumFaktorPenyebab" class="text-xs text-gray-800 mt-1">-</p>
+                            </div>
+                            <div id="sumIntervensiSection" style="display: none;">
+                                <span class="text-xs font-semibold text-gray-700">Intervensi Pasien:</span>
+                                <p id="sumIntervensiPasien" class="text-xs text-gray-800 mt-1">-</p>
+                            </div>
+                            <div class="pt-2 border-t border-gray-200">
+                                <span class="text-xs font-semibold text-gray-700">Obat Terlibat:</span>
+                                <p id="sumObat" class="text-xs text-gray-800 font-medium mt-1">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Narasi -->
+                    <div class="mb-5">
+                        <h4 class="text-sm font-semibold text-primary mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 bg-primary rounded-full text-white flex items-center justify-center text-xs">3</span>
+                            Narasi Kejadian
+                        </h4>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <p id="sumKronologi" class="text-xs text-gray-700 whitespace-pre-line leading-relaxed">-</p>
+                        </div>
+                    </div>
+
+                    <!-- Anonymous Notice -->
+                    <div id="summaryAnonNotice" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-5" style="display: none;">
+                        <div class="flex gap-3">
+                            <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <h4 class="text-sm font-semibold text-blue-800 mb-1">Pelaporan Anonim</h4>
+                                <p class="text-xs text-blue-700 leading-relaxed">Laporan ini bersifat anonim. Identitas pelapor tidak akan tercantum dalam sistem.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Confirmation -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <div class="flex gap-3">
+                            <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                            </svg>
+                            <div>
+                                <h4 class="text-sm font-semibold text-amber-800 mb-2">Konfirmasi Pengiriman</h4>
+                                <p class="text-xs text-amber-700 leading-relaxed mb-3">Dengan mengirim laporan ini, Anda menyatakan bahwa informasi yang diberikan adalah benar dan akurat. Laporan ini akan segera ditinjau oleh Kepala Ruang.</p>
+                                <label class="flex items-start gap-3 cursor-pointer">
+                                    <input type="checkbox" id="konfirmasiAkhir" required
+                                        class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
+                                    <span class="text-xs text-amber-800 font-medium">Saya telah memeriksa dan mengonfirmasi semua informasi di atas sudah benar</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Buttons -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-3 mb-8">
+                    <button type="button" id="btnKembali" onclick="prevStep()"
+                        class="hidden w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        Kembali
+                    </button>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <button type="button" id="btnDraf" onclick="simpanDraf()"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-primary text-primary rounded-lg text-sm font-medium hover:bg-green-50 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                            </svg>
+                            Simpan Draf
+                        </button>
+                        <button type="button" id="btnNext" onclick="nextStep()"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-dark transition shadow-sm">
+                            Selanjutnya
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+    </main>
+
+    <script src="data.js"></script>
+    <script>
+        // State
+        let currentStep = 1;
+        const totalSteps = 4;
+
+        // Elements
+        const steps = [document.getElementById('step1'), document.getElementById('step2'), document.getElementById('step3'), document.getElementById('step4')];
+        const btnKembali = document.getElementById('btnKembali');
+        const btnNext = document.getElementById('btnNext');
+        const kronologiEl = document.getElementById('kronologi');
+        const charCountEl = document.getElementById('charCount');
+
+        // Sidebar toggle
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const menuToggle = document.getElementById('menuToggle');
+
+        function openSidebar() {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+        }
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        }
+        menuToggle.addEventListener('click', openSidebar);
+
+        // Character count
+        kronologiEl.addEventListener('input', function() {
+            charCountEl.textContent = this.value.length;
+        });
+
+        // Update step indicators
+        function updateStepIndicators() {
+            for (let i = 1; i <= totalSteps; i++) {
+                const circle = document.getElementById('stepCircle' + i);
+                const label = document.getElementById('stepLabel' + i);
+
+                if (i < currentStep) {
+                    // Completed
+                    circle.className = 'w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm mb-2 transition-all';
+                    circle.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+                    label.className = 'text-xs font-semibold text-primary text-center';
+                } else if (i === currentStep) {
+                    // Current
+                    circle.className = 'w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm mb-2 transition-all';
+                    circle.textContent = i;
+                    label.className = 'text-xs font-semibold text-primary text-center';
+                } else {
+                    // Upcoming
+                    circle.className = 'w-10 h-10 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-sm mb-2 transition-all';
+                    circle.textContent = i;
+                    label.className = 'text-xs font-semibold text-gray-400 text-center';
+                }
+            }
+
+            // Lines
+            const line1 = document.getElementById('stepLine1');
+            const line2 = document.getElementById('stepLine2');
+            const line3 = document.getElementById('stepLine3');
+            line1.className = 'flex-1 h-0.5 -mt-6 mx-2 transition-all ' + (currentStep > 1 ? 'bg-primary' : 'bg-gray-200');
+            line2.className = 'flex-1 h-0.5 -mt-6 mx-2 transition-all ' + (currentStep > 2 ? 'bg-primary' : 'bg-gray-200');
+            line3.className = 'flex-1 h-0.5 -mt-6 mx-2 transition-all ' + (currentStep > 3 ? 'bg-primary' : 'bg-gray-200');
+        }
+
+        // Show/hide steps
+        function showStep(step) {
+            steps.forEach((s, i) => {
+                s.classList.toggle('hidden', i !== step - 1);
+            });
+
+            // Populate summary when entering step 4
+            if (step === 4) {
+                populateSummary();
+            }
+
+            // Toggle back button
+            btnKembali.classList.toggle('hidden', step === 1);
+
+            // Toggle next button text
+            if (step === totalSteps) {
+                btnNext.innerHTML = 'Kirim Laporan <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+                btnNext.onclick = submitForm;
+            } else {
+                btnNext.innerHTML = 'Selanjutnya <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>';
+                btnNext.onclick = nextStep;
+            }
+
+            updateStepIndicators();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Validation
+        function validateStep(step) {
+            let valid = true;
+            let firstInvalid = null;
+
+            if (step === 1) {
+                const fields = ['namaPasien', 'noRM', 'lokasi', 'tanggalKejadian', 'waktuKejadian'];
+                fields.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (!el.value.trim()) {
+                        el.classList.add('border-red-400', 'bg-red-50');
+                        valid = false;
+                        if (!firstInvalid) firstInvalid = el;
+                    } else {
+                        el.classList.remove('border-red-400', 'bg-red-50');
+                    }
+                });
+                const tipe = document.querySelector('input[name="tipeInsiden"]:checked');
+                if (!tipe) {
+                    valid = false;
+                    document.querySelectorAll('input[name="tipeInsiden"]').forEach(r => {
+                        r.closest('label').querySelector('div').classList.add('border-red-400');
+                    });
+                } else {
+                    document.querySelectorAll('input[name="tipeInsiden"]').forEach(r => {
+                        r.closest('label').querySelector('div').classList.remove('border-red-400');
+                    });
+                }
+            }
+
+            if (step === 2) {
+                const jenisErrorChecked = document.querySelectorAll('input[name="jenisError"]:checked');
+                if (jenisErrorChecked.length === 0) {
+                    valid = false;
+                    document.querySelectorAll('input[name="jenisError"]').forEach(c => {
+                        c.closest('label').classList.add('border-red-400', 'bg-red-50');
+                    });
+                } else {
+                    document.querySelectorAll('input[name="jenisError"]').forEach(c => {
+                        c.closest('label').classList.remove('border-red-400', 'bg-red-50');
+                    });
+                }
+
+                const cederaChecked = document.querySelectorAll('input[name="cedera"]:checked');
+                if (cederaChecked.length === 0) {
+                    valid = false;
+                    document.querySelectorAll('input[name="cedera"]').forEach(r => {
+                        r.closest('label').classList.add('border-red-400', 'bg-red-50');
+                    });
+                } else {
+                    document.querySelectorAll('input[name="cedera"]').forEach(r => {
+                        r.closest('label').classList.remove('border-red-400', 'bg-red-50');
+                    });
+                }
+
+                const obat = document.getElementById('namaObat');
+                if (!obat.value.trim()) {
+                    obat.classList.add('border-red-400', 'bg-red-50');
+                    valid = false;
+                    if (!firstInvalid) firstInvalid = obat;
+                } else {
+                    obat.classList.remove('border-red-400', 'bg-red-50');
+                }
+            }
+
+            if (step === 3) {
+                const kronologi = document.getElementById('kronologi');
+                if (!kronologi.value.trim()) {
+                    kronologi.classList.add('border-red-400', 'bg-red-50');
+                    valid = false;
+                    if (!firstInvalid) firstInvalid = kronologi;
+                } else {
+                    kronologi.classList.remove('border-red-400', 'bg-red-50');
+                }
+
+                const konfirmasi = document.getElementById('konfirmasi');
+                if (!konfirmasi.checked) {
+                    valid = false;
+                }
+            }
+
+            if (step === 4) {
+                const konfirmasiAkhir = document.getElementById('konfirmasiAkhir');
+                if (!konfirmasiAkhir.checked) {
+                    valid = false;
+                    alert('Mohon centang kotak konfirmasi untuk mengirim laporan.');
+                }
+            }
+
+            if (!valid && firstInvalid) {
+                firstInvalid.focus();
+            }
+
+            return valid;
+        }
+
+        // Navigation
+        function nextStep() {
+            if (!validateStep(currentStep)) return;
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep(currentStep);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        // Collect form data
+        function collectData() {
+            // Jenis Kesalahan
+            const jenisErrors = Array.from(document.querySelectorAll('input[name="jenisError"]:checked')).map(c => c.value);
+            const errorLainnya = document.getElementById('errorLainnya').value.trim();
+            if (errorLainnya) jenisErrors.push('Lainnya: ' + errorLainnya);
+            
+            // Cedera
+            const cederaList = Array.from(document.querySelectorAll('input[name="cedera"]:checked')).map(c => c.value);
+            const cederaLainnya = document.getElementById('cederaLainnya').value.trim();
+            if (cederaLainnya) cederaList.push('Lainnya: ' + cederaLainnya);
+            
+            // Faktor Penyebab
+            const faktorPenyebab = Array.from(document.querySelectorAll('input[name="faktorPenyebab"]:checked')).map(c => c.value);
+            const faktorLainnya = document.getElementById('faktorLainnya').value.trim();
+            if (faktorLainnya) faktorPenyebab.push('Lainnya: ' + faktorLainnya);
+            
+            // Intervensi Pasien
+            const intervensiPasien = Array.from(document.querySelectorAll('input[name="intervensiPasien"]:checked')).map(c => c.value);
+            const intervensiLainnya = document.getElementById('intervensiLainnya').value.trim();
+            if (intervensiLainnya) intervensiPasien.push('Lainnya: ' + intervensiLainnya);
+            
+            const tipeInsiden = document.querySelector('input[name="tipeInsiden"]:checked');
+            const tanggalRaw = document.getElementById('tanggalKejadian').value;
+            const tanggalFormatted = tanggalRaw ? new Date(tanggalRaw).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+            
+            // Get optional reporter info
+            const namaPelapor = document.getElementById('namaPelapor').value.trim();
+            const kontakPelapor = document.getElementById('kontakPelapor').value.trim();
+
+            // Determine priority based on injury severity
+            let prioritas = 'rendah';
+            if (cederaList.includes('meninggal')) {
+                prioritas = 'tinggi';
+            } else if (cederaList.some(c => ['perubahan_kesadaran', 'hipoksia', 'kehilangan_darah'].includes(c))) {
+                prioritas = 'tinggi';
+            } else if (cederaList.some(c => !['tidak_ada', 'blister', 'mual'].includes(c))) {
+                prioritas = 'sedang';
+            }
+
+            return {
+                pasien: document.getElementById('namaPasien').value.trim(),
+                rm: document.getElementById('noRM').value.trim(),
+                lokasi: document.getElementById('lokasi').value,
+                tanggalKejadian: tanggalFormatted,
+                waktu: document.getElementById('waktuKejadian').value,
+                tipeInsiden: tipeInsiden ? tipeInsiden.value : '',
+                jenisError: jenisErrors.length > 0 ? jenisErrors.join(', ') : '-',
+                cedera: cederaList.length > 0 ? cederaList.join(', ') : '-',
+                faktorPenyebab: faktorPenyebab.length > 0 ? faktorPenyebab.join(', ') : '-',
+                intervensiPasien: intervensiPasien.length > 0 ? intervensiPasien.join(', ') : '-',
+                obat: document.getElementById('namaObat').value.trim(),
+                kronologi: document.getElementById('kronologi').value.trim(),
+                status: 'baru',
+                prioritas: prioritas,
+                pelapor: namaPelapor || 'Anonim',
+                kontakPelapor: kontakPelapor,
+                unit: 'ICU',
+                umpanBalik: ''
+            };
+        }
+
+        // Populate summary step
+        function populateSummary() {
+            const data = collectData();
+            
+            // Data Demografis
+            document.getElementById('sumNamaPasien').textContent = data.pasien;
+            document.getElementById('sumNoRM').textContent = data.rm;
+            document.getElementById('sumLokasi').textContent = data.lokasi;
+            document.getElementById('sumWaktu').textContent = data.tanggalKejadian + ' - ' + data.waktu;
+            document.getElementById('sumTipeInsiden').textContent = data.tipeInsiden;
+            
+            // Detail Insiden
+            document.getElementById('sumJenisError').textContent = data.jenisError;
+            document.getElementById('sumCedera').textContent = data.cedera;
+            document.getElementById('sumObat').textContent = data.obat;
+            
+            // Faktor Penyebab (optional section)
+            if (data.faktorPenyebab !== '-') {
+                document.getElementById('sumFaktorSection').style.display = 'block';
+                document.getElementById('sumFaktorPenyebab').textContent = data.faktorPenyebab;
+            } else {
+                document.getElementById('sumFaktorSection').style.display = 'none';
+            }
+            
+            // Intervensi Pasien (optional section)
+            if (data.intervensiPasien !== '-') {
+                document.getElementById('sumIntervensiSection').style.display = 'block';
+                document.getElementById('sumIntervensiPasien').textContent = data.intervensiPasien;
+            } else {
+                document.getElementById('sumIntervensiSection').style.display = 'none';
+            }
+            
+            // Narasi
+            document.getElementById('sumKronologi').textContent = data.kronologi;
+            
+            // Identitas Pelapor - show in Data Demografis or show anon notice
+            if (data.pelapor !== 'Anonim') {
+                document.getElementById('sumPelaporInDemografis').style.display = 'block';
+                document.getElementById('summaryAnonNotice').style.display = 'none';
+                document.getElementById('sumNamaPelapor').textContent = data.pelapor;
+                document.getElementById('sumKontakPelapor').textContent = data.kontakPelapor || '-';
+            } else {
+                document.getElementById('sumPelaporInDemografis').style.display = 'none';
+                document.getElementById('summaryAnonNotice').style.display = 'block';
+            }
+
+            // Waktu Pelaporan - show current real-time
+            const now = new Date();
+            const waktuLaporStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) + ' - ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('sumWaktuLapor').textContent = waktuLaporStr + ' (otomatis)';
+        }
+
+        // Save draft
+        function simpanDraf() {
+            const data = collectData();
+            localStorage.setItem('mer_draf', JSON.stringify(data));
+
+            // Show toast
+            showToast('Draf berhasil disimpan');
+        }
+
+        // Submit form
+        function submitForm() {
+            if (!validateStep(currentStep)) return;
+
+            const data = collectData();
+            MER.addLaporan(data);
+
+            // Add notification
+            MER.addNotifikasi({
+                judul: 'Laporan Berhasil Dikirim',
+                pesan: 'Laporan insiden Anda berhasil dikirim dan menunggu peninjauan oleh Kepala Ruang.',
+                tipe: 'sukses'
+            });
+
+            // Clear draft
+            localStorage.removeItem('mer_draf');
+
+            // Redirect with success message
+            sessionStorage.setItem('mer_success', 'Laporan insiden berhasil dikirim! Laporan Anda akan segera ditinjau oleh Kepala Ruang.');
+            window.location.href = 'nakes-riwayat.html';
+        }
+
+        // Load draft if exists
+        function loadDraf() {
+            const draf = localStorage.getItem('mer_draf');
+            if (!draf) return;
+
+            const data = JSON.parse(draf);
+            if (data.pasien) document.getElementById('namaPasien').value = data.pasien;
+            if (data.rm) document.getElementById('noRM').value = data.rm;
+            if (data.lokasi) document.getElementById('lokasi').value = data.lokasi;
+            if (data.waktu) document.getElementById('waktuKejadian').value = data.waktu;
+            if (data.tipeInsiden) {
+                const radio = document.querySelector('input[name="tipeInsiden"][value="' + data.tipeInsiden + '"]');
+                if (radio) radio.checked = true;
+            }
+            if (data.obat) document.getElementById('namaObat').value = data.obat;
+            if (data.kronologi) {
+                document.getElementById('kronologi').value = data.kronologi;
+                charCountEl.textContent = data.kronologi.length;
+            }
+        }
+
+        // Toast notification
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-6 right-6 bg-primary text-white px-5 py-3 rounded-lg shadow-lg text-sm font-medium z-50 flex items-center gap-2 animate-fade-in';
+            toast.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' + message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 2500);
+        }
+
+        // Remove validation styling on input
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('input', function() {
+                this.classList.remove('border-red-400', 'bg-red-50');
+            });
+        });
+
+        // Init
+        showStep(1);
+        loadDraf();
+    </script>
+</body>
+</html>

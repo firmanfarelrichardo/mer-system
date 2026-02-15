@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Masuk - Komite KP - Sistem MER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FEFFD3',
+                        primary: '#2E7D32',
+                        'primary-dark': '#1B5E20',
+                        'primary-light': '#4CAF50',
+                        sage: '#A5D6A7',
+                        'sage-light': '#C8E6C9',
+                        'status-red': '#E53935',
+                        'status-orange': '#FB8C00',
+                        'status-green': '#43A047'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #FEFFD3; }
+        .sidebar-link.active { background: rgba(165,214,167,.3); border-right: 3px solid #2E7D32; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-6 right-6 z-[100] transform translate-x-full opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-white rounded-xl shadow-2xl border border-gray-100 px-5 py-4 flex items-center gap-3 min-w-[300px]">
+            <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <p id="toastMsg" class="text-sm font-medium text-gray-800"></p>
+        </div>
+    </div>
+
+    <!-- Mobile Header -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-primary text-white shadow-md">
+        <div class="flex items-center justify-between px-4 py-3">
+            <button id="menuToggle" class="p-1 rounded hover:bg-primary-dark transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <span class="font-bold text-lg">Sistem MER</span>
+            <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white text-sm font-bold">KP</div>
+        </div>
+    </header>
+
+    <!-- Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+        <!-- Logo -->
+        <div class="p-5 border-b border-gray-100 bg-primary">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-white text-lg leading-tight">Sistem MER</h1>
+                    <p class="text-xs text-white/80">Komite Keselamatan Pasien</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 py-4 overflow-y-auto">
+            <div class="px-4 mb-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu Utama</p>
+            </div>
+
+            <!-- Dashboard -->
+            <a href="komite-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
+                </svg>
+                Dashboard
+            </a>
+
+            <!-- Laporan Masuk (active) -->
+            <a href="komite-laporan-masuk.html" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 text-primary font-semibold text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6"/>
+                </svg>
+                Laporan Masuk
+                <span id="badgeLaporanBaru" class="ml-auto bg-status-red text-white text-xs font-bold px-2 py-0.5 rounded-full hidden">0</span>
+            </a>
+
+            <!-- Statistik -->
+            <a href="komite-statistik.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Statistik
+            </a>
+
+            <div class="px-4 mt-6 mb-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pengaturan</p>
+            </div>
+
+            <!-- Profil Saya -->
+            <a href="komite-profil.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                Profil Saya
+            </a>
+
+            <!-- Konfigurasi -->
+            <a href="komite-konfigurasi.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Konfigurasi
+            </a>
+        </nav>
+
+        <!-- Keluar -->
+        <div class="p-4 border-t border-gray-100">
+            <a href="login.html" class="flex items-center gap-3 px-4 py-2.5 text-status-red text-sm font-medium hover:bg-red-50 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
+                </svg>
+                Keluar
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+        <!-- Page Header -->
+        <div class="bg-gray-50 border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5 lg:h-[84px] flex items-center">
+            <div class="flex items-center justify-between w-full">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-600">Laporan Masuk</h2>
+                    <p class="text-gray-500 text-sm mt-1">Komite Keselamatan Pasien</p>
+                </div>
+                <!-- User Profile -->
+                <div class="hidden lg:flex items-center gap-3">
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm text-right">Dr. Ratna Sari</p>
+                        <p class="text-xs text-gray-500 text-right">Komite KP RS</p>
+                    </div>
+                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        KP
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+
+            <!-- Filter Bar -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <!-- Search -->
+                    <div class="relative sm:col-span-2">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <input type="text" id="searchInput" placeholder="Cari laporan..." class="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition">
+                    </div>
+                    <!-- Status Filter -->
+                    <div class="relative">
+                        <select id="filterStatus" class="w-full appearance-none pl-3 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition">
+                            <option value="">Semua Status</option>
+                            <option value="baru">Kasus Baru</option>
+                            <option value="ditinjau">Sedang Ditinjau</option>
+                            <option value="ditindak">Sedang Ditindak</option>
+                            <option value="selesai">Selesai</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <!-- Prioritas Filter -->
+                    <div class="relative">
+                        <select id="filterPrioritas" class="w-full appearance-none pl-3 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition">
+                            <option value="">Semua Prioritas</option>
+                            <option value="tinggi">Tinggi</option>
+                            <option value="sedang">Sedang</option>
+                            <option value="rendah">Rendah</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Count -->
+            <p id="totalCount" class="text-sm text-gray-500 mb-4"></p>
+
+            <!-- Reports List -->
+            <div id="reportsList" class="space-y-4 mb-6"></div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9.75m3 0H9.75m0 0v3.375m0-3.375h3.375M6.375 6.75h.008v.008h-.008V6.75z"/>
+                    </svg>
+                </div>
+                <p class="text-gray-500 font-medium">Tidak ada laporan ditemukan</p>
+                <p class="text-gray-400 text-sm mt-1">Coba ubah filter pencarian Anda</p>
+            </div>
+
+            <!-- Pagination -->
+            <div id="pagination" class="flex items-center justify-between bg-white rounded-xl shadow-sm border border-gray-100 px-5 py-3">
+                <button id="btnPrev" onclick="changePage(-1)" disabled class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                    Sebelumnya
+                </button>
+                <span id="pageInfo" class="text-sm text-gray-500"></span>
+                <button id="btnNext" onclick="changePage(1)" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition disabled:opacity-40 disabled:cursor-not-allowed">
+                    Selanjutnya
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="fixed inset-0 z-[80] hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="closeDetailModal()"></div>
+        <div class="absolute inset-4 sm:inset-8 lg:inset-y-8 lg:inset-x-auto lg:left-1/2 lg:-translate-x-1/2 lg:w-full lg:max-w-3xl bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50 flex-shrink-0">
+                <div>
+                    <h3 class="font-bold text-gray-800 text-lg" id="detailTitle">Detail Laporan</h3>
+                    <p class="text-xs text-gray-500 mt-0.5" id="detailSubtitle"></p>
+                </div>
+                <button onclick="closeDetailModal()" class="p-2 hover:bg-gray-200 rounded-lg transition">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <!-- Modal Body -->
+            <div class="flex-1 overflow-y-auto p-6" id="detailBody"></div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackModal" class="fixed inset-0 z-[80] hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="closeFeedbackModal()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+                <div>
+                    <h3 class="font-bold text-gray-800">Beri Umpan Balik</h3>
+                    <p class="text-xs text-gray-500 mt-0.5" id="feedbackSubtitle"></p>
+                </div>
+                <button onclick="closeFeedbackModal()" class="p-2 hover:bg-gray-200 rounded-lg transition">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <!-- Modal Body -->
+            <div class="p-6">
+                <input type="hidden" id="feedbackLaporanId">
+                <!-- Info -->
+                <div class="bg-cream/60 rounded-lg p-3 mb-4 border border-primary/10">
+                    <div class="flex items-center gap-2 text-sm">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span class="text-gray-700" id="feedbackInfo"></span>
+                    </div>
+                </div>
+                <!-- Textarea -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Umpan Balik Komite</label>
+                    <textarea id="feedbackText" rows="4" placeholder="Tulis umpan balik komite..." class="w-full px-4 py-3 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary resize-none transition"></textarea>
+                </div>
+                <!-- Status Change -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Ubah Status (opsional)</label>
+                    <div class="relative">
+                        <select id="feedbackStatus" class="w-full appearance-none pl-3 pr-8 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white transition">
+                            <option value="">Tidak mengubah status</option>
+                            <option value="baru">Kasus Baru</option>
+                            <option value="ditinjau">Sedang Ditinjau</option>
+                            <option value="ditindak">Sedang Ditindak</option>
+                            <option value="selesai">Selesai</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <!-- Submit -->
+                <button onclick="submitFeedback()" class="w-full flex items-center justify-center gap-2 bg-primary text-white font-semibold py-3 rounded-lg hover:bg-primary-dark transition shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                    </svg>
+                    Kirim Umpan Balik
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+        // State
+        let allLaporan = [];
+        let filteredLaporan = [];
+        let currentPage = 1;
+        const perPage = 5;
+
+        // Init
+        MER.init();
+        loadData();
+        setupEvents();
+        updateBadge();
+
+        function loadData() {
+            allLaporan = MER.getLaporan();
+            applyFilters();
+        }
+
+        function setupEvents() {
+            document.getElementById('searchInput').addEventListener('input', () => { currentPage = 1; applyFilters(); });
+            document.getElementById('filterStatus').addEventListener('change', () => { currentPage = 1; applyFilters(); });
+            document.getElementById('filterPrioritas').addEventListener('change', () => { currentPage = 1; applyFilters(); });
+
+            // Mobile sidebar
+            document.getElementById('menuToggle').addEventListener('click', openSidebar);
+        }
+
+        function updateBadge() {
+            const baru = allLaporan.filter(l => l.status === 'baru').length;
+            const badge = document.getElementById('badgeLaporanBaru');
+            if (baru > 0) { badge.textContent = baru; badge.classList.remove('hidden'); }
+            else { badge.classList.add('hidden'); }
+        }
+
+        // Sidebar
+        function openSidebar() {
+            document.getElementById('sidebar').classList.remove('-translate-x-full');
+            document.getElementById('overlay').classList.remove('hidden');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('overlay').classList.add('hidden');
+        }
+
+        // Toast
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            t.classList.remove('translate-x-full', 'opacity-0', 'pointer-events-none');
+            t.classList.add('translate-x-0', 'opacity-100');
+            setTimeout(() => {
+                t.classList.add('translate-x-full', 'opacity-0', 'pointer-events-none');
+                t.classList.remove('translate-x-0', 'opacity-100');
+            }, 3000);
+        }
+
+        // Filters
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.toLowerCase().trim();
+            const status = document.getElementById('filterStatus').value;
+            const prioritas = document.getElementById('filterPrioritas').value;
+
+            filteredLaporan = allLaporan.filter(l => {
+                const matchSearch = !search ||
+                    l.id.toLowerCase().includes(search) ||
+                    l.pasien.toLowerCase().includes(search) ||
+                    l.pelapor.toLowerCase().includes(search) ||
+                    l.lokasi.toLowerCase().includes(search) ||
+                    l.obat.toLowerCase().includes(search) ||
+                    MER.jenisLabel(l.jenisError).toLowerCase().includes(search);
+                const matchStatus = !status || l.status === status;
+                const matchPrioritas = !prioritas || l.prioritas === prioritas;
+                return matchSearch && matchStatus && matchPrioritas;
+            });
+
+            renderReports();
+            renderPagination();
+        }
+
+        // Priority helpers
+        function prioritasStripe(p) {
+            const map = { tinggi: 'bg-status-red', sedang: 'bg-status-orange', rendah: 'bg-status-green' };
+            return map[p] || 'bg-gray-400';
+        }
+        function prioritasLabel(p) {
+            const map = { tinggi: 'Tinggi', sedang: 'Sedang', rendah: 'Rendah' };
+            return map[p] || p;
+        }
+        function prioritasBadge(p) {
+            const map = {
+                tinggi: 'bg-red-100 text-red-700',
+                sedang: 'bg-orange-100 text-orange-700',
+                rendah: 'bg-green-100 text-green-700'
+            };
+            return map[p] || 'bg-gray-100 text-gray-700';
+        }
+        function tipeBadge(t) {
+            if (t === 'ktd') return 'bg-red-50 text-red-600 border border-red-200';
+            return 'bg-sage-light/50 text-primary border border-sage';
+        }
+        function tipeShort(t) {
+            return t === 'ktd' ? 'KTD' : 'KNC';
+        }
+        function cederaLabel(c) {
+            const map = { tidak_ada: 'Tidak Ada', ringan: 'Ringan', sedang: 'Sedang', berat: 'Berat' };
+            return map[c] || c;
+        }
+
+        // Render
+        function renderReports() {
+            const container = document.getElementById('reportsList');
+            const empty = document.getElementById('emptyState');
+            const start = (currentPage - 1) * perPage;
+            const pageData = filteredLaporan.slice(start, start + perPage);
+
+            document.getElementById('totalCount').textContent = filteredLaporan.length + ' laporan ditemukan';
+
+            if (pageData.length === 0) {
+                container.innerHTML = '';
+                empty.classList.remove('hidden');
+                document.getElementById('pagination').classList.add('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            document.getElementById('pagination').classList.remove('hidden');
+
+            container.innerHTML = pageData.map(l => `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+                    <div class="flex">
+                        <!-- Priority Stripe -->
+                        <div class="w-1.5 ${prioritasStripe(l.prioritas)} flex-shrink-0"></div>
+                        <div class="flex-1 p-4 sm:p-5">
+                            <!-- Header -->
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-bold text-gray-800 text-sm">${l.id}</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${tipeBadge(l.tipeInsiden)}">${tipeShort(l.tipeInsiden)}</span>
+                                    <span class="text-xs font-medium px-2 py-0.5 rounded-full ${prioritasBadge(l.prioritas)}">${prioritasLabel(l.prioritas)}</span>
+                                </div>
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${MER.statusColor(l.status)}">${MER.statusLabel(l.status)}</span>
+                            </div>
+                            <!-- Body -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-2 mb-4 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                    <span class="text-gray-600">${l.pasien}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span class="text-gray-600">Kejadian: ${l.tanggalKejadian} ${l.waktu}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span class="text-gray-600">Dilaporkan: ${l.tanggalLapor} ${l.waktuLapor || ''}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    <span class="text-gray-600">${l.lokasi}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    <span class="text-gray-600">${l.pelapor}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                    </svg>
+                                    <span class="text-gray-600">${MER.jenisLabel(l.jenisError)}</span>
+                                </div>
+                            </div>
+                            <!-- Footer Actions -->
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-3 border-t border-gray-100">
+                                <button onclick="openDetailModal('${l.id}')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary bg-green-50 border border-primary/20 rounded-lg hover:bg-green-100 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                    Lihat Detail
+                                </button>
+                                <!-- Status Dropdown -->
+                                <div class="relative">
+                                    <select onchange="changeStatus('${l.id}', this.value)" class="appearance-none pl-3 pr-8 py-1.5 text-sm font-medium border border-gray-200 rounded-lg bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary/30 cursor-pointer transition">
+                                        <option value="" disabled selected>Ubah Status</option>
+                                        <option value="baru" ${l.status==='baru'?'disabled':''}>Kasus Baru</option>
+                                        <option value="ditinjau" ${l.status==='ditinjau'?'disabled':''}>Sedang Ditinjau</option>
+                                        <option value="ditindak" ${l.status==='ditindak'?'disabled':''}>Sedang Ditindak</option>
+                                        <option value="selesai" ${l.status==='selesai'?'disabled':''}>Selesai</option>
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 pr-2 flex items-center pointer-events-none">
+                                        <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <button onclick="openFeedbackModal('${l.id}')" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary-dark transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                    </svg>
+                                    Beri Umpan Balik
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Pagination
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredLaporan.length / perPage) || 1;
+            document.getElementById('pageInfo').textContent = 'Halaman ' + currentPage + ' dari ' + totalPages;
+            document.getElementById('btnPrev').disabled = currentPage <= 1;
+            document.getElementById('btnNext').disabled = currentPage >= totalPages;
+        }
+
+        function changePage(dir) {
+            const totalPages = Math.ceil(filteredLaporan.length / perPage);
+            currentPage += dir;
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            renderReports();
+            renderPagination();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Change Status
+        function changeStatus(id, newStatus) {
+            if (!newStatus) return;
+            const oldLaporan = allLaporan.find(l => l.id === id);
+            const oldStatus = oldLaporan ? oldLaporan.status : '';
+            MER.updateLaporan(id, { status: newStatus });
+            allLaporan = MER.getLaporan();
+
+            // Add notification
+            MER.addNotifikasi({
+                judul: 'Status Berubah: ' + MER.statusLabel(newStatus),
+                pesan: 'Laporan ' + id + ' telah diubah statusnya dari ' + MER.statusLabel(oldStatus) + ' menjadi ' + MER.statusLabel(newStatus) + ' oleh Dr. Ratna Sari - Komite KP.',
+                tipe: 'status'
+            });
+
+            applyFilters();
+            updateBadge();
+            showToast('Status berhasil diperbarui');
+        }
+
+        // Detail Modal
+        function openDetailModal(id) {
+            const l = allLaporan.find(r => r.id === id);
+            if (!l) return;
+
+            document.getElementById('detailTitle').textContent = 'Detail Laporan ' + l.id;
+            document.getElementById('detailSubtitle').textContent = l.pasien + ' - ' + l.lokasi;
+
+            // Build feedback display
+            let feedbackHTML = '';
+            if (l.umpanBalik) {
+                if (Array.isArray(l.umpanBalik)) {
+                    feedbackHTML = l.umpanBalik.map(fb => `
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-2">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sm font-semibold text-green-800">${fb.author || 'Komite'}</span>
+                                <span class="text-xs text-green-600">${fb.date || '-'}</span>
+                            </div>
+                            <p class="text-sm text-green-700">${fb.text}</p>
+                        </div>
+                    `).join('');
+                } else if (typeof l.umpanBalik === 'string' && l.umpanBalik.trim()) {
+                    feedbackHTML = `
+                        <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p class="text-sm text-green-700">${l.umpanBalik}</p>
+                        </div>
+                    `;
+                }
+            }
+
+            document.getElementById('detailBody').innerHTML = `
+                <!-- Status & Priority -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${MER.statusColor(l.status)}">${MER.statusLabel(l.status)}</span>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${prioritasBadge(l.prioritas)}">Prioritas: ${prioritasLabel(l.prioritas)}</span>
+                    <span class="text-xs font-semibold px-2 py-1 rounded-full ${tipeBadge(l.tipeInsiden)}">${MER.tipeLabel(l.tipeInsiden)}</span>
+                </div>
+
+                <!-- Info Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Informasi Pasien</p>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-500">Nama Pasien</span><span class="font-medium text-gray-800">${l.pasien}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">No. Rekam Medis</span><span class="font-medium text-gray-800">${l.rm}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Cedera</span><span class="font-medium text-gray-800">${cederaLabel(l.cedera)}</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Detail Kejadian</p>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-500">Tanggal Kejadian</span><span class="font-medium text-gray-800">${l.tanggalKejadian}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Waktu Kejadian</span><span class="font-medium text-gray-800">${l.waktu}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Lokasi</span><span class="font-medium text-gray-800">${l.lokasi}</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Informasi Obat</p>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-500">Obat</span><span class="font-medium text-gray-800">${l.obat}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Jenis Kesalahan</span><span class="font-medium text-gray-800">${MER.jenisLabel(l.jenisError)}</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Pelaporan</p>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between"><span class="text-gray-500">Pelapor</span><span class="font-medium text-gray-800">${l.pelapor}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Unit</span><span class="font-medium text-gray-800">${l.unit}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Tanggal Lapor</span><span class="font-medium text-gray-800">${l.tanggalLapor}</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Waktu Lapor</span><span class="font-medium text-gray-800">${l.waktuLapor || '-'}</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kronologi -->
+                <div class="mb-6">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Kronologi Kejadian</p>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-sm text-gray-700 leading-relaxed">${l.kronologi}</p>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="mb-6">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Riwayat Status</p>
+                    <div class="space-y-3">
+                        <div class="flex items-start gap-3">
+                            <div class="w-3 h-3 mt-1.5 rounded-full bg-primary flex-shrink-0"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">Laporan Dibuat</p>
+                                <p class="text-xs text-gray-500">${l.tanggalLapor} - Dilaporkan oleh ${l.pelapor}</p>
+                            </div>
+                        </div>
+                        ${l.status !== 'baru' ? `
+                        <div class="flex items-start gap-3">
+                            <div class="w-3 h-3 mt-1.5 rounded-full bg-status-orange flex-shrink-0"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">Status Diperbarui</p>
+                                <p class="text-xs text-gray-500">Diubah menjadi ${MER.statusLabel(l.status)}</p>
+                            </div>
+                        </div>` : ''}
+                        ${l.status === 'selesai' ? `
+                        <div class="flex items-start gap-3">
+                            <div class="w-3 h-3 mt-1.5 rounded-full bg-status-green flex-shrink-0"></div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">Kasus Selesai</p>
+                                <p class="text-xs text-gray-500">Laporan telah selesai ditindaklanjuti</p>
+                            </div>
+                        </div>` : ''}
+                    </div>
+                </div>
+
+                <!-- Feedback -->
+                <div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Umpan Balik</p>
+                    ${feedbackHTML || '<p class="text-sm text-gray-400 italic">Belum ada umpan balik</p>'}
+                </div>
+            `;
+
+            document.getElementById('detailModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        // Feedback Modal
+        function openFeedbackModal(id) {
+            const l = allLaporan.find(r => r.id === id);
+            if (!l) return;
+            document.getElementById('feedbackLaporanId').value = id;
+            document.getElementById('feedbackSubtitle').textContent = id + ' - ' + l.pasien;
+            document.getElementById('feedbackInfo').textContent = 'Laporan ' + id + ' oleh ' + l.pelapor + ' (' + l.lokasi + ')';
+            document.getElementById('feedbackText').value = '';
+            document.getElementById('feedbackStatus').value = '';
+            document.getElementById('feedbackModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+
+        function submitFeedback() {
+            const id = document.getElementById('feedbackLaporanId').value;
+            const text = document.getElementById('feedbackText').value.trim();
+            const newStatus = document.getElementById('feedbackStatus').value;
+
+            if (!text) {
+                document.getElementById('feedbackText').classList.add('border-red-400', 'ring-2', 'ring-red-100');
+                setTimeout(() => document.getElementById('feedbackText').classList.remove('border-red-400', 'ring-2', 'ring-red-100'), 2000);
+                return;
+            }
+
+            const laporan = allLaporan.find(r => r.id === id);
+            if (!laporan) return;
+
+            // Build updated feedback
+            const newEntry = {
+                text: text,
+                author: 'Dr. Ratna Sari - Komite KP',
+                date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+            };
+
+            let updatedFeedback;
+            if (Array.isArray(laporan.umpanBalik)) {
+                updatedFeedback = [...laporan.umpanBalik, newEntry];
+            } else if (typeof laporan.umpanBalik === 'string' && laporan.umpanBalik.trim()) {
+                updatedFeedback = [
+                    { text: laporan.umpanBalik, author: 'Sebelumnya', date: '-' },
+                    newEntry
+                ];
+            } else {
+                updatedFeedback = [newEntry];
+            }
+
+            const updates = { umpanBalik: updatedFeedback };
+            if (newStatus) {
+                updates.status = newStatus;
+            }
+
+            MER.updateLaporan(id, updates);
+
+            // Notification
+            MER.addNotifikasi({
+                judul: 'Umpan Balik Baru dari Komite KP',
+                pesan: 'Dr. Ratna Sari (Komite KP) memberikan umpan balik untuk laporan ' + id + ': "' + text.substring(0, 80) + (text.length > 80 ? '...' : '') + '"',
+                tipe: 'umpan_balik'
+            });
+
+            if (newStatus) {
+                MER.addNotifikasi({
+                    judul: 'Status Berubah: ' + MER.statusLabel(newStatus),
+                    pesan: 'Laporan ' + id + ' telah diubah statusnya menjadi ' + MER.statusLabel(newStatus) + ' oleh Dr. Ratna Sari - Komite KP.',
+                    tipe: 'status'
+                });
+            }
+
+            // Reload
+            allLaporan = MER.getLaporan();
+            applyFilters();
+            updateBadge();
+            closeFeedbackModal();
+            showToast('Umpan balik berhasil dikirim');
+        }
+
+        // Keyboard
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeDetailModal();
+                closeFeedbackModal();
+            }
+        });
+    </script>
+</body>
+</html>

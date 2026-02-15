@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistik & Analisis - Sistem MER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FEFFD3',
+                        primary: '#2E7D32',
+                        'primary-dark': '#1B5E20',
+                        'primary-light': '#4CAF50',
+                        sage: '#A5D6A7',
+                        'sage-light': '#C8E6C9',
+                        'status-red': '#E53935',
+                        'status-orange': '#FB8C00',
+                        'status-green': '#43A047'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #FEFFD3; }
+        .sidebar-link.active { background: rgba(165,214,167,.3); border-right: 3px solid #2E7D32; }
+        .bar-animate { transition: height 0.6s ease-out; }
+        .hbar-animate { transition: width 0.6s ease-out; }
+        .donut-segment { transition: stroke-dasharray 0.6s ease-out; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Mobile Header -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-primary text-white shadow-md">
+        <div class="flex items-center justify-between px-4 py-3">
+            <button id="menuToggle" class="p-1 rounded hover:bg-primary-dark transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <span class="font-bold text-lg">Sistem MER</span>
+            <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white text-sm font-bold">DR</div>
+        </div>
+    </header>
+
+    <!-- Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+        <!-- Logo -->
+        <div class="p-5 border-b border-gray-100 bg-primary">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-white text-lg leading-tight">Sistem MER</h1>
+                    <p class="text-xs text-white/80">Pelaporan Insiden Obat</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 py-4 overflow-y-auto">
+            <div class="px-4 mb-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu Utama</p>
+            </div>
+
+            <!-- Dashboard -->
+            <a href="dashboard-manager.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
+                </svg>
+                Dashboard
+            </a>
+
+            <!-- Laporan Masuk -->
+            <a href="manager-laporan-masuk.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6"/>
+                </svg>
+                Laporan Masuk
+            </a>
+
+            <!-- Statistik (ACTIVE) -->
+            <a href="manager-statistik.html" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 text-primary font-semibold text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                Statistik
+            </a>
+
+            <div class="px-4 mt-6 mb-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pengaturan</p>
+            </div>
+
+            <!-- Profil Saya -->
+            <a href="manager-profil.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                Profil Saya
+            </a>
+
+            <!-- Konfigurasi -->
+            <a href="manager-konfigurasi.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Konfigurasi
+            </a>
+        </nav>
+
+        <!-- Keluar -->
+        <div class="p-4 border-t border-gray-100">
+            <a href="login.html" class="flex items-center gap-3 px-4 py-2.5 text-status-red text-sm font-medium hover:bg-red-50 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
+                </svg>
+                Keluar
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+        <!-- Page Header -->
+        <div class="bg-gray-50 border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5 lg:h-[84px] flex items-center">
+            <div class="flex items-center justify-between w-full">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-600">Statistik & Analisis</h2>
+                    <p class="text-gray-500 text-sm mt-1">Sistem Pelaporan Insiden Obat</p>
+                </div>
+                <!-- User Profile -->
+                <div class="hidden lg:flex items-center gap-3">
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm text-right">Dr. Ahmad Fauzi</p>
+                        <p class="text-xs text-gray-500 text-right">Kepala Ruang - ICU</p>
+                    </div>
+                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        DR
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto">
+
+            <!-- Summary Stat Cards -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <!-- Total Insiden -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-sage-light rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800" id="statTotal">0</p>
+                    <p class="text-xs text-gray-500 mt-1">Total Insiden</p>
+                </div>
+
+                <!-- Rata-rata per Bulan -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800" id="statRataRata">0</p>
+                    <p class="text-xs text-gray-500 mt-1">Rata-rata per Bulan</p>
+                </div>
+
+                <!-- Tingkat Penyelesaian -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800" id="statPenyelesaian">0%</p>
+                    <p class="text-xs text-gray-500 mt-1">Tingkat Penyelesaian</p>
+                </div>
+
+                <!-- Insiden Bulan Ini -->
+                <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <p class="text-2xl font-bold text-gray-800" id="statBulanIni">0</p>
+                    <p class="text-xs text-gray-500 mt-1">Insiden Bulan Ini</p>
+                </div>
+            </div>
+
+            <!-- Tren Insiden Bulanan -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-1">Tren Insiden Bulanan</h3>
+                <p class="text-xs text-gray-500 mb-5">Jumlah insiden dalam 6 bulan terakhir</p>
+                <div class="flex items-end justify-around gap-2 sm:gap-4" style="height:220px" id="chartTrenBulanan">
+                    <!-- Bars rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Two Column Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+                <!-- Distribusi Jenis Kesalahan -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">Distribusi Jenis Kesalahan</h3>
+                    <p class="text-xs text-gray-500 mb-5">Berdasarkan kategori jenis kesalahan</p>
+                    <div id="chartJenisError" class="space-y-3">
+                        <!-- Horizontal bars rendered by JS -->
+                    </div>
+                </div>
+
+                <!-- Distribusi Status -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+                    <h3 class="text-lg font-bold text-gray-800 mb-1">Distribusi Status</h3>
+                    <p class="text-xs text-gray-500 mb-5">Status penanganan seluruh insiden</p>
+                    <div id="chartStatus">
+                        <!-- Donut + Legend rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Distribusi Tipe Insiden -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-1">Distribusi Tipe Insiden</h3>
+                <p class="text-xs text-gray-500 mb-5">Perbandingan KTD dan KNC</p>
+                <div id="chartTipeInsiden" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Two cards rendered by JS -->
+                </div>
+            </div>
+
+            <!-- Ringkasan per Unit -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-1">Ringkasan per Unit</h3>
+                <p class="text-xs text-gray-500 mb-5">Data insiden dikelompokkan berdasarkan unit/lokasi</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b-2 border-gray-200">
+                                <th class="text-left py-3 px-3 font-semibold text-gray-600">Unit</th>
+                                <th class="text-center py-3 px-3 font-semibold text-gray-600">Total Insiden</th>
+                                <th class="text-center py-3 px-3 font-semibold text-gray-600">KTD</th>
+                                <th class="text-center py-3 px-3 font-semibold text-gray-600">KNC</th>
+                                <th class="text-center py-3 px-3 font-semibold text-gray-600">Selesai</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelUnit">
+                            <!-- Rows rendered by JS -->
+                        </tbody>
+                        <tfoot id="tabelUnitFooter">
+                            <!-- Total row rendered by JS -->
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="data.js"></script>
+    <script>
+        // Sidebar toggle
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        });
+
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        }
+
+        // Indonesian month names
+        const BULAN_NAMA = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const BULAN_PANJANG = { 'Januari':0,'Februari':1,'Maret':2,'April':3,'Mei':4,'Juni':5,'Juli':6,'Agustus':7,'September':8,'Oktober':9,'November':10,'Desember':11,
+            'Jan':0,'Feb':1,'Mar':2,'Apr':3,'Jun':5,'Jul':6,'Agu':7,'Sep':8,'Okt':9,'Nov':10,'Des':11 };
+
+        // Parse Indonesian date string to { month, year }
+        function parseTanggal(tgl) {
+            if (!tgl) return null;
+            const parts = tgl.trim().split(/\s+/);
+            if (parts.length < 3) return null;
+            const bulanStr = parts[1];
+            let bulanIdx = BULAN_PANJANG[bulanStr];
+            if (bulanIdx === undefined) {
+                // Try partial match
+                for (const key in BULAN_PANJANG) {
+                    if (key.toLowerCase().startsWith(bulanStr.toLowerCase())) {
+                        bulanIdx = BULAN_PANJANG[key];
+                        break;
+                    }
+                }
+            }
+            if (bulanIdx === undefined) bulanIdx = 0;
+            const tahun = parseInt(parts[2]) || 2026;
+            return { month: bulanIdx, year: tahun, day: parseInt(parts[0]) || 1 };
+        }
+
+        // Colors for charts
+        const JENIS_COLORS = ['#2E7D32', '#E53935', '#FB8C00', '#FB8C00', '#1B5E20', '#43A047'];
+        const STATUS_COLORS = { baru: '#E53935', ditinjau: '#FB8C00', ditindak: '#FB8C00', selesai: '#43A047' };
+        const STATUS_KEYS = ['baru', 'ditinjau', 'ditindak', 'selesai'];
+        const STATUS_LABELS = { baru: 'Kasus Baru', ditinjau: 'Sedang Ditinjau', ditindak: 'Sedang Ditindak', selesai: 'Selesai' };
+
+        // Unit filter: Kepala Ruang hanya melihat laporan unit-nya
+        const UNIT_RUANGAN = 'ICU';
+        function getLaporanUnit() {
+            return MER.getLaporan().filter(l => (l.unit || l.lokasi) === UNIT_RUANGAN);
+        }
+
+        function renderStatistik() {
+            const laporan = getLaporanUnit();
+            const total = laporan.length;
+
+            // --- Summary Cards ---
+            document.getElementById('statTotal').textContent = total;
+
+            // Months with data
+            const monthSet = new Set();
+            laporan.forEach(l => {
+                const d = parseTanggal(l.tanggalLapor);
+                if (d) monthSet.add(d.year + '-' + d.month);
+            });
+            const jumlahBulan = Math.max(monthSet.size, 1);
+            document.getElementById('statRataRata').textContent = (total / jumlahBulan).toFixed(1);
+
+            const selesaiCount = laporan.filter(l => l.status === 'selesai').length;
+            const pctSelesai = total > 0 ? Math.round((selesaiCount / total) * 100) : 0;
+            document.getElementById('statPenyelesaian').textContent = pctSelesai + '%';
+
+            // Current month
+            const now = new Date();
+            const bulanIni = laporan.filter(l => {
+                const d = parseTanggal(l.tanggalLapor);
+                return d && d.month === now.getMonth() && d.year === now.getFullYear();
+            }).length;
+            document.getElementById('statBulanIni').textContent = bulanIni;
+
+            // --- Tren Insiden Bulanan (last 6 months) ---
+            renderTrenBulanan(laporan);
+
+            // --- Distribusi Jenis Kesalahan ---
+            renderJenisError(laporan);
+
+            // --- Distribusi Status ---
+            renderStatusChart(laporan);
+
+            // --- Distribusi Tipe Insiden ---
+            renderTipeInsiden(laporan);
+
+            // --- Ringkasan per Unit ---
+            renderTabelUnit(laporan);
+        }
+
+        function renderTrenBulanan(laporan) {
+            const container = document.getElementById('chartTrenBulanan');
+            container.innerHTML = '';
+
+            // Build last 6 months
+            const now = new Date();
+            const months = [];
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                months.push({ month: d.getMonth(), year: d.getFullYear(), label: BULAN_NAMA[d.getMonth()] });
+            }
+
+            // Count per month
+            const counts = months.map(m => {
+                return laporan.filter(l => {
+                    const d = parseTanggal(l.tanggalLapor);
+                    return d && d.month === m.month && d.year === m.year;
+                }).length;
+            });
+
+            const maxCount = Math.max(...counts, 1);
+
+            months.forEach((m, i) => {
+                const pct = (counts[i] / maxCount) * 100;
+                const col = document.createElement('div');
+                col.className = 'flex flex-col items-center flex-1';
+                col.innerHTML = `
+                    <span class="text-xs font-bold text-gray-700 mb-1">${counts[i]}</span>
+                    <div class="w-full flex justify-center" style="height:180px;align-items:flex-end;">
+                        <div class="bar-animate rounded-t-md w-8 sm:w-10" style="height:0%;background:#2E7D32;" data-height="${pct}%"></div>
+                    </div>
+                    <span class="text-xs text-gray-500 mt-2 font-medium">${m.label}</span>
+                `;
+                container.appendChild(col);
+            });
+
+            // Animate bars
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    container.querySelectorAll('.bar-animate').forEach(bar => {
+                        bar.style.height = bar.dataset.height;
+                    });
+                }, 50);
+            });
+        }
+
+        function renderJenisError(laporan) {
+            const container = document.getElementById('chartJenisError');
+            container.innerHTML = '';
+
+            // Count by jenis
+            const jenisCounts = {};
+            laporan.forEach(l => {
+                const j = l.jenisError || 'lainnya';
+                jenisCounts[j] = (jenisCounts[j] || 0) + 1;
+            });
+
+            const entries = Object.entries(jenisCounts).sort((a, b) => b[1] - a[1]);
+            const total = laporan.length || 1;
+            const maxVal = entries.length > 0 ? entries[0][1] : 1;
+
+            entries.forEach(([jenis, count], i) => {
+                const pct = Math.round((count / total) * 100);
+                const barPct = (count / maxVal) * 100;
+                const color = JENIS_COLORS[i % JENIS_COLORS.length];
+                const label = MER.jenisLabel(jenis);
+
+                const row = document.createElement('div');
+                row.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-sm text-gray-700 font-medium">${label}</span>
+                        <span class="text-sm font-bold text-gray-800">${count} <span class="text-xs text-gray-400 font-normal">(${pct}%)</span></span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
+                        <div class="hbar-animate h-full rounded-full" style="width:0%;background:${color};" data-width="${barPct}%"></div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+
+            // Animate
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    container.querySelectorAll('.hbar-animate').forEach(bar => {
+                        bar.style.width = bar.dataset.width;
+                    });
+                }, 50);
+            });
+        }
+
+        function renderStatusChart(laporan) {
+            const container = document.getElementById('chartStatus');
+            container.innerHTML = '';
+
+            const total = laporan.length || 1;
+            const counts = {};
+            STATUS_KEYS.forEach(k => counts[k] = 0);
+            laporan.forEach(l => {
+                if (counts[l.status] !== undefined) counts[l.status]++;
+            });
+
+            // SVG Donut Chart
+            const size = 160;
+            const strokeWidth = 28;
+            const radius = (size - strokeWidth) / 2;
+            const circumference = 2 * Math.PI * radius;
+            let offset = 0;
+
+            let segments = '';
+            STATUS_KEYS.forEach(key => {
+                const pct = counts[key] / total;
+                const dashLen = pct * circumference;
+                const dashGap = circumference - dashLen;
+                segments += `<circle cx="${size/2}" cy="${size/2}" r="${radius}" fill="none" stroke="${STATUS_COLORS[key]}" stroke-width="${strokeWidth}" stroke-dasharray="${dashLen} ${dashGap}" stroke-dashoffset="${-offset}" class="donut-segment" transform="rotate(-90 ${size/2} ${size/2})" />`;
+                offset += dashLen;
+            });
+
+            // Legend
+            let legendHTML = '';
+            STATUS_KEYS.forEach(key => {
+                const pct = Math.round((counts[key] / total) * 100);
+                legendHTML += `
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 rounded-full flex-shrink-0" style="background:${STATUS_COLORS[key]}"></div>
+                        <span class="text-sm text-gray-600">${STATUS_LABELS[key]}</span>
+                        <span class="ml-auto text-sm font-bold text-gray-800">${counts[key]}</span>
+                        <span class="text-xs text-gray-400">(${pct}%)</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <div class="flex flex-col sm:flex-row items-center gap-6">
+                    <div class="relative flex-shrink-0">
+                        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                            ${segments}
+                        </svg>
+                        <div class="absolute inset-0 flex items-center justify-center flex-col">
+                            <span class="text-2xl font-bold text-gray-800">${laporan.length}</span>
+                            <span class="text-xs text-gray-500">Total</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 space-y-3 w-full">
+                        ${legendHTML}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderTipeInsiden(laporan) {
+            const container = document.getElementById('chartTipeInsiden');
+            container.innerHTML = '';
+
+            const total = laporan.length || 1;
+            const ktdCount = laporan.filter(l => l.tipeInsiden === 'ktd').length;
+            const kncCount = laporan.filter(l => l.tipeInsiden === 'knc').length;
+            const ktdPct = Math.round((ktdCount / total) * 100);
+            const kncPct = Math.round((kncCount / total) * 100);
+
+            container.innerHTML = `
+                <!-- KTD Card -->
+                <div class="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-5 text-center">
+                    <div class="w-14 h-14 mx-auto mb-3 bg-red-200 rounded-full flex items-center justify-center">
+                        <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-8.58 14.85A1 1 0 002.58 20h18.84a1 1 0 00.87-1.29l-8.58-14.85a1.5 1.5 0 00-2.42 0z"/>
+                        </svg>
+                    </div>
+                    <p class="text-3xl font-bold text-red-700 mb-1">${ktdCount}</p>
+                    <p class="text-sm font-semibold text-red-600 mb-1">KTD</p>
+                    <p class="text-xs text-red-500">Kejadian Tidak Diharapkan</p>
+                    <div class="mt-3 w-full bg-red-200 rounded-full h-2 overflow-hidden">
+                        <div class="h-full bg-red-500 rounded-full hbar-animate" style="width:0%" data-width="${ktdPct}%"></div>
+                    </div>
+                    <p class="text-xs text-red-500 mt-1 font-medium">${ktdPct}% dari total</p>
+                </div>
+
+                <!-- KNC Card -->
+                <div class="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-5 text-center">
+                    <div class="w-14 h-14 mx-auto mb-3 bg-amber-200 rounded-full flex items-center justify-center">
+                        <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"/>
+                        </svg>
+                    </div>
+                    <p class="text-3xl font-bold text-amber-700 mb-1">${kncCount}</p>
+                    <p class="text-sm font-semibold text-amber-600 mb-1">KNC</p>
+                    <p class="text-xs text-amber-500">Kejadian Nyaris Cedera</p>
+                    <div class="mt-3 w-full bg-amber-200 rounded-full h-2 overflow-hidden">
+                        <div class="h-full bg-amber-500 rounded-full hbar-animate" style="width:0%" data-width="${kncPct}%"></div>
+                    </div>
+                    <p class="text-xs text-amber-500 mt-1 font-medium">${kncPct}% dari total</p>
+                </div>
+            `;
+
+            // Animate
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    container.querySelectorAll('.hbar-animate').forEach(bar => {
+                        bar.style.width = bar.dataset.width;
+                    });
+                }, 50);
+            });
+        }
+
+        function renderTabelUnit(laporan) {
+            const tbody = document.getElementById('tabelUnit');
+            const tfoot = document.getElementById('tabelUnitFooter');
+            tbody.innerHTML = '';
+            tfoot.innerHTML = '';
+
+            // Group by lokasi
+            const units = {};
+            laporan.forEach(l => {
+                const u = l.lokasi || 'Tidak Diketahui';
+                if (!units[u]) units[u] = { total: 0, ktd: 0, knc: 0, selesai: 0 };
+                units[u].total++;
+                if (l.tipeInsiden === 'ktd') units[u].ktd++;
+                if (l.tipeInsiden === 'knc') units[u].knc++;
+                if (l.status === 'selesai') units[u].selesai++;
+            });
+
+            const sortedUnits = Object.entries(units).sort((a, b) => b[1].total - a[1].total);
+            let grandTotal = 0, grandKTD = 0, grandKNC = 0, grandSelesai = 0;
+
+            sortedUnits.forEach(([unit, data], i) => {
+                grandTotal += data.total;
+                grandKTD += data.ktd;
+                grandKNC += data.knc;
+                grandSelesai += data.selesai;
+
+                const tr = document.createElement('tr');
+                tr.className = i % 2 === 0 ? 'bg-gray-50/50' : '';
+                tr.innerHTML = `
+                    <td class="py-3 px-3 font-medium text-gray-800">${unit}</td>
+                    <td class="py-3 px-3 text-center font-bold text-gray-800">${data.total}</td>
+                    <td class="py-3 px-3 text-center">
+                        <span class="inline-block bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">${data.ktd}</span>
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        <span class="inline-block bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">${data.knc}</span>
+                    </td>
+                    <td class="py-3 px-3 text-center">
+                        <span class="inline-block bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">${data.selesai}</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Footer total
+            tfoot.innerHTML = `
+                <tr class="border-t-2 border-gray-300 bg-gray-100">
+                    <td class="py-3 px-3 font-bold text-gray-800">Total</td>
+                    <td class="py-3 px-3 text-center font-bold text-gray-800">${grandTotal}</td>
+                    <td class="py-3 px-3 text-center font-bold text-red-700">${grandKTD}</td>
+                    <td class="py-3 px-3 text-center font-bold text-amber-700">${grandKNC}</td>
+                    <td class="py-3 px-3 text-center font-bold text-green-700">${grandSelesai}</td>
+                </tr>
+            `;
+        }
+
+        // --- Ekspor CSV ---
+        function eksporCSV() {
+            const laporan = getLaporanUnit();
+            if (laporan.length === 0) {
+                alert('Tidak ada data untuk diekspor.');
+                return;
+            }
+
+            const headers = ['ID', 'Pasien', 'No. RM', 'Lokasi', 'Tanggal Kejadian', 'Waktu', 'Tipe Insiden', 'Jenis Kesalahan', 'Cedera', 'Obat', 'Status', 'Prioritas', 'Pelapor', 'Tanggal Lapor'];
+            const rows = laporan.map(l => [
+                l.id,
+                l.pasien,
+                l.rm,
+                l.lokasi,
+                l.tanggalKejadian,
+                l.waktu,
+                MER.tipeLabel(l.tipeInsiden),
+                MER.jenisLabel(l.jenisError),
+                l.cedera,
+                l.obat,
+                MER.statusLabel(l.status),
+                l.prioritas,
+                l.pelapor,
+                l.tanggalLapor
+            ]);
+
+            let csv = '\uFEFF'; // BOM for Excel UTF-8
+            csv += headers.join(';') + '\n';
+            rows.forEach(row => {
+                csv += row.map(cell => '"' + String(cell || '').replace(/"/g, '""') + '"').join(';') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'laporan-insiden-mer-' + new Date().toISOString().slice(0, 10) + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Init
+        MER.init();
+        renderStatistik();
+    </script>
+</body>
+</html>

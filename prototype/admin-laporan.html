@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semua Laporan - Sistem MER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FEFFD3',
+                        primary: '#2E7D32',
+                        'primary-dark': '#1B5E20',
+                        'primary-light': '#4CAF50',
+                        sage: '#A5D6A7',
+                        'sage-light': '#C8E6C9',
+                        'status-red': '#E53935',
+                        'status-orange': '#FB8C00',
+                        'status-green': '#43A047'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #FEFFD3; }
+        .sidebar-link.active { background: rgba(165,214,167,.3); border-right: 3px solid #2E7D32; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Mobile Header -->
+    <header class="lg:hidden fixed top-0 left-0 right-0 z-40 bg-primary text-white shadow-md">
+        <div class="flex items-center justify-between px-4 py-3">
+            <button id="menuToggle" class="p-1 rounded hover:bg-primary-dark transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+            <span class="font-bold text-lg">Sistem MER</span>
+            <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white text-sm font-bold">AD</div>
+        </div>
+    </header>
+
+    <!-- Overlay -->
+    <div id="overlay" class="fixed inset-0 bg-black/40 z-40 hidden lg:hidden" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+        <!-- Logo -->
+        <div class="p-5 border-b border-gray-100 bg-primary">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="font-bold text-white text-lg leading-tight">Sistem MER</h1>
+                    <p class="text-xs text-white/80">Panel Administrator</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 py-4 overflow-y-auto">
+            <div class="px-4 mb-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Menu Utama</p>
+            </div>
+
+            <a href="admin-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
+                </svg>
+                Dashboard
+            </a>
+
+            <a href="admin-users.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                Manajemen Pengguna
+            </a>
+
+            <a href="admin-laporan.html" class="sidebar-link active flex items-center gap-3 px-4 py-2.5 text-primary font-semibold text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 012-2h2a2 2 0 012 2M9 5h6"/>
+                </svg>
+                Semua Laporan
+            </a>
+
+            <div class="px-4 mt-6 mb-2">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Pengaturan</p>
+            </div>
+
+            <a href="admin-pengaturan.html" class="sidebar-link flex items-center gap-3 px-4 py-2.5 text-gray-600 text-sm hover:bg-sage-light/30 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Pengaturan Sistem
+            </a>
+        </nav>
+
+        <!-- Keluar -->
+        <div class="p-4 border-t border-gray-100">
+            <a href="login.html" class="flex items-center gap-3 px-4 py-2.5 text-status-red text-sm font-medium hover:bg-red-50 rounded-lg transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h5a2 2 0 012 2v1"/>
+                </svg>
+                Keluar
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="lg:ml-64 pt-16 lg:pt-0 min-h-screen">
+        <!-- Page Header -->
+        <div class="bg-gray-50 border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-5 lg:h-[84px] flex items-center">
+            <div class="flex items-center justify-between w-full">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-600">Semua Laporan</h2>
+                    <p class="text-gray-500 text-sm mt-1">Panel Administrator</p>
+                </div>
+                <!-- User Profile -->
+                <div class="hidden lg:flex items-center gap-3">
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm text-right">Admin Sistem</p>
+                        <p class="text-xs text-gray-500 text-right">Administrator</p>
+                    </div>
+                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        AD
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+
+            <!-- Filter Bar -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                    <!-- Search -->
+                    <div class="xl:col-span-2">
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Pencarian</label>
+                        <div class="relative">
+                            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                            <input id="filterSearch" type="text" placeholder="Cari berdasarkan pasien, ID, atau pelapor..." class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
+                        </div>
+                    </div>
+                    <!-- Status -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Status</label>
+                        <select id="filterStatus" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition bg-white">
+                            <option value="">Semua</option>
+                            <option value="baru">Kasus Baru</option>
+                            <option value="ditinjau">Sedang Ditinjau</option>
+                            <option value="ditindak">Sedang Ditindak</option>
+                            <option value="selesai">Selesai</option>
+                        </select>
+                    </div>
+                    <!-- Tipe -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Tipe</label>
+                        <select id="filterTipe" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition bg-white">
+                            <option value="">Semua</option>
+                            <option value="ktd">KTD</option>
+                            <option value="knc">KNC</option>
+                        </select>
+                    </div>
+                    <!-- Jenis -->
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 mb-1">Jenis Kesalahan</label>
+                        <select id="filterJenis" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition bg-white">
+                            <option value="">Semua</option>
+                            <option value="salah_pasien">Salah Pasien</option>
+                            <option value="salah_obat">Salah Obat</option>
+                            <option value="salah_dosis">Salah Dosis</option>
+                            <option value="salah_rute">Salah Rute</option>
+                            <option value="obat_terlewat">Obat Terlewat</option>
+                            <option value="obat_kadaluarsa">Obat Kadaluarsa</option>
+                        </select>
+                    </div>
+                    <!-- Date Range -->
+                    <div class="xl:col-span-2 grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Dari</label>
+                            <input id="filterDari" type="date" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Sampai</label>
+                            <input id="filterSampai" type="date" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Row -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <p class="text-sm text-gray-600 font-medium" id="summaryText">Menampilkan 0 dari 0 laporan</p>
+                    <div class="flex flex-wrap gap-2 ml-auto" id="statusPills"></div>
+                </div>
+            </div>
+
+            <!-- Reports Table -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-100">
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">ID Insiden</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Pasien</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">No. RM</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Tanggal</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Lokasi</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Tipe</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Jenis</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Status</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Pelapor</th>
+                                <th class="text-left px-4 py-3 font-semibold text-gray-600 whitespace-nowrap">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+                <!-- Empty state -->
+                <div id="emptyState" class="hidden py-12 text-center">
+                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v16.5c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9zm3.75 11.625a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+                    </svg>
+                    <p class="text-gray-400 text-sm">Tidak ada laporan ditemukan</p>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3" id="paginationWrapper">
+                <p class="text-sm text-gray-500" id="paginationInfo"></p>
+                <div class="flex items-center gap-1" id="paginationButtons"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Detail Modal -->
+    <div id="detailModal" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="tutupModal('detailModal')"></div>
+        <div class="absolute inset-4 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+                <h3 class="font-bold text-gray-800 text-lg">Detail Laporan</h3>
+                <button onclick="tutupModal('detailModal')" class="p-1 hover:bg-gray-200 rounded-lg transition">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-1" id="detailContent"></div>
+        </div>
+    </div>
+
+    <!-- Edit Status Modal -->
+    <div id="editStatusModal" class="fixed inset-0 z-[60] hidden">
+        <div class="absolute inset-0 bg-black/50" onclick="tutupModal('editStatusModal')"></div>
+        <div class="absolute inset-4 sm:inset-auto sm:top-1/2 sm:left-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md bg-white rounded-xl shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+                <h3 class="font-bold text-gray-800 text-lg">Edit Status Laporan</h3>
+                <button onclick="tutupModal('editStatusModal')" class="p-1 hover:bg-gray-200 rounded-lg transition">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="editStatusId">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ID Insiden</label>
+                    <p class="text-sm text-gray-800 font-semibold" id="editStatusIdDisplay"></p>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status Saat Ini</label>
+                    <p id="editStatusCurrent" class="text-sm"></p>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Status Baru</label>
+                    <select id="editStatusNew" class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition bg-white">
+                        <option value="baru">Kasus Baru</option>
+                        <option value="ditinjau">Sedang Ditinjau</option>
+                        <option value="ditindak">Sedang Ditindak</option>
+                        <option value="selesai">Selesai</option>
+                    </select>
+                </div>
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Catatan Admin</label>
+                    <textarea id="editStatusCatatan" rows="3" placeholder="Tambahkan catatan..." class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition resize-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button onclick="tutupModal('editStatusModal')" class="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition">Batal</button>
+                    <button onclick="simpanStatus()" class="px-4 py-2 text-sm bg-primary hover:bg-primary-dark text-white rounded-lg transition font-medium">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-6 right-6 z-[70] transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-gray-800 text-white px-5 py-3 rounded-lg shadow-lg flex items-center gap-2 text-sm">
+            <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script src="data.js"></script>
+    <script>
+        // Init
+        MER.init();
+
+        // State
+        let semuaLaporan = [];
+        let laporanFiltered = [];
+        let halamanSaatIni = 1;
+        const perHalaman = 10;
+
+        // Sidebar
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        document.getElementById('menuToggle').addEventListener('click', () => {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+        });
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        }
+
+        // Filters
+        const filterSearch = document.getElementById('filterSearch');
+        const filterStatus = document.getElementById('filterStatus');
+        const filterTipe = document.getElementById('filterTipe');
+        const filterJenis = document.getElementById('filterJenis');
+        const filterDari = document.getElementById('filterDari');
+        const filterSampai = document.getElementById('filterSampai');
+
+        [filterSearch, filterStatus, filterTipe, filterJenis, filterDari, filterSampai].forEach(el => {
+            el.addEventListener(el.tagName === 'INPUT' && el.type === 'text' ? 'input' : 'change', () => {
+                halamanSaatIni = 1;
+                terapkanFilter();
+            });
+        });
+
+        function parseTanggal(tgl) {
+            const bulan = { Jan:0, Feb:1, Mar:2, Apr:3, Mei:4, Jun:5, Jul:6, Agt:7, Sep:8, Okt:9, Nov:10, Des:11 };
+            const parts = tgl.split(' ');
+            if (parts.length === 3) {
+                return new Date(parseInt(parts[2]), bulan[parts[1]] || 0, parseInt(parts[0]));
+            }
+            return new Date(tgl);
+        }
+
+        function terapkanFilter() {
+            const search = filterSearch.value.toLowerCase().trim();
+            const status = filterStatus.value;
+            const tipe = filterTipe.value;
+            const jenis = filterJenis.value;
+            const dari = filterDari.value ? new Date(filterDari.value) : null;
+            const sampai = filterSampai.value ? new Date(filterSampai.value) : null;
+
+            laporanFiltered = semuaLaporan.filter(l => {
+                if (search && !(l.pasien.toLowerCase().includes(search) || l.id.toLowerCase().includes(search) || l.pelapor.toLowerCase().includes(search))) return false;
+                if (status && l.status !== status) return false;
+                if (tipe && l.tipeInsiden !== tipe) return false;
+                if (jenis && l.jenisError !== jenis) return false;
+                if (dari || sampai) {
+                    const tgl = parseTanggal(l.tanggalKejadian);
+                    if (dari && tgl < dari) return false;
+                    if (sampai) {
+                        const sampaiEnd = new Date(sampai);
+                        sampaiEnd.setHours(23, 59, 59, 999);
+                        if (tgl > sampaiEnd) return false;
+                    }
+                }
+                return true;
+            });
+
+            renderSummary();
+            renderTabel();
+            renderPagination();
+        }
+
+        function renderSummary() {
+            document.getElementById('summaryText').textContent = `Menampilkan ${laporanFiltered.length} dari ${semuaLaporan.length} laporan`;
+
+            const counts = { baru: 0, ditinjau: 0, ditindak: 0, selesai: 0 };
+            laporanFiltered.forEach(l => { if (counts[l.status] !== undefined) counts[l.status]++; });
+
+            const pillColors = {
+                baru: 'bg-red-100 text-red-700',
+                ditinjau: 'bg-orange-100 text-orange-700',
+                ditindak: 'bg-sage-light text-primary-dark',
+                selesai: 'bg-green-100 text-green-700'
+            };
+
+            const pillsHTML = Object.entries(counts).map(([key, val]) =>
+                `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${pillColors[key]}">${MER.statusLabel(key)}: ${val}</span>`
+            ).join('');
+            document.getElementById('statusPills').innerHTML = pillsHTML;
+        }
+
+        function renderTabel() {
+            const tbody = document.getElementById('tableBody');
+            const empty = document.getElementById('emptyState');
+            const start = (halamanSaatIni - 1) * perHalaman;
+            const end = start + perHalaman;
+            const pageData = laporanFiltered.slice(start, end);
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            tbody.innerHTML = pageData.map(l => `
+                <tr class="border-b border-gray-50 hover:bg-cream/30 transition">
+                    <td class="px-4 py-3 font-medium text-primary whitespace-nowrap">${l.id}</td>
+                    <td class="px-4 py-3 text-gray-800 whitespace-nowrap">${l.pasien}</td>
+                    <td class="px-4 py-3 text-gray-500 whitespace-nowrap">${l.rm}</td>
+                    <td class="px-4 py-3 text-gray-500 whitespace-nowrap">${l.tanggalKejadian}</td>
+                    <td class="px-4 py-3 text-gray-500 whitespace-nowrap">${l.lokasi}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="inline-block px-2 py-0.5 rounded text-xs font-medium ${l.tipeInsiden === 'ktd' ? 'bg-red-50 text-red-600' : 'bg-yellow-50 text-yellow-700'}">${l.tipeInsiden.toUpperCase()}</span>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600 whitespace-nowrap">${MER.jenisLabel(l.jenisError)}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${MER.statusColor(l.status)}">${MER.statusLabel(l.status)}</span>
+                    </td>
+                    <td class="px-4 py-3 text-gray-600 whitespace-nowrap">${l.pelapor}</td>
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <div class="flex items-center gap-1">
+                            <button onclick="lihatDetail('${l.id}')" class="p-1.5 text-primary hover:bg-sage-light/30 rounded-lg transition" title="Lihat">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </button>
+                            <button onclick="bukaEditStatus('${l.id}')" class="p-1.5 text-orange-600 hover:bg-orange-50 rounded-lg transition" title="Edit Status">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </button>
+                            <button onclick="hapusLaporan('${l.id}')" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition" title="Hapus">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderPagination() {
+            const total = laporanFiltered.length;
+            const totalHalaman = Math.ceil(total / perHalaman) || 1;
+            const start = (halamanSaatIni - 1) * perHalaman + 1;
+            const end = Math.min(halamanSaatIni * perHalaman, total);
+
+            const wrapper = document.getElementById('paginationWrapper');
+            if (total === 0) {
+                wrapper.classList.add('hidden');
+                return;
+            }
+            wrapper.classList.remove('hidden');
+
+            document.getElementById('paginationInfo').textContent = `Halaman ${halamanSaatIni} dari ${totalHalaman} (${start}-${end} dari ${total})`;
+
+            let btns = '';
+            // Prev
+            btns += `<button onclick="gotoHalaman(${halamanSaatIni - 1})" class="px-3 py-1.5 text-sm rounded-lg border ${halamanSaatIni === 1 ? 'border-gray-200 text-gray-300 cursor-not-allowed' : 'border-gray-200 text-gray-600 hover:bg-gray-50'} transition" ${halamanSaatIni === 1 ? 'disabled' : ''}>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+            </button>`;
+
+            // Page numbers
+            const maxVisible = 5;
+            let startPage = Math.max(1, halamanSaatIni - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalHalaman, startPage + maxVisible - 1);
+            if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
+
+            if (startPage > 1) {
+                btns += `<button onclick="gotoHalaman(1)" class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">1</button>`;
+                if (startPage > 2) btns += `<span class="px-1 text-gray-400">...</span>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                btns += `<button onclick="gotoHalaman(${i})" class="px-3 py-1.5 text-sm rounded-lg border ${i === halamanSaatIni ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:bg-gray-50'} transition">${i}</button>`;
+            }
+
+            if (endPage < totalHalaman) {
+                if (endPage < totalHalaman - 1) btns += `<span class="px-1 text-gray-400">...</span>`;
+                btns += `<button onclick="gotoHalaman(${totalHalaman})" class="px-3 py-1.5 text-sm rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition">${totalHalaman}</button>`;
+            }
+
+            // Next
+            btns += `<button onclick="gotoHalaman(${halamanSaatIni + 1})" class="px-3 py-1.5 text-sm rounded-lg border ${halamanSaatIni === totalHalaman ? 'border-gray-200 text-gray-300 cursor-not-allowed' : 'border-gray-200 text-gray-600 hover:bg-gray-50'} transition" ${halamanSaatIni === totalHalaman ? 'disabled' : ''}>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>`;
+
+            document.getElementById('paginationButtons').innerHTML = btns;
+        }
+
+        function gotoHalaman(n) {
+            const totalHalaman = Math.ceil(laporanFiltered.length / perHalaman) || 1;
+            if (n < 1 || n > totalHalaman) return;
+            halamanSaatIni = n;
+            renderTabel();
+            renderPagination();
+        }
+
+        // Detail Modal
+        function lihatDetail(id) {
+            const l = semuaLaporan.find(x => x.id === id);
+            if (!l) return;
+
+            let html = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">ID Insiden</p>
+                        <p class="text-sm font-semibold text-primary">${l.id}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Status</p>
+                        <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${MER.statusColor(l.status)}">${MER.statusLabel(l.status)}</span>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Pasien</p>
+                        <p class="text-sm text-gray-800">${l.pasien}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">No. RM</p>
+                        <p class="text-sm text-gray-800">${l.rm}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Tanggal Kejadian</p>
+                        <p class="text-sm text-gray-800">${l.tanggalKejadian}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Waktu</p>
+                        <p class="text-sm text-gray-800">${l.waktu}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Lokasi</p>
+                        <p class="text-sm text-gray-800">${l.lokasi}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Unit</p>
+                        <p class="text-sm text-gray-800">${l.unit}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Tipe Insiden</p>
+                        <p class="text-sm text-gray-800">${MER.tipeLabel(l.tipeInsiden)}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Jenis Kesalahan</p>
+                        <p class="text-sm text-gray-800">${MER.jenisLabel(l.jenisError)}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Obat</p>
+                        <p class="text-sm text-gray-800">${l.obat}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Tingkat Cedera</p>
+                        <p class="text-sm text-gray-800">${l.cedera === 'tidak_ada' ? 'Tidak Ada' : l.cedera === 'ringan' ? 'Ringan' : l.cedera === 'sedang' ? 'Sedang' : l.cedera === 'berat' ? 'Berat' : l.cedera}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Prioritas</p>
+                        <p class="text-sm text-gray-800 capitalize">${l.prioritas}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Pelapor</p>
+                        <p class="text-sm text-gray-800">${l.pelapor}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-400 font-medium mb-0.5">Tanggal Lapor</p>
+                        <p class="text-sm text-gray-800">${l.tanggalLapor}</p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-xs text-gray-400 font-medium mb-1">Kronologi</p>
+                    <p class="text-sm text-gray-700 leading-relaxed">${l.kronologi}</p>
+                </div>`;
+
+            if (l.umpanBalik) {
+                html += `
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    <p class="text-xs text-gray-400 font-medium mb-1">Umpan Balik</p>
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <p class="text-sm text-green-800">${l.umpanBalik}</p>
+                    </div>
+                </div>`;
+            }
+
+            document.getElementById('detailContent').innerHTML = html;
+            document.getElementById('detailModal').classList.remove('hidden');
+        }
+
+        // Edit Status
+        function bukaEditStatus(id) {
+            const l = semuaLaporan.find(x => x.id === id);
+            if (!l) return;
+            document.getElementById('editStatusId').value = l.id;
+            document.getElementById('editStatusIdDisplay').textContent = l.id;
+            document.getElementById('editStatusCurrent').innerHTML = `<span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${MER.statusColor(l.status)}">${MER.statusLabel(l.status)}</span>`;
+            document.getElementById('editStatusNew').value = l.status;
+            document.getElementById('editStatusCatatan').value = '';
+            document.getElementById('editStatusModal').classList.remove('hidden');
+        }
+
+        function simpanStatus() {
+            const id = document.getElementById('editStatusId').value;
+            const newStatus = document.getElementById('editStatusNew').value;
+            const catatan = document.getElementById('editStatusCatatan').value.trim();
+            const updates = { status: newStatus };
+            if (catatan) updates.umpanBalik = catatan;
+            MER.updateLaporan(id, updates);
+            tutupModal('editStatusModal');
+            tampilToast('Status berhasil diperbarui');
+            muatData();
+        }
+
+        // Hapus
+        function hapusLaporan(id) {
+            if (!confirm('Apakah Anda yakin ingin menghapus laporan ' + id + '?')) return;
+            MER.hapusLaporan(id);
+            tampilToast('Laporan berhasil dihapus');
+            muatData();
+        }
+
+        // Modal helpers
+        function tutupModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Toast
+        function tampilToast(pesan) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = pesan;
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        // Export CSV
+        function eksporCSV() {
+            const headers = ['ID Insiden', 'Pasien', 'No RM', 'Tanggal Kejadian', 'Lokasi', 'Tipe Insiden', 'Jenis Kesalahan', 'Status', 'Pelapor'];
+            const rows = laporanFiltered.map(l => [
+                l.id,
+                l.pasien,
+                l.rm,
+                l.tanggalKejadian,
+                l.lokasi,
+                MER.tipeLabel(l.tipeInsiden),
+                MER.jenisLabel(l.jenisError),
+                MER.statusLabel(l.status),
+                l.pelapor
+            ]);
+
+            let csv = '\uFEFF'; // BOM for UTF-8
+            csv += headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(val => '"' + String(val).replace(/"/g, '""') + '"').join(',') + '\n';
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'laporan-mer-' + new Date().toISOString().slice(0, 10) + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Load data
+        function muatData() {
+            semuaLaporan = MER.getLaporan();
+            halamanSaatIni = 1;
+            terapkanFilter();
+        }
+
+        // Init
+        muatData();
+    </script>
+</body>
+</html>

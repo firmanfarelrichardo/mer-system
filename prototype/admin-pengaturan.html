@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan Sistem - Sistem MER</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FEFFD3',
+                        primary: '#2E7D32',
+                        'primary-dark': '#1B5E20',
+                        'primary-light': '#4CAF50',
+                        sage: '#A5D6A7',
+                        'sage-light': '#C8E6C9',
+                        'status-red': '#E53935',
+                        'status-orange': '#FB8C00',
+                        'status-green': '#43A047'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background: #FEFFD3; }
+        .sidebar-link.active { background: rgba(165,214,167,.3); border-right: 3px solid #2E7D32; }
+        .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 24px; transition: .3s; }
+        .toggle-slider:before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .3s; }
+        .toggle-switch input:checked + .toggle-slider { background: #2E7D32; }
+        .toggle-switch input:checked + .toggle-slider:before { transform: translateX(20px); }
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 14px 24px; border-radius: 8px; color: #fff; font-weight: 500; z-index: 9999; transform: translateY(100px); opacity: 0; transition: all .4s ease; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Mobile Overlay -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-white shadow-xl z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+        <div class="p-5 border-b border-gray-100 bg-primary">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-white">Sistem MER</h1>
+                    <p class="text-xs text-white/80">Panel Administrator</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="p-3 flex-1">
+            <a href="admin-dashboard.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-sage-light/30 transition mb-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/>
+                </svg>
+                <span class="text-sm font-medium">Dashboard</span>
+            </a>
+            <a href="admin-users.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-sage-light/30 transition mb-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"/>
+                </svg>
+                <span class="text-sm font-medium">Manajemen Pengguna</span>
+            </a>
+            <a href="admin-laporan.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-sage-light/30 transition mb-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="text-sm font-medium">Semua Laporan</span>
+            </a>
+            <a href="admin-pengaturan.html" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-lg text-primary-dark font-semibold transition mb-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.573-1.066z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="text-sm font-medium">Pengaturan Sistem</span>
+            </a>
+
+            <div class="mt-4 pt-4 border-t border-gray-100">
+                <a href="login.html" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-lg text-red-500 hover:bg-red-50 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    <span class="text-sm font-medium">Keluar</span>
+                </a>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="lg:ml-64 min-h-screen">
+        <!-- Top Bar -->
+        <header class="bg-gray-50 shadow-sm sticky top-0 z-30 border-b border-gray-200 lg:h-[84px]">
+            <div class="flex items-center justify-between px-4 sm:px-6 py-4 h-full">
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-600">Pengaturan Sistem</h2>
+                        <p class="text-sm text-gray-500">Panel Administrator</p>
+                    </div>
+                </div>                <!-- User Profile -->
+                <div class="hidden lg:flex items-center gap-3">
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm text-right">Admin Sistem</p>
+                        <p class="text-xs text-gray-500 text-right">Administrator</p>
+                    </div>
+                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm">
+                        AD
+                    </div>
+                </div>            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="p-4 sm:p-6 max-w-4xl mx-auto">
+
+            <!-- Card 1: Informasi Rumah Sakit -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+                <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                    <div class="w-9 h-9 bg-sage-light rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">Informasi Rumah Sakit</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Rumah Sakit</label>
+                        <input id="hospitalName" type="text" value="RS Harapan Sehat" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
+                        <textarea id="hospitalAddress" rows="3" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-sm resize-none" placeholder="Masukkan alamat rumah sakit"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon</label>
+                            <input id="hospitalPhone" type="text" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-sm" placeholder="Masukkan nomor telepon">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input id="hospitalEmail" type="text" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-sm" placeholder="Masukkan email">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                        <input id="hospitalWebsite" type="text" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-sm" placeholder="Masukkan URL website">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Pengaturan Keamanan -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+                <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                    <div class="w-9 h-9 bg-sage-light rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">Pengaturan Keamanan</h3>
+                </div>
+                <div class="p-6 space-y-5">
+                    <!-- Toggle: 2FA -->
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Wajib Autentikasi Dua Faktor</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Semua pengguna wajib mengaktifkan 2FA</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggle2FA">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <!-- Select: Session Timeout -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Masa Berlaku Sesi (Menit)</label>
+                        <select id="sessionTimeout" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-sm bg-white">
+                            <option value="15">15</option>
+                            <option value="30" selected>30</option>
+                            <option value="60">60</option>
+                            <option value="120">120</option>
+                        </select>
+                    </div>
+                    <!-- Select: Max Login -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Percobaan Login Maksimal</label>
+                        <select id="maxLoginAttempts" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-sm bg-white">
+                            <option value="3">3</option>
+                            <option value="5" selected>5</option>
+                            <option value="10">10</option>
+                        </select>
+                    </div>
+                    <!-- Toggle: Auto Lock -->
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Kunci Akun Otomatis</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Kunci akun setelah percobaan login gagal</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleAutoLock" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 3: Kebijakan Pelaporan -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+                <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                    <div class="w-9 h-9 bg-sage-light rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">Kebijakan Pelaporan</h3>
+                </div>
+                <div class="p-6 space-y-5">
+                    <!-- Toggle: Non-Punitive -->
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-start gap-2">
+                            <div class="mt-0.5">
+                                <svg class="w-4 h-4 text-primary-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-700">Kebijakan Non-Hukuman</p>
+                                <p class="text-xs text-gray-500 mt-0.5">Pelapor tidak akan dihukum atas laporan yang dibuat</p>
+                            </div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleNonPunitive" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <!-- Toggle: Anonymous -->
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Laporan Anonim Diizinkan</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Izinkan pelaporan tanpa mencantumkan identitas</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleAnonymous">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <!-- Select: Review Deadline -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Batas Waktu Peninjauan (Hari)</label>
+                        <select id="reviewDeadline" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-sm bg-white">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                            <option value="5">5</option>
+                            <option value="7">7</option>
+                            <option value="14">14</option>
+                        </select>
+                    </div>
+                    <!-- Toggle: Auto Escalation -->
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Auto-eskalasi</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Eskalasi otomatis jika tidak ditinjau dalam batas waktu</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleAutoEscalation" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 4: Notifikasi Sistem -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+                <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                    <div class="w-9 h-9 bg-sage-light rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">Notifikasi Sistem</h3>
+                </div>
+                <div class="p-6 space-y-5">
+                    <!-- Toggle: Email Notification -->
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Notifikasi Email</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Kirim notifikasi melalui email</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleEmailNotif" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <!-- Toggle: New Report Notification -->
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Notifikasi Laporan Baru</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Kirim notifikasi ke manajer saat ada laporan baru</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="toggleNewReportNotif" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <!-- Toggle: Periodic Report -->
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <p class="text-sm font-medium text-gray-700">Laporan Berkala</p>
+                            <p class="text-xs text-gray-500 mt-0.5">Kirim laporan statistik berkala</p>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="togglePeriodicReport">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <!-- Select: Report Frequency -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Frekuensi Laporan</label>
+                        <select id="reportFrequency" class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition text-sm bg-white">
+                            <option value="Harian">Harian</option>
+                            <option value="Mingguan" selected>Mingguan</option>
+                            <option value="Bulanan">Bulanan</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 5: Pencadangan & Pemulihan -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 mb-6">
+                <div class="flex items-center gap-3 px-6 py-4 border-b border-gray-100">
+                    <div class="w-9 h-9 bg-sage-light rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">Pencadangan & Pemulihan</h3>
+                </div>
+                <div class="p-6 space-y-4">
+                    <!-- Last Backup Info -->
+                    <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-sm text-gray-600">Terakhir dicadangkan: <span id="lastBackupTime" class="font-medium">-</span></p>
+                    </div>
+                    <!-- Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button onclick="backupData()" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Cadangkan Data Sekarang
+                        </button>
+                        <button onclick="triggerRestore()" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            Pulihkan Data
+                        </button>
+                        <input type="file" id="restoreFileInput" accept=".json" class="hidden" onchange="restoreData(event)">
+                        <button onclick="resetAllData()" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-status-red text-white rounded-lg hover:bg-red-700 transition text-sm font-medium">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            Reset Semua Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="flex justify-end mb-8">
+                <button onclick="saveSettings()" class="flex items-center gap-2 px-8 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark transition text-sm font-semibold shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Simpan Pengaturan
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast bg-primary"></div>
+
+    <script src="data.js"></script>
+    <script>
+        // Sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        // Toast notification
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast';
+            if (type === 'error') {
+                toast.classList.add('bg-status-red');
+            } else if (type === 'warning') {
+                toast.classList.add('bg-status-orange');
+            } else {
+                toast.classList.add('bg-primary');
+            }
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // Load saved settings
+        function loadSettings() {
+            const saved = localStorage.getItem('mer_admin_settings');
+            if (!saved) return;
+            try {
+                const settings = JSON.parse(saved);
+                // Hospital info
+                if (settings.hospitalName) document.getElementById('hospitalName').value = settings.hospitalName;
+                if (settings.hospitalAddress) document.getElementById('hospitalAddress').value = settings.hospitalAddress;
+                if (settings.hospitalPhone) document.getElementById('hospitalPhone').value = settings.hospitalPhone;
+                if (settings.hospitalEmail) document.getElementById('hospitalEmail').value = settings.hospitalEmail;
+                if (settings.hospitalWebsite) document.getElementById('hospitalWebsite').value = settings.hospitalWebsite;
+                // Security
+                if (settings.toggle2FA !== undefined) document.getElementById('toggle2FA').checked = settings.toggle2FA;
+                if (settings.sessionTimeout) document.getElementById('sessionTimeout').value = settings.sessionTimeout;
+                if (settings.maxLoginAttempts) document.getElementById('maxLoginAttempts').value = settings.maxLoginAttempts;
+                if (settings.toggleAutoLock !== undefined) document.getElementById('toggleAutoLock').checked = settings.toggleAutoLock;
+                // Reporting policy
+                if (settings.toggleNonPunitive !== undefined) document.getElementById('toggleNonPunitive').checked = settings.toggleNonPunitive;
+                if (settings.toggleAnonymous !== undefined) document.getElementById('toggleAnonymous').checked = settings.toggleAnonymous;
+                if (settings.reviewDeadline) document.getElementById('reviewDeadline').value = settings.reviewDeadline;
+                if (settings.toggleAutoEscalation !== undefined) document.getElementById('toggleAutoEscalation').checked = settings.toggleAutoEscalation;
+                // Notifications
+                if (settings.toggleEmailNotif !== undefined) document.getElementById('toggleEmailNotif').checked = settings.toggleEmailNotif;
+                if (settings.toggleNewReportNotif !== undefined) document.getElementById('toggleNewReportNotif').checked = settings.toggleNewReportNotif;
+                if (settings.togglePeriodicReport !== undefined) document.getElementById('togglePeriodicReport').checked = settings.togglePeriodicReport;
+                if (settings.reportFrequency) document.getElementById('reportFrequency').value = settings.reportFrequency;
+                // Backup time
+                if (settings.lastBackupTime) document.getElementById('lastBackupTime').textContent = settings.lastBackupTime;
+            } catch (e) {
+                console.error('Gagal memuat pengaturan:', e);
+            }
+        }
+
+        // Save settings
+        function saveSettings() {
+            const settings = {
+                // Hospital info
+                hospitalName: document.getElementById('hospitalName').value,
+                hospitalAddress: document.getElementById('hospitalAddress').value,
+                hospitalPhone: document.getElementById('hospitalPhone').value,
+                hospitalEmail: document.getElementById('hospitalEmail').value,
+                hospitalWebsite: document.getElementById('hospitalWebsite').value,
+                // Security
+                toggle2FA: document.getElementById('toggle2FA').checked,
+                sessionTimeout: document.getElementById('sessionTimeout').value,
+                maxLoginAttempts: document.getElementById('maxLoginAttempts').value,
+                toggleAutoLock: document.getElementById('toggleAutoLock').checked,
+                // Reporting policy
+                toggleNonPunitive: document.getElementById('toggleNonPunitive').checked,
+                toggleAnonymous: document.getElementById('toggleAnonymous').checked,
+                reviewDeadline: document.getElementById('reviewDeadline').value,
+                toggleAutoEscalation: document.getElementById('toggleAutoEscalation').checked,
+                // Notifications
+                toggleEmailNotif: document.getElementById('toggleEmailNotif').checked,
+                toggleNewReportNotif: document.getElementById('toggleNewReportNotif').checked,
+                togglePeriodicReport: document.getElementById('togglePeriodicReport').checked,
+                reportFrequency: document.getElementById('reportFrequency').value,
+                // Backup time (preserve existing)
+                lastBackupTime: document.getElementById('lastBackupTime').textContent
+            };
+            localStorage.setItem('mer_admin_settings', JSON.stringify(settings));
+            showToast('Pengaturan sistem berhasil disimpan');
+        }
+
+        // Backup data
+        function backupData() {
+            const allData = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                allData[key] = localStorage.getItem(key);
+            }
+            const blob = new Blob([JSON.stringify(allData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const now = new Date();
+            const timestamp = now.getFullYear() + '-' +
+                String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                String(now.getDate()).padStart(2, '0') + '_' +
+                String(now.getHours()).padStart(2, '0') + '-' +
+                String(now.getMinutes()).padStart(2, '0');
+            a.href = url;
+            a.download = 'backup_mer_' + timestamp + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            const backupTimeStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) +
+                ' ' + now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('lastBackupTime').textContent = backupTimeStr;
+
+            // Save backup time to settings
+            const saved = localStorage.getItem('mer_admin_settings');
+            let settings = saved ? JSON.parse(saved) : {};
+            settings.lastBackupTime = backupTimeStr;
+            localStorage.setItem('mer_admin_settings', JSON.stringify(settings));
+
+            showToast('Data berhasil dicadangkan');
+        }
+
+        // Trigger file input for restore
+        function triggerRestore() {
+            document.getElementById('restoreFileInput').click();
+        }
+
+        // Restore data from JSON
+        function restoreData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (typeof data !== 'object' || data === null) {
+                        showToast('Format file cadangan tidak valid', 'error');
+                        return;
+                    }
+                    for (const key in data) {
+                        if (data.hasOwnProperty(key)) {
+                            localStorage.setItem(key, data[key]);
+                        }
+                    }
+                    showToast('Data berhasil dipulihkan');
+                    setTimeout(() => location.reload(), 1000);
+                } catch (err) {
+                    showToast('Gagal membaca file cadangan', 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // Reset all data
+        function resetAllData() {
+            if (confirm('Apakah Anda yakin ingin menghapus semua data? Tindakan ini tidak dapat dibatalkan.')) {
+                localStorage.clear();
+                showToast('Semua data telah dihapus', 'warning');
+                setTimeout(() => location.reload(), 1000);
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSettings();
+            if (typeof MER !== 'undefined' && MER.init) {
+                MER.init();
+            }
+        });
+    </script>
+</body>
+</html>
