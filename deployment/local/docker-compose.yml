@@ -1,66 +1,137 @@
+# ===========================================
+# MER System - Development Docker Compose
+# ===========================================
+
 services:
-  # 1. Aplikasi (PHP-FPM)
+  # ===========================================
+  # Laravel App - PHP-FPM (Development)
+  # ===========================================
   app:
     build:
-      context: ../../              # MUNDUR ke Root Project
+      context: ../..
       dockerfile: deployment/local/Dockerfile
-    container_name: laravel-app
-    restart: unless-stopped
-    working_dir: /var/www
-    volumes:
-      - ../../:/var/www            # Mapping Root ke Container
-    networks:
-      - laravel-net
-    depends_on:
-      - db
-
-  # 2. Web Server (Nginx)
-  web:
-    image: nginx:alpine
-    container_name: laravel-web
+    container_name: mer-system-app-dev
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "${VITE_PORT:-5173}:5173"
+    environment:
+      - APP_NAME=${APP_NAME:-MER System}
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:${APP_PORT:-8000}
+      - APP_TIMEZONE=Asia/Jakarta
+      - TZ=Asia/Jakarta
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-null}
+      - CACHE_STORE=redis
+      - SESSION_DRIVER=redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
-      - ../../:/var/www            # Nginx butuh akses ke file public
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf # Config ada di sebelah file ini
+      - ../..:/var/www/html
+      - /var/www/html/node_modules
     networks:
-      - laravel-net
+      - mer-system-dev-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ===========================================
+  # Nginx Web Server (Development)
+  # Konfigurasi nginx dibuat manual oleh user
+  # Letakkan file di: deployment/local/nginx/default.conf
+  # ===========================================
+  web:
+    image: nginx:1.27-alpine
+    container_name: mer-system-web-dev
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - ../..:/var/www/html:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
+    networks:
+      - mer-system-dev-network
 
-  # 3. Database (Postgres)
+  # ===========================================
+  # PostgreSQL 16 (Development)
+  # Multi-schema: tenant, akun, master, pelaporan, audit
+  # ===========================================
   db:
-    image: postgres:15-alpine
-    container_name: laravel-db
+    image: postgres:16-alpine
+    container_name: mer-system-db-dev
     restart: unless-stopped
+    ports:
+      - "${FORWARD_DB_PORT:-5432}:5432"
     environment:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGPASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Jakarta
     volumes:
-      - dbdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+      - mer-db-data:/var/lib/postgresql/data
+      - ../../database/sql/mer_ddl.sql:/docker-entrypoint-initdb.d/01-mer-ddl.sql:ro
     networks:
-      - laravel-net
+      - mer-system-dev-network
+    healthcheck:
+      test:
+        - CMD
+        - pg_isready
+        - '-q'
+        - '-d'
+        - '${DB_DATABASE}'
+        - '-U'
+        - '${DB_USERNAME}'
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # 4. Vite (Frontend)
-  npm:
-    image: node:20-alpine
-    container_name: laravel-npm
-    working_dir: /var/www
+  # ===========================================
+  # Redis 7 (Development)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: mer-system-redis-dev
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_REDIS_PORT:-6379}:6379"
     volumes:
-      - ../../:/var/www
-    ports:
-      - "5173:5173"
-    command: npm run dev
+      - mer-redis-data:/data
     networks:
-      - laravel-net
+      - mer-system-dev-network
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
+# ===========================================
+# Networks
+# ===========================================
 networks:
-  laravel-net:
+  mer-system-dev-network:
     driver: bridge
 
+# ===========================================
+# Volumes
+# ===========================================
 volumes:
-  dbdata:
+  mer-db-data:
+    driver: local
+  mer-redis-data:
+    driver: local
