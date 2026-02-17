@@ -3,56 +3,55 @@
 # ===========================================
 
 services:
-  # ===========================================
-  # Laravel App - PHP-FPM (Development)
-  # ===========================================
+  # -------------------------------------------
+  # PHP-FPM Application (Development)
+  # -------------------------------------------
   app:
     build:
       context: ../..
       dockerfile: deployment/local/Dockerfile
-    container_name: mer-system-app-dev
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    container_name: mer-app-dev
     restart: unless-stopped
-    ports:
-      - "${VITE_PORT:-5173}:5173"
     environment:
-      - APP_NAME=${APP_NAME:-MER System}
-      - APP_ENV=local
-      - APP_DEBUG=true
-      - APP_URL=http://localhost:${APP_PORT:-8000}
-      - APP_TIMEZONE=Asia/Jakarta
-      - TZ=Asia/Jakarta
-      - DB_CONNECTION=pgsql
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_DATABASE=${DB_DATABASE}
-      - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-null}
-      - CACHE_STORE=redis
-      - SESSION_DRIVER=redis
+      APP_NAME: ${APP_NAME:-MER System}
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:${APP_PORT:-8000}
+      APP_TIMEZONE: Asia/Jakarta
+      TZ: Asia/Jakarta
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ../..:/var/www/html
-      - /var/www/html/node_modules
+      - /var/www/html/vendor
     networks:
-      - mer-system-dev-network
+      - mer-dev-network
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
 
-  # ===========================================
+  # -------------------------------------------
   # Nginx Web Server (Development)
-  # Konfigurasi nginx dibuat manual oleh user
-  # Letakkan file di: deployment/local/nginx/default.conf
-  # ===========================================
+  # -------------------------------------------
   web:
     image: nginx:1.27-alpine
-    container_name: mer-system-web-dev
+    container_name: mer-web-dev
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8000}:80"
@@ -62,15 +61,14 @@ services:
     depends_on:
       - app
     networks:
-      - mer-system-dev-network
+      - mer-dev-network
 
-  # ===========================================
+  # -------------------------------------------
   # PostgreSQL 16 (Development)
-  # Multi-schema: tenant, akun, master, pelaporan, audit
-  # ===========================================
+  # -------------------------------------------
   db:
     image: postgres:16-alpine
-    container_name: mer-system-db-dev
+    container_name: mer-db-dev
     restart: unless-stopped
     ports:
       - "${FORWARD_DB_PORT:-5432}:5432"
@@ -84,38 +82,28 @@ services:
       - mer-db-data:/var/lib/postgresql/data
       - ../../database/sql/mer_ddl.sql:/docker-entrypoint-initdb.d/01-mer-ddl.sql:ro
     networks:
-      - mer-system-dev-network
+      - mer-dev-network
     healthcheck:
-      test:
-        - CMD
-        - pg_isready
-        - '-q'
-        - '-d'
-        - '${DB_DATABASE}'
-        - '-U'
-        - '${DB_USERNAME}'
+      test: ["CMD", "pg_isready", "-q", "-d", "${DB_DATABASE}", "-U", "${DB_USERNAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ===========================================
+  # -------------------------------------------
   # Redis 7 (Development)
-  # ===========================================
+  # -------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: mer-system-redis-dev
+    container_name: mer-redis-dev
     restart: unless-stopped
     ports:
       - "${FORWARD_REDIS_PORT:-6379}:6379"
     volumes:
       - mer-redis-data:/data
     networks:
-      - mer-system-dev-network
+      - mer-dev-network
     healthcheck:
-      test:
-        - CMD
-        - redis-cli
-        - ping
+      test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -124,7 +112,7 @@ services:
 # Networks
 # ===========================================
 networks:
-  mer-system-dev-network:
+  mer-dev-network:
     driver: bridge
 
 # ===========================================

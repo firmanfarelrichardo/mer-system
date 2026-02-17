@@ -35,10 +35,16 @@ if [ $counter_redis -eq $max_tries_redis ]; then
     log_message "WARNING: Could not connect to Redis after $max_tries_redis attempts. Continuing anyway..."
 fi
 
-# Install composer dependencies if not present
-if [ ! -d "vendor" ] || [ ! -f "vendor/autoload.php" ]; then
-    log_message "Installing Composer dependencies..."
-    composer install --prefer-dist
+# Skip composer install in development - run manually after container starts
+# This prevents permission issues with bind-mounts
+if [ "${APP_ENV:-local}" != "local" ]; then
+    if [ ! -d "vendor" ] || [ ! -f "vendor/autoload.php" ]; then
+        log_message "Installing Composer dependencies..."
+        composer install --prefer-dist --no-interaction
+    fi
+else
+    log_message "Development mode: Skipping automatic composer install"
+    log_message "Run: docker exec mer-app-dev composer install"
 fi
 
 # Check if .env exists, if not copy from .env.example
@@ -48,19 +54,29 @@ if [ ! -f ".env" ]; then
     php artisan key:generate
 fi
 
-# Run migrations
-log_message "Running database migrations..."
-php artisan migrate --force || log_message "Migration failed or no migrations to run"
+# Skip migrations in development - run manually
+if [ "${APP_ENV:-local}" != "local" ]; then
+    log_message "Running database migrations..."
+    php artisan migrate --force || log_message "Migration failed or no migrations to run"
+else
+    log_message "Development mode: Skipping automatic migrations"
+    log_message "Run migrations manually: docker exec mer-app-dev php artisan migrate"
+fi
 
-# Clear and cache config for development
-log_message "Clearing cache..."
-php artisan config:clear
-php artisan cache:clear
-php artisan view:clear
+# Clear cache only if vendor exists (composer has run)
+if [ -f "vendor/autoload.php" ]; then
+    log_message "Clearing cache..."
+    php artisan config:clear 2>/dev/null || true
+    php artisan cache:clear 2>/dev/null || true
+    php artisan view:clear 2>/dev/null || true
+else
+    log_message "Skipping cache clear (vendor not installed yet)"
+fi
 
-# Set permissions
+# Set permissions for storage directories
 log_message "Setting permissions..."
-chmod -R 777 storage bootstrap/cache 2>/dev/null || true
+chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
 log_message "Initialization complete!"
 

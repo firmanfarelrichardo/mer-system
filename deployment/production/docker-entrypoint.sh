@@ -5,7 +5,7 @@ log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
-log_message "Starting production container..."
+log_message "Starting MER System production container..."
 
 # Wait for database
 log_message "Waiting for database connection..."
@@ -34,12 +34,18 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
+# Copy public assets to shared volume (for Nginx)
+if [ -d /var/www/html/public ]; then
+    log_message "Syncing public assets to shared volume..."
+    cp -ru /var/www/html/public/* /var/www/html/public/ 2>/dev/null || true
+fi
+
 # Set permissions
 log_message "Setting permissions..."
 chown -R www-data:www-data /var/www/html/storage
 chmod -R 775 /var/www/html/storage
 
-log_message "Initialization complete. Starting services..."
+log_message "Initialization complete. Starting PHP-FPM..."
 
 # Execute main command
 exec "$@"
