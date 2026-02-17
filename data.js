@@ -98,19 +98,38 @@ const MER = {
         return map[j] || j;
     },
     tipeLabel(t) {
-        const map = { ktd: 'KTD (Kejadian Tidak Diharapkan)', knc: 'KNC (Kejadian Nyaris Cedera)' };
+        const map = { 
+            kpc: 'KPC (Kondisi Potensial Cedera)', 
+            knc: 'KNC (Kejadian Nyaris Cedera)', 
+            ktc: 'KTC (Kejadian Tidak Cedera)',
+            ktd: 'KTD (Kejadian Tidak Diharapkan)',
+            sentinel: 'Kejadian Sentinel'
+        };
         return map[t] || t;
+    },
+    tipeDefinisi(t) {
+        const map = {
+            kpc: 'Situasi yang berpotensi menimbulkan cedera, tetapi belum terjadi insiden.',
+            knc: 'Insiden yang belum sampai terpapar ke pasien karena terhentikan atau disadari sebelum tindakan.',
+            ktc: 'Insiden sudah terpapar/terkena ke pasien, tetapi tidak menimbulkan cedera.',
+            ktd: 'Insiden yang mengakibatkan cedera pada pasien akibat tindakan medis, bukan penyakit dasarnya.',
+            sentinel: 'Kejadian Tidak Diharapkan yang mengakibatkan kematian, cedera permanen, atau cedera berat sementara.'
+        };
+        return map[t] || '';
     },
 
     // Data default laporan
     defaultLaporan: [
+        { id:'MER-2026-010', pasien:'Tn. Agus Wijaya', rm:'RM-20260010', lokasi:'VIP', tanggalKejadian:'15 Feb 2026', waktu:'08:00', tipeInsiden:'kpc', jenisError:'salah_obat', cedera:'tidak_ada', obat:'Insulin Actrapid', kronologi:'Ditemukan stok insulin yang hampir kadaluarsa di lemari obat ruangan, segera diidentifikasi sebelum digunakan.', status:'baru', prioritas:'rendah', pelapor:'Ns. Linda Hartati', unit:'VIP', tanggalLapor:'15 Feb 2026', waktuLapor:'08:30', umpanBalik:'' },
+        { id:'MER-2026-009', pasien:'An. Raka Pratama', rm:'RM-20260009', lokasi:'Anak', tanggalKejadian:'14 Feb 2026', waktu:'19:00', tipeInsiden:'sentinel', jenisError:'salah_dosis', cedera:'berat', obat:'Morphine 10mg IV', kronologi:'Pemberian dosis morphine yang terlalu tinggi menyebabkan depresi napas berat pada anak, memerlukan intubasi dan perawatan intensif.', status:'baru', prioritas:'kritis', pelapor:'Ns. Ayu Lestari', unit:'Anak', tanggalLapor:'14 Feb 2026', waktuLapor:'19:45', umpanBalik:'' },
+        { id:'MER-2026-008', pasien:'Ny. Dewi Lestari', rm:'RM-20260008', lokasi:'Interna', tanggalKejadian:'13 Feb 2026', waktu:'10:00', tipeInsiden:'ktc', jenisError:'salah_obat', cedera:'tidak_ada', obat:'Paracetamol 500mg', kronologi:'Pasien menerima Paracetamol padahal seharusnya Ibuprofen, namun tidak menimbulkan efek negatif karena keduanya adalah analgesik.', status:'ditinjau', prioritas:'rendah', pelapor:'Ns. Maria Ulfa', unit:'Interna', tanggalLapor:'13 Feb 2026', waktuLapor:'11:00', umpanBalik:'' },
         { id:'MER-2026-007', pasien:'Tn. Ahmad Hidayat', rm:'RM-20260007', lokasi:'ICU', tanggalKejadian:'12 Feb 2026', waktu:'14:30', tipeInsiden:'ktd', jenisError:'salah_dosis', cedera:'ringan', obat:'Amoxicillin 500mg', kronologi:'Perawat memberikan dosis ganda Amoxicillin karena tidak mengecek catatan pemberian sebelumnya.', status:'baru', prioritas:'tinggi', pelapor:'Ns. Sari Dewi', unit:'ICU', tanggalLapor:'12 Feb 2026', waktuLapor:'15:05', umpanBalik:'' },
         { id:'MER-2026-006', pasien:'Ny. Ratna Sari', rm:'RM-20260006', lokasi:'ICU', tanggalKejadian:'10 Feb 2026', waktu:'09:15', tipeInsiden:'knc', jenisError:'salah_obat', cedera:'tidak_ada', obat:'Metformin 850mg', kronologi:'Nyaris memberikan Metformin kepada pasien yang tidak terjadwal. Kesalahan terdeteksi saat verifikasi akhir.', status:'ditindak', prioritas:'sedang', pelapor:'Ns. Sari Dewi', unit:'ICU', tanggalLapor:'10 Feb 2026', waktuLapor:'10:00', umpanBalik:'Lakukan double-check dengan metode read-back pada setiap pemberian obat.' },
-        { id:'MER-2026-005', pasien:'Tn. Budi Santoso', rm:'RM-20260005', lokasi:'IGD', tanggalKejadian:'08 Feb 2026', waktu:'22:00', tipeInsiden:'ktd', jenisError:'salah_pasien', cedera:'tidak_ada', obat:'Ceftriaxone 1g IV', kronologi:'Obat disiapkan untuk pasien bed 3 namun hampir diberikan ke pasien bed 4 karena nama yang mirip.', status:'baru', prioritas:'tinggi', pelapor:'Ns. Dewi Anggraini', unit:'IGD', tanggalLapor:'08 Feb 2026', waktuLapor:'22:45', umpanBalik:'' },
+        { id:'MER-2026-005', pasien:'Tn. Budi Santoso', rm:'RM-20260005', lokasi:'IGD', tanggalKejadian:'08 Feb 2026', waktu:'22:00', tipeInsiden:'ktc', jenisError:'salah_pasien', cedera:'tidak_ada', obat:'Ceftriaxone 1g IV', kronologi:'Obat disiapkan untuk pasien bed 3 dan diberikan ke pasien bed 4 karena nama yang mirip, namun tidak menimbulkan efek negatif.', status:'selesai', prioritas:'sedang', pelapor:'Ns. Dewi Anggraini', unit:'IGD', tanggalLapor:'08 Feb 2026', waktuLapor:'22:45', umpanBalik:'Tim sudah melakukan sosialisasi double-check identitas pasien.' },
         { id:'MER-2026-004', pasien:'An. Putri Ayu', rm:'RM-20260004', lokasi:'NICU', tanggalKejadian:'06 Feb 2026', waktu:'03:45', tipeInsiden:'knc', jenisError:'salah_dosis', cedera:'tidak_ada', obat:'Gentamicin 20mg', kronologi:'Dosis Gentamicin yang dihitung kurang tepat untuk berat badan neonatus. Terdeteksi oleh apoteker saat verifikasi.', status:'selesai', prioritas:'sedang', pelapor:'Ns. Rina Kartika', unit:'NICU', tanggalLapor:'06 Feb 2026', waktuLapor:'04:30', umpanBalik:'Kasus sudah ditindaklanjuti. Terima kasih atas laporannya.' },
         { id:'MER-2026-003', pasien:'Ny. Lestari', rm:'RM-20260003', lokasi:'Bedah', tanggalKejadian:'04 Feb 2026', waktu:'16:20', tipeInsiden:'ktd', jenisError:'obat_terlewat', cedera:'ringan', obat:'Ketorolac 30mg IV', kronologi:'Obat analgesik pasca operasi tidak diberikan sesuai jadwal, menyebabkan pasien mengeluh nyeri berlebih.', status:'selesai', prioritas:'sedang', pelapor:'Ns. Fitri Handayani', unit:'Bedah', tanggalLapor:'04 Feb 2026', waktuLapor:'17:00', umpanBalik:'Sudah dilakukan perbaikan jadwal pemberian obat.' },
         { id:'MER-2026-002', pasien:'Tn. Wahyu', rm:'RM-20260002', lokasi:'Interna', tanggalKejadian:'01 Feb 2026', waktu:'11:00', tipeInsiden:'knc', jenisError:'salah_rute', cedera:'tidak_ada', obat:'Omeprazole 40mg', kronologi:'Omeprazole yang seharusnya diberikan secara IV hendak diberikan per oral. Tertangkap saat pengecekan.', status:'selesai', prioritas:'rendah', pelapor:'Ns. Maria Ulfa', unit:'Interna', tanggalLapor:'01 Feb 2026', waktuLapor:'11:45', umpanBalik:'Perbaikan label rute pemberian telah dilakukan.' },
-        { id:'MER-2026-001', pasien:'Ny. Siti Aminah', rm:'RM-20260001', lokasi:'ICU', tanggalKejadian:'28 Jan 2026', waktu:'07:30', tipeInsiden:'ktd', jenisError:'obat_kadaluarsa', cedera:'tidak_ada', obat:'NaCl 0.9%', kronologi:'Infus NaCl yang digunakan ternyata sudah melewati tanggal kedaluwarsa 2 minggu. Segera diganti.', status:'selesai', prioritas:'rendah', pelapor:'Ns. Sari Dewi', unit:'ICU', tanggalLapor:'28 Jan 2026', waktuLapor:'08:15', umpanBalik:'Rotasi stok farmasi sudah diperbaiki.' }
+        { id:'MER-2026-001', pasien:'Ny. Siti Aminah', rm:'RM-20260001', lokasi:'ICU', tanggalKejadian:'28 Jan 2026', waktu:'07:30', tipeInsiden:'kpc', jenisError:'obat_kadaluarsa', cedera:'tidak_ada', obat:'NaCl 0.9%', kronologi:'Teridentifikasi infus NaCl yang sudah melewati tanggal kedaluwarsa 2 minggu di trolley emergency, segera disingkirkan sebelum digunakan.', status:'selesai', prioritas:'rendah', pelapor:'Ns. Sari Dewi', unit:'ICU', tanggalLapor:'28 Jan 2026', waktuLapor:'08:15', umpanBalik:'Rotasi stok farmasi sudah diperbaiki.' }
     ],
 
     // Data default users

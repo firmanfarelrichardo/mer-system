@@ -257,18 +257,19 @@
                     <!-- Jenis Insiden -->
                     <div class="mt-6">
                         <label class="block text-sm font-medium text-gray-700 mb-3">Jenis Insiden <span class="text-status-red">*</span></label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <!-- KTD -->
+                        <div class="grid grid-cols-1 gap-4">
+                            <!-- KPC -->
                             <label class="relative cursor-pointer">
-                                <input type="radio" name="tipeInsiden" value="ktd" class="peer sr-only" required>
+                                <input type="radio" name="tipeInsiden" value="kpc" class="peer sr-only" required>
                                 <div class="border-2 border-gray-200 rounded-xl p-4 transition-all peer-checked:border-primary peer-checked:bg-green-50 hover:border-gray-300">
                                     <div class="flex items-start gap-3">
                                         <div class="w-5 h-5 mt-0.5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0 peer-checked:border-primary transition">
                                             <div class="w-2.5 h-2.5 rounded-full bg-primary scale-0 peer-checked:scale-100 transition"></div>
                                         </div>
-                                        <div>
-                                            <p class="font-semibold text-gray-800 text-sm">KTD (Kejadian Tidak Diharapkan)</p>
-                                            <p class="text-xs text-gray-500 mt-1">Insiden yang menyebabkan cedera</p>
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-gray-800 text-sm">KPC (Kondisi Potensial Cedera)</p>
+                                            <p class="text-xs text-gray-500 mt-1">Situasi yang berpotensi menimbulkan cedera</p>
+                                            <button type="button" onclick="showPopupDefinisi('kpc')" class="text-xs text-primary hover:text-primary-dark underline mt-1">Lihat definisi lengkap</button>
                                         </div>
                                     </div>
                                 </div>
@@ -281,9 +282,58 @@
                                         <div class="w-5 h-5 mt-0.5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0 peer-checked:border-primary transition">
                                             <div class="w-2.5 h-2.5 rounded-full bg-primary scale-0 peer-checked:scale-100 transition"></div>
                                         </div>
-                                        <div>
-                                            <p class="font-semibold text-gray-800 text-sm">KNC (Kejadian Nyaris Cedera)</p>
-                                            <p class="text-xs text-gray-500 mt-1">Insiden yang hampir terjadi</p>
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-gray-800 text-sm">KNC (Kejadian Nyaris Cedera / Near Miss)</p>
+                                            <p class="text-xs text-gray-500 mt-1">Insiden yang belum terpapar ke pasien</p>
+                                            <button type="button" onclick="showPopupDefinisi('knc')" class="text-xs text-primary hover:text-primary-dark underline mt-1">Lihat definisi lengkap</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            <!-- KTC -->
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="tipeInsiden" value="ktc" class="peer sr-only" required>
+                                <div class="border-2 border-gray-200 rounded-xl p-4 transition-all peer-checked:border-primary peer-checked:bg-green-50 hover:border-gray-300">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-5 h-5 mt-0.5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0 peer-checked:border-primary transition">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-primary scale-0 peer-checked:scale-100 transition"></div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-gray-800 text-sm">KTC (Kejadian Tidak Cedera)</p>
+                                            <p class="text-xs text-gray-500 mt-1">Insiden sudah terpapar tetapi tidak menimbulkan cedera</p>
+                                            <button type="button" onclick="showPopupDefinisi('ktc')" class="text-xs text-primary hover:text-primary-dark underline mt-1">Lihat definisi lengkap</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            <!-- KTD -->
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="tipeInsiden" value="ktd" class="peer sr-only" required>
+                                <div class="border-2 border-gray-200 rounded-xl p-4 transition-all peer-checked:border-primary peer-checked:bg-green-50 hover:border-gray-300">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-5 h-5 mt-0.5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0 peer-checked:border-primary transition">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-primary scale-0 peer-checked:scale-100 transition"></div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-gray-800 text-sm">KTD (Kejadian Tidak Diharapkan / Adverse Event)</p>
+                                            <p class="text-xs text-gray-500 mt-1">Insiden yang mengakibatkan cedera pada pasien</p>
+                                            <button type="button" onclick="showPopupDefinisi('ktd')" class="text-xs text-primary hover:text-primary-dark underline mt-1">Lihat definisi lengkap</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            <!-- Sentinel -->
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="tipeInsiden" value="sentinel" class="peer sr-only" required>
+                                <div class="border-2 border-gray-200 rounded-xl p-4 transition-all peer-checked:border-primary peer-checked:bg-green-50 hover:border-gray-300">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-5 h-5 mt-0.5 rounded-full border-2 border-gray-300 flex items-center justify-center flex-shrink-0 peer-checked:border-primary transition">
+                                            <div class="w-2.5 h-2.5 rounded-full bg-primary scale-0 peer-checked:scale-100 transition"></div>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-gray-800 text-sm">Kejadian Sentinel (Sentinel Event)</p>
+                                            <p class="text-xs text-gray-500 mt-1">Kejadian tidak diharapkan yang mengakibatkan kematian atau cedera berat</p>
+                                            <button type="button" onclick="showPopupDefinisi('sentinel')" class="text-xs text-primary hover:text-primary-dark underline mt-1">Lihat definisi lengkap</button>
                                         </div>
                                     </div>
                                 </div>
@@ -405,10 +455,6 @@
                             <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
                                 <input type="checkbox" name="cedera" value="perubahan_kesadaran" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
                                 <span class="text-xs text-gray-700">Perubahan Kesadaran</span>
-                            </label>
-                            <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
-                                <input type="checkbox" name="cedera" value="meninggal" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
-                                <span class="text-xs text-gray-700 font-semibold text-red-600">Meninggal</span>
                             </label>
                             <label class="flex items-start gap-2 p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition has-[:checked]:border-primary has-[:checked]:bg-green-50">
                                 <input type="checkbox" name="cedera" value="edema" class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary mt-0.5">
@@ -810,6 +856,42 @@
         </div>
     </main>
 
+    <!-- Popup Modal Definisi Jenis Insiden -->
+    <div id="popupDefinisi" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-primary text-white p-5 rounded-t-xl flex items-center justify-between">
+                <h3 id="popupTitle" class="text-lg font-bold"></h3>
+                <button onclick="closePopupDefinisi()" class="text-white hover:text-gray-200 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="mb-4">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-2">Definisi:</h4>
+                    <p id="popupDefinisiText" class="text-sm text-gray-600 leading-relaxed"></p>
+                </div>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex gap-3">
+                        <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div>
+                            <h4 class="text-sm font-semibold text-blue-800 mb-1">Informasi</h4>
+                            <p id="popupInfo" class="text-xs text-blue-700 leading-relaxed"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <button onclick="closePopupDefinisi()" class="w-full px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-dark transition">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="data.js"></script>
     <script>
         // State
@@ -837,6 +919,61 @@
             overlay.classList.add('hidden');
         }
         menuToggle.addEventListener('click', openSidebar);
+
+        // Popup Definisi Functions
+        function showPopupDefinisi(tipe) {
+            const definisiData = {
+                kpc: {
+                    title: 'KPC (Kondisi Potensial Cedera)',
+                    definisi: 'Situasi yang berpotensi menimbulkan cedera, tetapi belum terjadi insiden. Kondisi ini merupakan tahap paling awal dalam spektrum keselamatan pasien, di mana risiko atau bahaya telah teridentifikasi.',
+                    info: 'Laporkan KPC untuk membantu mencegah terjadinya insiden di masa depan. Pelaporan kondisi ini sangat penting untuk perbaikan sistem.'
+                },
+                knc: {
+                    title: 'KNC (Kejadian Nyaris Cedera / Near Miss)',
+                    definisi: 'Insiden yang belum sampai terpapar ke pasien karena terhentikan atau disadari sebelum tindakan dilakukan. Kejadian ini hampir terjadi tetapi dicegah pada saat-saat terakhir.',
+                    info: 'Near Miss adalah pembelajaran berharga. Dengan melaporkannya, kita dapat memperbaiki sistem sebelum kejadian serupa benar-benar merugikan pasien.'
+                },
+                ktc: {
+                    title: 'KTC (Kejadian Tidak Cedera)',
+                    definisi: 'Insiden sudah terpapar atau terkena ke pasien, tetapi tidak menimbulkan cedera atau kerugian. Meskipun terjadi kesalahan, pasien tidak mengalami dampak negatif yang signifikan.',
+                    info: 'KTC tetap perlu dilaporkan karena mengindikasikan adanya celah dalam sistem yang perlu diperbaiki, meskipun kali ini tidak menimbulkan cedera.'
+                },
+                ktd: {
+                    title: 'KTD (Kejadian Tidak Diharapkan / Adverse Event)',
+                    definisi: 'Insiden yang mengakibatkan cedera pada pasien akibat tindakan medis atau intervensi, bukan karena penyakit dasarnya. Cedera ini dapat bersifat ringan, sedang, atau berat.',
+                    info: 'KTD memerlukan investigasi menyeluruh untuk memahami akar masalah dan mencegah kejadian serupa di masa depan melalui perbaikan sistem dan prosedur.'
+                },
+                sentinel: {
+                    title: 'Kejadian Sentinel (Sentinel Event)',
+                    definisi: 'KTD yang mengakibatkan kematian, cedera permanen, atau cedera berat sementara yang memerlukan intervensi untuk mempertahankan hidup. Ini adalah kejadian paling serius dalam keselamatan pasien.',
+                    info: 'Kejadian Sentinel memerlukan investigasi segera dan menyeluruh (Root Cause Analysis) serta tindakan korektif yang komprehensif untuk mencegah terulangnya kejadian serupa.'
+                }
+            };
+
+            const data = definisiData[tipe];
+            if (!data) return;
+
+            document.getElementById('popupTitle').textContent = data.title;
+            document.getElementById('popupDefinisiText').textContent = data.definisi;
+            document.getElementById('popupInfo').textContent = data.info;
+
+            const popup = document.getElementById('popupDefinisi');
+            popup.classList.remove('hidden');
+            popup.classList.add('flex');
+        }
+
+        function closePopupDefinisi() {
+            const popup = document.getElementById('popupDefinisi');
+            popup.classList.add('hidden');
+            popup.classList.remove('flex');
+        }
+
+        // Close popup on background click
+        document.getElementById('popupDefinisi').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePopupDefinisi();
+            }
+        });
 
         // Character count
         kronologiEl.addEventListener('input', function() {

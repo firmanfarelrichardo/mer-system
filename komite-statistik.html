@@ -243,9 +243,9 @@
             <!-- Distribusi Tipe Insiden -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-1">Distribusi Tipe Insiden</h3>
-                <p class="text-xs text-gray-500 mb-5">Perbandingan KTD dan KNC</p>
-                <div id="chartTipeInsiden" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <!-- Two cards rendered by JS -->
+                <p class="text-xs text-gray-500 mb-5">Lima kategori insiden berdasarkan tingkat keparahan</p>
+                <div id="chartTipeInsiden" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                    <!-- Five cards rendered by JS -->
                 </div>
             </div>
 
@@ -533,26 +533,33 @@
             container.innerHTML = '';
 
             const total = laporan.length || 1;
-            const ktdCount = laporan.filter(l => l.tipeInsiden === 'ktd').length;
+            const kpcCount = laporan.filter(l => l.tipeInsiden === 'kpc').length;
             const kncCount = laporan.filter(l => l.tipeInsiden === 'knc').length;
-            const ktdPct = Math.round((ktdCount / total) * 100);
+            const ktcCount = laporan.filter(l => l.tipeInsiden === 'ktc').length;
+            const ktdCount = laporan.filter(l => l.tipeInsiden === 'ktd').length;
+            const sentinelCount = laporan.filter(l => l.tipeInsiden === 'sentinel').length;
+            
+            const kpcPct = Math.round((kpcCount / total) * 100);
             const kncPct = Math.round((kncCount / total) * 100);
+            const ktcPct = Math.round((ktcCount / total) * 100);
+            const ktdPct = Math.round((ktdCount / total) * 100);
+            const sentinelPct = Math.round((sentinelCount / total) * 100);
 
             container.innerHTML = `
-                <!-- KTD Card -->
-                <div class="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-5 text-center">
-                    <div class="w-14 h-14 mx-auto mb-3 bg-red-200 rounded-full flex items-center justify-center">
-                        <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-8.58 14.85A1 1 0 002.58 20h18.84a1 1 0 00.87-1.29l-8.58-14.85a1.5 1.5 0 00-2.42 0z"/>
+                <!-- KPC Card -->
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-5 text-center">
+                    <div class="w-14 h-14 mx-auto mb-3 bg-blue-200 rounded-full flex items-center justify-center">
+                        <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                         </svg>
                     </div>
-                    <p class="text-3xl font-bold text-red-700 mb-1">${ktdCount}</p>
-                    <p class="text-sm font-semibold text-red-600 mb-1">KTD</p>
-                    <p class="text-xs text-red-500">Kejadian Tidak Diharapkan</p>
-                    <div class="mt-3 w-full bg-red-200 rounded-full h-2 overflow-hidden">
-                        <div class="h-full bg-red-500 rounded-full hbar-animate" style="width:0%" data-width="${ktdPct}%"></div>
+                    <p class="text-3xl font-bold text-blue-700 mb-1">${kpcCount}</p>
+                    <p class="text-sm font-semibold text-blue-600 mb-1">KPC</p>
+                    <p class="text-xs text-blue-500">Kondisi Potensial Cedera</p>
+                    <div class="mt-3 w-full bg-blue-200 rounded-full h-2 overflow-hidden">
+                        <div class="h-full bg-blue-500 rounded-full hbar-animate" style="width:0%" data-width="${kpcPct}%"></div>
                     </div>
-                    <p class="text-xs text-red-500 mt-1 font-medium">${ktdPct}% dari total</p>
+                    <p class="text-xs text-blue-500 mt-1 font-medium">${kpcPct}% dari total</p>
                 </div>
 
                 <!-- KNC Card -->
@@ -569,6 +576,54 @@
                         <div class="h-full bg-amber-500 rounded-full hbar-animate" style="width:0%" data-width="${kncPct}%"></div>
                     </div>
                     <p class="text-xs text-amber-500 mt-1 font-medium">${kncPct}% dari total</p>
+                </div>
+
+                <!-- KTC Card -->
+                <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-5 text-center">
+                    <div class="w-14 h-14 mx-auto mb-3 bg-green-200 rounded-full flex items-center justify-center">
+                        <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <p class="text-3xl font-bold text-green-700 mb-1">${ktcCount}</p>
+                    <p class="text-sm font-semibold text-green-600 mb-1">KTC</p>
+                    <p class="text-xs text-green-500">Kejadian Tidak Cedera</p>
+                    <div class="mt-3 w-full bg-green-200 rounded-full h-2 overflow-hidden">
+                        <div class="h-full bg-green-500 rounded-full hbar-animate" style="width:0%" data-width="${ktcPct}%"></div>
+                    </div>
+                    <p class="text-xs text-green-500 mt-1 font-medium">${ktcPct}% dari total</p>
+                </div>
+
+                <!-- KTD Card -->
+                <div class="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-xl p-5 text-center">
+                    <div class="w-14 h-14 mx-auto mb-3 bg-orange-200 rounded-full flex items-center justify-center">
+                        <svg class="w-7 h-7 text-orange-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86l-8.58 14.85A1 1 0 002.58 20h18.84a1 1 0 00.87-1.29l-8.58-14.85a1.5 1.5 0 00-2.42 0z"/>
+                        </svg>
+                    </div>
+                    <p class="text-3xl font-bold text-orange-700 mb-1">${ktdCount}</p>
+                    <p class="text-sm font-semibold text-orange-600 mb-1">KTD</p>
+                    <p class="text-xs text-orange-500">Kejadian Tidak Diharapkan</p>
+                    <div class="mt-3 w-full bg-orange-200 rounded-full h-2 overflow-hidden">
+                        <div class="h-full bg-orange-500 rounded-full hbar-animate" style="width:0%" data-width="${ktdPct}%"></div>
+                    </div>
+                    <p class="text-xs text-orange-500 mt-1 font-medium">${ktdPct}% dari total</p>
+                </div>
+
+                <!-- Sentinel Card -->
+                <div class="bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-5 text-center">
+                    <div class="w-14 h-14 mx-auto mb-3 bg-red-200 rounded-full flex items-center justify-center">
+                        <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <p class="text-3xl font-bold text-red-700 mb-1">${sentinelCount}</p>
+                    <p class="text-sm font-semibold text-red-600 mb-1">Sentinel</p>
+                    <p class="text-xs text-red-500">Kejadian Sentinel</p>
+                    <div class="mt-3 w-full bg-red-200 rounded-full h-2 overflow-hidden">
+                        <div class="h-full bg-red-500 rounded-full hbar-animate" style="width:0%" data-width="${sentinelPct}%"></div>
+                    </div>
+                    <p class="text-xs text-red-500 mt-1 font-medium">${sentinelPct}% dari total</p>
                 </div>
             `;
 
