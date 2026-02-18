@@ -71,7 +71,7 @@ services:
     container_name: mer-db-dev
     restart: unless-stopped
     ports:
-      - "${FORWARD_DB_PORT:-5432}:5432"
+      - "5433:5432"
     environment:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
@@ -80,7 +80,6 @@ services:
       TZ: Asia/Jakarta
     volumes:
       - mer-db-data:/var/lib/postgresql/data
-      - ../../database/sql/mer_ddl.sql:/docker-entrypoint-initdb.d/01-mer-ddl.sql:ro
     networks:
       - mer-dev-network
     healthcheck:
