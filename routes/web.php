@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\NotifikasiController;
+use App\Http\Controllers\PengaturanController;
+use App\Http\Controllers\ProfilController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -59,4 +63,25 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/direktur/dasbor', fn () => view('dashboard'))
         ->name('direktur.dashboard');
+
+    // ----- Laporan Insiden -----
+    // Riwayat laporan dan formulir pembuatan laporan baru.
+    Route::get('/laporan', [LaporanController::class, 'index'])
+        ->name('laporan.index');
+
+    Route::get('/laporan/buat', [LaporanController::class, 'buat'])
+        ->name('laporan.buat');
+
+    Route::get('/laporan/{laporan}', [LaporanController::class, 'tampil'])
+        ->name('laporan.tampil');
+
+    // ----- Profil, Pengaturan, & Notifikasi -----
+    Route::get('/profil', [ProfilController::class, 'index'])
+        ->name('profil.index');
+
+    Route::get('/pengaturan', [PengaturanController::class, 'index'])
+        ->name('pengaturan.index');
+
+    Route::get('/notifikasi', [NotifikasiController::class, 'index'])
+        ->name('notifikasi.index');
 });

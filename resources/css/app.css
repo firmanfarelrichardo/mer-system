@@ -8,4 +8,11 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Warna utama brand: dark slate blue (#355872)
+       Digunakan untuk sidebar, tombol primer, dan state aktif.
+       Tailwind v4 membaca variabel --color-* sebagai utilitas warna. */
+    --color-brand: #355872;
+    --color-brand-light: #4a7a9b;
+    --color-brand-dark: #253f52;
 }
