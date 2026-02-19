@@ -3,7 +3,8 @@
 | Sidebar Navigasi (sidebar.blade.php)
 |--------------------------------------------------------------------------
 | Sidebar tetap di sisi kiri layar dengan latar belakang warna brand
-| (#355872 — dark slate blue). Semua teks berwarna putih.
+| (teal primary-800 — hijau-toska gelap, WCAG AA ≥ 4.5:1 vs putih).
+| Warna dikontrol via CSS variable --token-brand di resources/css/theme.css.
 |
 | Menu yang tampil bersifat TERPUSAT: satu file blade ini mengontrol
 | seluruh menu untuk semua peran. Gunakan blok @if / memilikiPeran()
@@ -25,14 +26,12 @@
 
     {{-- Header sidebar: Logo & judul sistem --}}
     <div class="flex items-center gap-3 border-b border-white/10 px-5 py-5">
-        {{-- Ikon silang medis (inline SVG) --}}
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-white/15">
-            <svg class="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                 viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-        </div>
+        {{-- Logo MER System (gambar asli, tanpa paksa square) --}}
+        <img
+            src="{{ asset('images/icon-mer_system.jpg') }}"
+            alt="Logo Sistem MER"
+            class="h-9 w-auto shrink-0 rounded-lg"
+        >
         <div>
             <h2 class="text-sm font-bold leading-tight tracking-wide">Sistem MER</h2>
             <p class="text-[11px] text-white/60">Pelaporan Insiden Obat</p>
