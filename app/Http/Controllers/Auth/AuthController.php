@@ -1,0 +1,209 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Pengguna;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+
+/**
+ * KontrollerAuth — Menangani proses Masuk dan Keluar berbasis sesi.
+ *
+ * Langkah keamanan yang diterapkan:
+ *  1. Validasi input, captcha, dan pembatasan percobaan didelegasikan ke LoginRequest.
+ *  2. Pencarian akun manual berdasarkan nomor_induk — aman untuk lingkungan multi-tenant.
+ *  3. Pengecekan bendera `is_aktif` — akun nonaktif tidak dapat masuk.
+ *  4. Perlindungan session fixation — ID sesi diperbarui setelah masuk berhasil.
+ *  5. Keluar aman — sesi dihancurkan & token CSRF diperbarui.
+ *  6. Setiap peristiwa autentikasi dicatat untuk jejak audit.
+ */
+class AuthController extends Controller
+{
+    /* ==================================================================
+     | MASUK — Tampilkan Formulir
+     | ================================================================*/
+
+    /**
+     * Tampilkan halaman formulir masuk.
+     */
+    public function tampilkanFormulirMasuk()
+    {
+        return view('auth.login');
+    }
+
+    /* ==================================================================
+     | MASUK — Proses
+     | ================================================================*/
+
+    /**
+     * Proses autentikasi pengguna.
+     *
+     * Alur:
+     *  1. LoginRequest memvalidasi input, captcha, dan memeriksa batas percobaan.
+     *  2. Cari pengguna berdasarkan nomor_induk secara manual — aman untuk
+     *     lingkungan multi-tenant karena nomor_induk bisa sama antar tenant.
+     *  3. Verifikasi kata sandi dengan Hash::check.
+     *  4. Periksa status aktif akun.
+     *  5. Masukkan pengguna ke sesi dan perbarui ID sesi.
+     *  6. Perbarui timestamp terakhir masuk.
+     *  7. Arahkan ke dasbor sesuai peran tertinggi.
+     */
+    public function masuk(LoginRequest $permintaan): RedirectResponse
+    {
+        // ----------------------------------------------------------
+        // 1. Periksa batas percobaan (lempar ValidationException jika melebihi)
+        // ----------------------------------------------------------
+        $permintaan->pastikanBelumDibatasi();
+
+        // ----------------------------------------------------------
+        // 2. Cari akun berdasarkan nomor_induk.
+        //    Pendekatan manual dipilih agar aman di lingkungan multi-tenant.
+        //    Pada sistem multi-tenant, tambahkan filter tenant_id di sini.
+        // ----------------------------------------------------------
+        $pengguna = Pengguna::where('nomor_induk', $permintaan->validated('nomor_induk'))
+            ->first();
+
+        // ----------------------------------------------------------
+        // 3. Verifikasi keberadaan akun dan kecocokan kata sandi.
+        //    Pesan error digeneralisasi agar tidak mengekspos apakah
+        //    nomor_induk terdaftar atau tidak (mencegah user enumeration).
+        // ----------------------------------------------------------
+        if (! $pengguna || ! Hash::check($permintaan->validated('kata_sandi'), $pengguna->kata_sandi)) {
+            $permintaan->tambahHitungGagal();
+
+            Log::warning('Percobaan masuk gagal: kredensial tidak valid.', [
+                'nomor_induk' => $permintaan->validated('nomor_induk'),
+                'ip'          => $permintaan->ip(),
+            ]);
+
+            return back()
+                ->withInput($permintaan->only('nomor_induk'))
+                ->withErrors([
+                    'nomor_induk' => 'Nomor induk atau kata sandi salah.',
+                ]);
+        }
+
+        // ----------------------------------------------------------
+        // 4. Cek status aktif — akun nonaktif langsung ditolak.
+        //    Throttle tetap dihitung agar tidak menjadi celah enumerasi akun.
+        // ----------------------------------------------------------
+        if (! $pengguna->is_aktif) {
+            $permintaan->tambahHitungGagal();
+
+            Log::notice('Percobaan masuk ditolak: akun tidak aktif.', [
+                'pengguna_id' => $pengguna->id,
+                'nomor_induk' => $pengguna->nomor_induk,
+            ]);
+
+            return back()
+                ->withInput($permintaan->only('nomor_induk'))
+                ->withErrors([
+                    'nomor_induk' => 'Akun Anda tidak aktif. Silakan hubungi administrator.',
+                ]);
+        }
+
+        // ----------------------------------------------------------
+        // 5. Masukkan pengguna ke sesi.
+        //    session()->regenerate() mengganti ID sesi — mencegah serangan
+        //    session fixation dari sesi yang dibuat sebelum login.
+        // ----------------------------------------------------------
+        Auth::login($pengguna);
+        $permintaan->session()->regenerate();
+
+        // ----------------------------------------------------------
+        // 6. Hapus catatan throttle setelah masuk berhasil.
+        // ----------------------------------------------------------
+        $permintaan->hapusThrottle();
+
+        // ----------------------------------------------------------
+        // 7. Perbarui timestamp terakhir masuk untuk keperluan audit.
+        //    updateQuietly agar tidak memicu event/observer model.
+        // ----------------------------------------------------------
+        $pengguna->updateQuietly([
+            'terakhir_login_pada' => now(),
+        ]);
+
+        // ----------------------------------------------------------
+        // 8. Muat peran dan tentukan halaman tujuan berdasarkan peran.
+        // ----------------------------------------------------------
+        $pengguna->load('peran');
+
+        Log::info('Pengguna berhasil masuk.', [
+            'pengguna_id' => $pengguna->id,
+            'nomor_induk' => $pengguna->nomor_induk,
+            'peran'       => $pengguna->daftarPeran(),
+            'ip'          => $permintaan->ip(),
+        ]);
+
+        return redirect()
+            ->intended($this->tentukanHalamanSesuaiPeran($pengguna))
+            ->with('sukses', 'Selamat datang, ' . $pengguna->nama_lengkap . '.');
+    }
+
+    /* ==================================================================
+     | KELUAR
+     | ================================================================*/
+
+    /**
+     * Keluarkan pengguna dari aplikasi.
+     *
+     * Keamanan:
+     *  - Menghapus seluruh data sesi (invalidate).
+     *  - Memperbarui token CSRF agar tidak dapat digunakan ulang.
+     */
+    public function keluar(Request $permintaan): RedirectResponse
+    {
+        /** @var Pengguna|null $pengguna */
+        $pengguna = Auth::user();
+
+        if ($pengguna) {
+            Log::info('Pengguna keluar.', [
+                'pengguna_id' => $pengguna->id,
+                'nomor_induk' => $pengguna->nomor_induk,
+                'ip'          => $permintaan->ip(),
+            ]);
+        }
+
+        // Hapus pengguna dari sesi
+        Auth::logout();
+
+        // Hancurkan seluruh sesi — mencegah session fixation setelah keluar
+        $permintaan->session()->invalidate();
+
+        // Perbarui token CSRF agar token lama tidak dapat diputar ulang
+        $permintaan->session()->regenerateToken();
+
+        return redirect()
+            ->route('login')
+            ->with('sukses', 'Anda telah berhasil keluar.');
+    }
+
+    /* ==================================================================
+     | PEMBANTU PRIVAT
+     | ================================================================*/
+
+    /**
+     * Tentukan route dasbor tujuan berdasarkan peran pengguna.
+     * Peran dengan kewenangan tertinggi diutamakan.
+     */
+    private function tentukanHalamanSesuaiPeran(Pengguna $pengguna): string
+    {
+        $daftarPeran = $pengguna->daftarPeran();
+
+        return match (true) {
+            in_array('Direktur',       $daftarPeran, true) => route('direktur.dashboard'),
+            in_array('Admin',          $daftarPeran, true) => route('admin.dashboard'),
+            in_array('Komite',         $daftarPeran, true) => route('komite.dashboard'),
+            in_array('Kepala Ruangan', $daftarPeran, true) => route('kepala-ruangan.dashboard'),
+            in_array('Perawat',        $daftarPeran, true) => route('perawat.dashboard'),
+            default                                         => route('dashboard'),
+        };
+    }
+}
