@@ -99,11 +99,11 @@ services:
     restart: unless-stopped
     working_dir: /var/www/html
     ports:
-      - "${VITE_PORT:-5173}:5173"
+      - "${VITE_PORT:-5174}:5174"
     volumes:
       - ../..:/var/www/html
       - vite-node-modules:/var/www/html/node_modules
-    command: sh -c "npm install && npm run dev"
+    command: sh -c "rm -rf node_modules/.package-lock.json && npm install --prefer-offline && npm run dev"
     networks:
       - mer-dev-network
 

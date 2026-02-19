@@ -13,11 +13,12 @@ export default defineConfig({
     server: {
         // host 0.0.0.0: agar Vite listen di semua interface (wajib di Docker)
         host: '0.0.0.0',
-        port: 5173,
+        port: 5174,
         hmr: {
             // HMR WebSocket harus mengarah ke localhost
             // karena browser mengakses dari host machine, bukan dari dalam container
             host: 'localhost',
+            port: 5174,
         },
         watch: {
             // Gunakan polling di Docker karena inotify tidak bekerja

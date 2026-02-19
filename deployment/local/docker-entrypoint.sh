@@ -79,10 +79,16 @@ log_message "Migrations complete"
 
 # -------------------------------------------
 # 6. Set permissions untuk storage & bootstrap cache
+#    - Buat file log agar PHP-FPM tidak gagal menulis
+#    - chown + chmod diperlukan karena bind-mount
+#      bisa menimpa ownership yang sudah diset di Dockerfile
 # -------------------------------------------
 log_message "Setting permissions..."
+mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache
+touch storage/logs/laravel.log
 chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+chmod 664 storage/logs/laravel.log 2>/dev/null || true
 
 log_message "Initialization complete!"
 log_message "Starting PHP-FPM server..."
