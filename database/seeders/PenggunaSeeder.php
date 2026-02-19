@@ -39,13 +39,13 @@ class PenggunaSeeder extends Seeder
         // Plain-text password — the Pengguna model's `hashed` cast on `kata_sandi`
         // will call Hash::make() automatically on Eloquent create/update.
         // Do NOT pre-hash here; that would cause a double-bcrypt.
-        $devPassword = 'Admin123!';
+        $devPassword = 'password';
 
         return [
             [
                 'pengguna' => [
                     'tenant_id'   => $tenantId,
-                    'nomor_induk' => 'ADM-001',
+                    'nomor_induk' => 'admin',
                     'email'       => 'admin@mer.test',
                     'nomor_hp'    => '08100000001',
                     'alamat'      => 'Jl. Admin No. 1',
@@ -58,7 +58,7 @@ class PenggunaSeeder extends Seeder
             [
                 'pengguna' => [
                     'tenant_id'   => $tenantId,
-                    'nomor_induk' => 'DIR-001',
+                    'nomor_induk' => 'direktur',
                     'email'       => 'direktur@mer.test',
                     'nomor_hp'    => '08100000002',
                     'alamat'      => 'Jl. Direktur No. 1',
@@ -71,7 +71,7 @@ class PenggunaSeeder extends Seeder
             [
                 'pengguna' => [
                     'tenant_id'   => $tenantId,
-                    'nomor_induk' => 'KOM-001',
+                    'nomor_induk' => 'komite',
                     'email'       => 'komite@mer.test',
                     'nomor_hp'    => '08100000003',
                     'alamat'      => 'Jl. Komite No. 1',
@@ -84,7 +84,7 @@ class PenggunaSeeder extends Seeder
             [
                 'pengguna' => [
                     'tenant_id'   => $tenantId,
-                    'nomor_induk' => 'KR-001',
+                    'nomor_induk' => 'kepalaruangan',
                     'email'       => 'kepala.ruangan@mer.test',
                     'nomor_hp'    => '08100000004',
                     'alamat'      => 'Jl. Kepala Ruangan No. 1',
@@ -97,7 +97,7 @@ class PenggunaSeeder extends Seeder
             [
                 'pengguna' => [
                     'tenant_id'   => $tenantId,
-                    'nomor_induk' => 'PRW-001',
+                    'nomor_induk' => 'nakes',
                     'email'       => 'perawat@mer.test',
                     'nomor_hp'    => '08100000005',
                     'alamat'      => 'Jl. Perawat No. 1',

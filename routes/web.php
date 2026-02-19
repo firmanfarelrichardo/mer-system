@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\NotifikasiController;
@@ -58,8 +60,33 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/komite/dasbor', fn () => view('dashboard'))
         ->name('komite.dashboard');
 
-    Route::get('/admin/dasbor', fn () => view('dashboard'))
-        ->name('admin.dashboard');
+    // ----- Admin: Dasbor & Manajemen Pengguna -----
+    Route::prefix('admin')->group(function (): void {
+
+        Route::get('/dasbor', [AdminDashboardController::class, 'index'])
+            ->name('admin.dashboard');
+
+        Route::get('/pengguna', [PenggunaController::class, 'index'])
+            ->name('admin.pengguna.index');
+
+        Route::get('/pengguna/buat', [PenggunaController::class, 'buat'])
+            ->name('admin.pengguna.buat');
+
+        Route::post('/pengguna', [PenggunaController::class, 'simpan'])
+            ->name('admin.pengguna.simpan');
+
+        Route::get('/pengguna/{pengguna}/edit', [PenggunaController::class, 'edit'])
+            ->name('admin.pengguna.edit');
+
+        Route::put('/pengguna/{pengguna}', [PenggunaController::class, 'perbarui'])
+            ->name('admin.pengguna.perbarui');
+
+        Route::patch('/pengguna/{pengguna}/status', [PenggunaController::class, 'toggleStatus'])
+            ->name('admin.pengguna.toggle-status');
+
+        Route::patch('/pengguna/{pengguna}/reset-sandi', [PenggunaController::class, 'resetKataSandi'])
+            ->name('admin.pengguna.reset-sandi');
+    });
 
     Route::get('/direktur/dasbor', fn () => view('dashboard'))
         ->name('direktur.dashboard');
