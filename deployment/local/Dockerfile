@@ -1,11 +1,14 @@
 # ===========================================
 # MER System - Laravel Dockerfile (Development)
+# PHP 8.3 FPM Alpine dengan UID/GID alignment
 # ===========================================
 
 FROM php:8.3-fpm-alpine
 
 # -------------------------------------------
-# 1. Install system dependencies & PHP ext
+# 1. Install system dependencies & PHP extensions
+#    - shadow: diperlukan untuk usermod/groupmod
+#    - Build deps dipisah agar bisa dihapus setelah compile
 # -------------------------------------------
 RUN apk add --no-cache \
         bash \
@@ -55,13 +58,26 @@ RUN apk add --no-cache \
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # -------------------------------------------
-# 3. Create non-root user for bind-mount parity
+# 3. Align www-data UID/GID dengan host user
+#
+#    MENGAPA: PHP-FPM berjalan sebagai www-data.
+#    Pada bind-mount, file yang ditulis oleh www-data
+#    harus memiliki UID/GID yang sama dengan user host
+#    agar tidak terjadi konflik permission.
+#
+#    Default www-data di Alpine: UID=82, GID=82
+#    Host Linux user biasanya: UID=1000, GID=1000
+#
+#    Dengan usermod/groupmod, kita selaraskan keduanya
+#    sehingga file yang dibuat di container memiliki
+#    ownership yang benar di host filesystem.
 # -------------------------------------------
 ARG UID=1000
 ARG GID=1000
 
-RUN addgroup -g ${GID} laravel \
-    && adduser -u ${UID} -G laravel -s /bin/bash -D laravel
+RUN groupmod -g ${GID} www-data \
+    && usermod -u ${UID} -g ${GID} www-data \
+    && usermod -s /bin/bash www-data
 
 # -------------------------------------------
 # 4. Prepare working directory
@@ -73,10 +89,10 @@ RUN mkdir -p storage/logs \
              storage/framework/sessions \
              storage/framework/views \
              bootstrap/cache \
-    && chown -R laravel:laravel /var/www/html
+    && chown -R www-data:www-data /var/www/html
 
 # -------------------------------------------
-# 5. Entrypoint
+# 5. Entrypoint & Command
 # -------------------------------------------
 COPY deployment/local/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
