@@ -39,31 +39,46 @@ if [ ! -f ".env" ]; then
 fi
 
 # -------------------------------------------
-# 2. Composer dependency check
-#    Di development, composer install dilakukan manual
-#    agar developer punya kontrol penuh atas dependency
+# 2. Composer install (auto jika vendor belum ada)
 # -------------------------------------------
-if [ ! -d "vendor" ] || [ ! -f "vendor/autoload.php" ]; then
-    log_message "Vendor directory not found."
-    log_message "Run: docker exec mer-app-dev composer install"
+if [ ! -f "vendor/autoload.php" ]; then
+    log_message "vendor/autoload.php not found — running composer install..."
+    composer install --no-interaction --prefer-dist --optimize-autoloader
+    log_message "composer install complete"
 else
-    log_message "Vendor directory detected"
+    log_message "Vendor directory detected — skipping composer install"
 fi
 
 # -------------------------------------------
-# 3. Clear stale cache
-#    Hanya jika vendor sudah ter-install
+# 3. Generate app key (jika APP_KEY belum di-set)
 # -------------------------------------------
-if [ -f "vendor/autoload.php" ]; then
-    log_message "Clearing stale cache..."
-    php artisan config:clear 2>/dev/null || true
-    php artisan cache:clear 2>/dev/null || true
-    php artisan view:clear 2>/dev/null || true
+APP_KEY_VAL=$(grep "^APP_KEY=" .env 2>/dev/null | cut -d'=' -f2 | tr -d '\r')
+if [ -z "$APP_KEY_VAL" ]; then
+    log_message "APP_KEY is empty — generating application key..."
+    php artisan key:generate --no-interaction --force
+    log_message "Application key generated"
+else
+    log_message "APP_KEY already set — skipping key:generate"
 fi
 
 # -------------------------------------------
-# 4. Set permissions untuk storage & bootstrap cache
-#    www-data harus bisa menulis ke direktori ini
+# 4. Clear stale cache
+# -------------------------------------------
+log_message "Clearing stale cache..."
+php artisan config:clear 2>/dev/null || true
+php artisan cache:clear 2>/dev/null || true
+php artisan view:clear 2>/dev/null || true
+
+# -------------------------------------------
+# 5. Run database migrations (idempotent — aman dijalankan setiap start)
+#    depends_on healthcheck sudah menjamin DB siap sebelum ini berjalan
+# -------------------------------------------
+log_message "Running database migrations..."
+php artisan migrate --no-interaction --force
+log_message "Migrations complete"
+
+# -------------------------------------------
+# 6. Set permissions untuk storage & bootstrap cache
 # -------------------------------------------
 log_message "Setting permissions..."
 chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
