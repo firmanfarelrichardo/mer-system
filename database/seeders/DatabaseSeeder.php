@@ -1,25 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
      * Seed the application's database.
+     *
+     * Order matters — foreign-key constraints require tenants before
+     * roles, and roles before users.
+     *
+     * IMPORTANT: PenggunaSeeder creates dev-only test accounts.
+     * Never run db:seed on production without excluding it.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            OrganisasiSeeder::class,  // 1. Tenant (required FK for all below)
+            PeranSeeder::class,        // 2. Roles  (required FK for user-role pivot)
+            PenggunaSeeder::class,     // 3. Users + pivot assignments
         ]);
     }
 }
