@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        DB::statement('DROP TABLE IF EXISTS "akun"."pengguna_peran" CASCADE');
         Schema::create('akun.pengguna_peran', function (Blueprint $table) {
             $table->foreignId('pengguna_id')->index()->constrained('akun.pengguna')->cascadeOnDelete();
             $table->foreignId('peran_id')->index()->constrained('akun.peran')->cascadeOnDelete();
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('akun.pengguna_peran');
+        DB::statement('DROP TABLE IF EXISTS "akun"."pengguna_peran" CASCADE');
     }
 };

@@ -12,6 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        DB::statement('DROP TABLE IF EXISTS "master"."unit_kerja" CASCADE');
         Schema::create('master.unit_kerja', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->default(DB::raw('gen_random_uuid()'))->unique();
@@ -34,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('master.unit_kerja');
+        DB::statement('DROP TABLE IF EXISTS "master"."unit_kerja" CASCADE');
     }
 };

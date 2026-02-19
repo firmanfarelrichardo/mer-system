@@ -12,6 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        DB::statement('DROP TABLE IF EXISTS "audit"."log_aktivitas" CASCADE');
         Schema::create('audit.log_aktivitas', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->default(DB::raw('gen_random_uuid()'))->unique();
@@ -37,6 +38,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('audit.log_aktivitas');
+        DB::statement('DROP TABLE IF EXISTS "audit"."log_aktivitas" CASCADE');
     }
 };

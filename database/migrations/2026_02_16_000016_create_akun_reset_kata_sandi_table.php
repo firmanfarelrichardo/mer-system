@@ -11,6 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
+        DB::statement('DROP TABLE IF EXISTS "akun"."reset_kata_sandi" CASCADE');
         Schema::create('akun.reset_kata_sandi', function (Blueprint $table) {
             $table->id();
 
@@ -34,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('akun.reset_kata_sandi');
+        DB::statement('DROP TABLE IF EXISTS "akun"."reset_kata_sandi" CASCADE');
     }
 };
