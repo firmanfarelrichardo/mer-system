@@ -1,83 +1,103 @@
 # ===========================================
 # MER System - Laravel Dockerfile (Development)
+# PHP 8.3 FPM Alpine dengan UID/GID alignment
 # ===========================================
 
 FROM php:8.3-fpm-alpine
 
-# Set working directory
-WORKDIR /var/www/html
-
-# Install dependencies
+# -------------------------------------------
+# 1. Install system dependencies & PHP extensions
+#    - shadow: diperlukan untuk usermod/groupmod
+#    - Build deps dipisah agar bisa dihapus setelah compile
+# -------------------------------------------
 RUN apk add --no-cache \
-    git \
-    curl \
-    bash \
-    ca-certificates \
-    libpng-dev \
-    oniguruma-dev \
-    libxml2-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    postgresql-dev \
-    icu-dev \
-    nodejs \
-    npm \
-    $PHPIZE_DEPS \
-    && update-ca-certificates
-
-# Install PHP extensions
-RUN docker-php-ext-install pdo pdo_pgsql pgsql mbstring exif pcntl bcmath gd zip intl
-
-# Install Redis extension via PECL
-RUN pecl channel-update pecl.php.net \
+        bash \
+        curl \
+        git \
+        libpng \
+        libjpeg-turbo \
+        freetype \
+        libzip \
+        libxml2 \
+        libpq \
+        icu-libs \
+        oniguruma \
+        zip \
+        unzip \
+        shadow \
+    && apk add --no-cache --virtual .build-deps \
+        $PHPIZE_DEPS \
+        libpng-dev \
+        libjpeg-turbo-dev \
+        freetype-dev \
+        libzip-dev \
+        libxml2-dev \
+        postgresql-dev \
+        icu-dev \
+        oniguruma-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
+        pdo \
+        pdo_pgsql \
+        pgsql \
+        mbstring \
+        exif \
+        pcntl \
+        bcmath \
+        gd \
+        zip \
+        intl \
     && pecl install redis \
-    && docker-php-ext-enable redis
-
-# Clean up build dependencies
-RUN apk del $PHPIZE_DEPS \
+    && docker-php-ext-enable redis \
+    && apk del .build-deps \
     && rm -rf /tmp/pear /tmp/* /var/cache/apk/*
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# -------------------------------------------
+# 2. Install Composer
+# -------------------------------------------
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy composer files first
-COPY composer.json composer.lock* ./
+# -------------------------------------------
+# 3. Align www-data UID/GID dengan host user
+#
+#    MENGAPA: PHP-FPM berjalan sebagai www-data.
+#    Pada bind-mount, file yang ditulis oleh www-data
+#    harus memiliki UID/GID yang sama dengan user host
+#    agar tidak terjadi konflik permission.
+#
+#    Default www-data di Alpine: UID=82, GID=82
+#    Host Linux user biasanya: UID=1000, GID=1000
+#
+#    Dengan usermod/groupmod, kita selaraskan keduanya
+#    sehingga file yang dibuat di container memiliki
+#    ownership yang benar di host filesystem.
+# -------------------------------------------
+ARG UID=1000
+ARG GID=1000
 
-# Install dependencies
-RUN composer install --no-scripts --no-autoloader --prefer-dist
+RUN groupmod -g ${GID} www-data \
+    && usermod -u ${UID} -g ${GID} www-data \
+    && usermod -s /bin/bash www-data
 
-# Copy package.json for npm
-COPY package.json package-lock.json* ./
+# -------------------------------------------
+# 4. Prepare working directory
+# -------------------------------------------
+WORKDIR /var/www/html
 
-# Install npm dependencies
-RUN npm install
+RUN mkdir -p storage/logs \
+             storage/framework/cache \
+             storage/framework/sessions \
+             storage/framework/views \
+             bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html
 
-# Copy application files
-COPY . .
-
-# Generate autoloader
-RUN composer dump-autoload
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
-
-# Create storage directories if not exist
-RUN mkdir -p /var/www/html/storage/logs \
-    && mkdir -p /var/www/html/storage/framework/cache \
-    && mkdir -p /var/www/html/storage/framework/sessions \
-    && mkdir -p /var/www/html/storage/framework/views \
-    && chmod -R 777 /var/www/html/storage
-
-# Copy entrypoint script
+# -------------------------------------------
+# 5. Entrypoint & Command
+# -------------------------------------------
 COPY deployment/local/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# Expose PHP-FPM port and Vite HMR port
-EXPOSE 9000 5173
+EXPOSE 9000
 
-# Start with entrypoint script
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php-fpm"]
