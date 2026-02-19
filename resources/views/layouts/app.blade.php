@@ -23,6 +23,10 @@
     {{-- Cegah mesin pencari mengindeks halaman internal --}}
     <meta name="robots" content="noindex, nofollow">
 
+    {{-- Favicon: menggunakan logo Rumah Sakit --}}
+    <link rel="icon" type="image/jpeg" href="{{ asset('images/icon-rmh_sakit.jpg') }}">
+    <link rel="shortcut icon" type="image/jpeg" href="{{ asset('images/icon-rmh_sakit.jpg') }}">
+
     {{-- Aset Vite: Tailwind CSS + JS --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -46,6 +50,9 @@
             <main class="flex-1 overflow-y-auto p-6">
                 @yield('konten')
             </main>
+
+            {{-- Footer global —— konsisten di seluruh halaman --}}
+            @include('layouts.footer')
         </div>
     </div>
 
