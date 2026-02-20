@@ -47,17 +47,25 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Aturan captcha dikosongkan saat CAPTCHA_DISABLE=true agar
-        // pengembangan lokal tidak terhambat, JANGAN aktifkan di produksi.
-        $aturanCaptcha = config('captcha.disable', false)
-            ? []
-            : ['required', 'captcha'];
-
-        return [
+        // Aturan dasar yang selalu wajib ada.
+        $aturan = [
             'nomor_induk' => ['required', 'string', 'max:100'],
             'kata_sandi'  => ['required', 'string', 'min:8'],
-            'captcha'     => $aturanCaptcha,
         ];
+
+        // Tambahkan aturan captcha HANYA bila CAPTCHA_DISABLE=false (captcha aktif).
+        //
+        // Menggunakan config() — bukan env() — agar kompatibel dengan config:cache
+        // produksi (env() mengembalikan null setelah cache di-build).
+        //
+        // Kunci 'captcha' sengaja dihilangkan dari array saat tidak aktif,
+        // bukan diisi [] (kosong), agar Laravel tidak mendaftarkan field ini
+        // dalam pipeline validasi sama sekali.
+        if (! config('captcha.disable', false)) {
+            $aturan['captcha'] = ['required', 'captcha'];
+        }
+
+        return $aturan;
     }
 
     /**

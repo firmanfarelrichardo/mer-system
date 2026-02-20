@@ -101,35 +101,65 @@
         {{--
             Captcha (mews/captcha) — Disembunyikan saat CAPTCHA_DISABLE=true.
             Klik gambar untuk memperbarui kode tanpa muat ulang halaman.
+
+            Catatan implementasi:
+            • config('captcha.disable') dibaca dari config/captcha.php → env('CAPTCHA_DISABLE').
+              Menggunakan config() bukan env() langsung agar kompatibel dengan config:cache produksi.
+            • Blok ini dibungkus dalam elemen isolasi (min-w-0 + block) agar tidak
+              mengganggu flex/grid induknya saat dirender bersama field lain.
         --}}
         @unless(config('captcha.disable'))
-        <div class="space-y-1.5">
+        {{-- ── CAPTCHA FIELD ─────────────────────────────────────────────────── --}}
+        <div class="min-w-0 space-y-1.5">
             <label for="captcha"
                    class="block text-[13px] font-semibold text-slate-600">
                 Kode Keamanan
             </label>
-            <div class="overflow-hidden rounded-xl border {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }}">
+
+            {{--
+                Container captcha: satu border tunggal mengelilingi keseluruhan blok.
+                overflow-hidden + rounded-xl menjamin sudut-sudut gambar terpotong rapi
+                tanpa perlu border-radius tambahan pada elemen anak.
+            --}}
+            <div class="overflow-hidden rounded-xl border
+                        {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }}">
+
+                {{--
+                    Gambar captcha:
+                    • block  — mencegah gap baseline 3-4px yang muncul pada img inline
+                    • w-full — mengisi lebar container sepenuhnya
+                    • max-w-full — defensive: cegah overflow jika intrinsic-width > container
+                    • h-16   — tinggi tetap 64px; captcha default config 345×65 → muat presisi
+                    • object-contain — skalakan konten gambar agar muat tanpa crop/distorsi
+                    • TIDAK memakai rounded-t-xl (parent overflow-hidden sudah menangani ini)
+                    • TIDAK memakai border-b     (separator hanya dari border-t pada div input)
+                --}}
                 <img
                     id="gambar-captcha"
                     src="{{ captcha_src('default') }}"
                     alt="Kode keamanan captcha"
                     title="Klik untuk memperbarui kode"
                     onclick="this.src='{{ url('captcha/default') }}?'+Date.now()"
-                    class="h-16 w-full cursor-pointer object-contain bg-white rounded-t-xl border-b border-slate-100"
-                    style="max-width:100%;display:block;"
+                    class="block h-16 w-full max-w-full cursor-pointer object-contain bg-white"
                 >
+
+                {{--
+                    Input kode captcha — dipisahkan dari gambar oleh satu border-t tunggal.
+                    Warna border mengikuti status error agar konsisten dengan border luar.
+                --}}
                 <div class="border-t {{ $errors->has('captcha') ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50' }}">
                     <input
                         type="text"
                         id="captcha"
                         name="captcha"
                         autocomplete="off"
-                        required
                         placeholder="Ketik kode di atas…"
-                        class="w-full bg-transparent px-4 py-2.5 text-sm text-slate-800 placeholder-slate-400 outline-none"
+                        class="w-full bg-transparent px-4 py-2.5 text-sm text-slate-800
+                               placeholder-slate-400 outline-none"
                     >
                 </div>
             </div>
+
             @error('captcha')
                 <p class="flex items-center gap-1.5 text-[12px] text-red-600" role="alert">
                     <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -139,6 +169,7 @@
                 </p>
             @enderror
         </div>
+        {{-- ── /CAPTCHA FIELD ────────────────────────────────────────────────── --}}
         @endunless
 
         {{-- Tombol Masuk --}}

@@ -91,7 +91,7 @@ services:
   #   3. File public/hot dibuat oleh Vite plugin Laravel
   #   4. PHP membaca public/hot → tahu Vite dev server aktif
   #   5. Blade @vite() directive mengarahkan browser ke
-  #      localhost:5173 untuk mengambil assets
+  #      localhost:${VITE_PORT} untuk mengambil assets
   # -------------------------------------------
   vite:
     image: node:22-alpine
@@ -99,7 +99,7 @@ services:
     restart: unless-stopped
     working_dir: /var/www/html
     ports:
-      - "${VITE_PORT:-5174}:5174"
+      - "${VITE_PORT:-5173}:5173"
     volumes:
       - ../..:/var/www/html
       - vite-node-modules:/var/www/html/node_modules

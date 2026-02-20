@@ -11,14 +11,12 @@ export default defineConfig({
         tailwindcss(),
     ],
     server: {
-        // host 0.0.0.0: agar Vite listen di semua interface (wajib di Docker)
-        host: '0.0.0.0',
-        port: 5174,
+        host: '0.0.0.0', // Mengizinkan akses dari luar container
+        port: 5173,
+        strictPort: true, // Memaksa Vite tetap di port 5173
         hmr: {
-            // HMR WebSocket harus mengarah ke localhost
-            // karena browser mengakses dari host machine, bukan dari dalam container
-            host: 'localhost',
-            port: 5174,
+            host: 'localhost', // Browser Windows/WSL mengakses via localhost
+            port: 5173,        // Samakan dengan server.port agar konsisten
         },
         watch: {
             // Gunakan polling di Docker karena inotify tidak bekerja

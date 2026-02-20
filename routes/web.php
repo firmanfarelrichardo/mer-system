@@ -99,6 +99,12 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/laporan/buat', [LaporanController::class, 'buat'])
         ->name('laporan.buat');
 
+    Route::post('/laporan', [LaporanController::class, 'simpan'])
+        ->name('laporan.simpan');
+
+    Route::patch('/laporan/{laporan}/tandai-dibaca', [LaporanController::class, 'tandaiDibaca'])
+        ->name('laporan.tandai-dibaca');
+
     Route::get('/laporan/{laporan}', [LaporanController::class, 'tampil'])
         ->name('laporan.tampil');
 

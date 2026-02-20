@@ -31,12 +31,22 @@
         ->implode('');
 @endphp
 
-<header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-3 shadow-sm">
+<header class="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-sm sm:px-6">
 
-    {{-- Sisi kiri: Nama sistem --}}
+    {{-- Sisi kiri: Hamburger + Nama sistem --}}
     <div class="flex items-center gap-3">
+        {{-- Tombol hamburger — hanya tampil di mobile --}}
+        <button type="button"
+                class="inline-flex items-center justify-center rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
+                onclick="toggleSidebar()"
+                aria-label="Toggle menu">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+            </svg>
+        </button>
+
         {{-- Ikon rumah sakit kecil (SVG inline agar tidak perlu library ikon) --}}
-        <svg class="h-6 w-6 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none"
+        <svg class="hidden h-6 w-6 text-brand sm:block" xmlns="http://www.w3.org/2000/svg" fill="none"
              viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332
