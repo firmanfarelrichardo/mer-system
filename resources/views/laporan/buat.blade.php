@@ -34,10 +34,10 @@
 
         // Fase kesalahan obat (medication error phase).
         $faseKesalahan = [
-            'prescribing'    => 'Kesalahan Peresepan (Prescribing Error)',
-            'transcribing'   => 'Kesalahan Penerjemahan Resep (Transcribing Error)',
-            'dispensing'     => 'Kesalahan Menyiapkan/Meracik Obat (Dispensing Error)',
-            'administration' => 'Kesalahan Penyerahan Obat kepada Pasien (Administration Error)',
+            'prescribing'    => 'Tahap Peresepan (Prescribing Error)',
+            'transcribing'   => 'Tahap Penerjemahan Resep (Transcribing Error)',
+            'dispensing'     => 'Tahap Menyiapkan/Peracikan Obat (Dispensing Error)',
+            'administration' => 'Tahap Penyerahan Obat kepada Pasien (Administration Error)',
         ];
 
         // Jenis kesalahan (detail).
@@ -295,15 +295,15 @@
         <div id="step-2" class="step-panel hidden">
             <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian B — Karakteristik Insiden</h2>
-                <p class="mb-6 text-sm text-slate-400">Detail fase, jenis kesalahan, cedera, faktor penyebab, dan intervensi pasien</p>
+                <p class="mb-6 text-sm text-slate-400">Detail Tahapan, jenis kesalahan, cedera, faktor penyebab, dan intervensi pasien</p>
 
                 {{-- 1. Fase Kesalahan Obat (dipindahkan ke posisi pertama) --}}
                 <fieldset class="mb-6">
                     <legend class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">1</span>
-                        Fase Kesalahan Obat <span class="text-red-500">*</span>
+                        Tahap Kesalahan Pengobatan <span class="text-red-500">*</span>
                     </legend>
-                    <p class="mb-3 text-xs text-slate-400">Pilih fase dimana kesalahan obat terjadi</p>
+                    <p class="mb-3 text-xs text-slate-400">Pilih tahapan kesalahan pengobatan</p>
                     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                         @foreach ($faseKesalahan as $kode => $label)
                             <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-4 transition-all
