@@ -7,6 +7,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SimpanLaporanRequest;
 use App\Models\DetailPasien;
 use App\Models\Insiden;
+use App\Models\Peran;
+use App\Models\TindakLanjut;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,37 +18,46 @@ use Illuminate\View\View;
 /**
  * LaporanController — menangani CRUD laporan insiden medication error.
  *
+ * Prinsip DRY (Don't Repeat Yourself):
+ *   - SATU controller untuk SEMUA peran (Perawat, Karu, Komite, Direktur).
+ *   - Data di-filter secara otomatis di level database menggunakan
+ *     local scope `scopeUntukPeran()` pada model Insiden.
+ *   - Otorisasi aksi (tindak lanjut, ubah status) melalui InsidenPolicy.
+ *   - View yang sama merender UI secara kondisional via @can / @if.
+ *
  * Fitur:
- *   - Riwayat laporan dengan pagination, filter, & pencarian
- *   - Formulir multi-step untuk membuat laporan baru
- *   - Simpan laporan ke database (pelaporan.insiden + pelaporan.detail_pasien)
- *   - Tandai laporan sudah dibaca
- *   - Tampilkan detail laporan
+ *   1. Index     — daftar laporan + statistik (scoped per peran)
+ *   2. Buat      — formulir multi-step
+ *   3. Simpan    — simpan laporan baru
+ *   4. Tampil    — detail laporan + histori tindak lanjut
+ *   5. TindakLanjut — ubah status + catatan (Karu & Komite only)
+ *   6. Tandai Dibaca — tandai laporan sudah dibaca
  */
 class LaporanController extends Controller
 {
+    /* ==================================================================
+     | INDEX — Daftar Laporan & Statistik
+     | =================================================================*/
+
     /**
-     * Tampilkan halaman riwayat / daftar laporan insiden.
+     * Tampilkan halaman daftar laporan insiden.
      *
-     * Mendukung:
-     *   - Pencarian berdasarkan nama pasien / nomor laporan
-     *   - Filter berdasarkan status & tipe insiden
-     *   - Pagination (10 per halaman)
+     * Query SELALU melewati scopeUntukPeran() sehingga:
+     *   - Perawat    → hanya laporan miliknya
+     *   - Karu       → hanya laporan dari unit kerjanya
+     *   - Komite     → semua laporan tenant
+     *   - Direktur   → semua laporan tenant (read-only)
      */
     public function index(Request $permintaan): View
     {
         $pengguna = Auth::user();
 
-        $query = Insiden::with('detailPasien')
-            ->where('tenant_id', $pengguna->tenant_id)
+        // ── Query utama (scoped per peran) ──────────────────────────
+        $query = Insiden::with(['detailPasien', 'unitKerja'])
+            ->untukPeran($pengguna)
             ->latest('tgl_lapor');
 
-        // Perawat hanya melihat laporan mereka sendiri.
-        if ($pengguna->memilikiPeran('Perawat') && ! $pengguna->memilikiPeran('Kepala Ruangan') && ! $pengguna->memilikiPeran('Komite') && ! $pengguna->memilikiPeran('Admin')) {
-            $query->where('pelapor_id', $pengguna->id);
-        }
-
-        // Filter: pencarian.
+        // Filter: pencarian nama pasien atau nomor laporan.
         if ($cari = $permintaan->input('cari')) {
             $query->where(function ($q) use ($cari) {
                 $q->where('nomor_laporan', 'ilike', "%{$cari}%")
@@ -54,37 +65,34 @@ class LaporanController extends Controller
             });
         }
 
-        // Filter: status.
+        // Filter: status insiden.
         if ($status = $permintaan->input('status')) {
             $query->where('status_saat_ini', $status);
         }
 
-        // Filter: tipe insiden.
+        // Filter: tipe insiden (KPC/KNC/KTC/KTD/Sentinel).
         if ($tipe = $permintaan->input('tipe')) {
             $query->where('tipe_insiden', $tipe);
         }
 
         $daftarLaporan = $query->paginate(10)->withQueryString();
 
-        // Statistik ringkasan.
-        $baseQuery = Insiden::where('tenant_id', $pengguna->tenant_id);
-        if ($pengguna->memilikiPeran('Perawat') && ! $pengguna->memilikiPeran('Kepala Ruangan') && ! $pengguna->memilikiPeran('Komite') && ! $pengguna->memilikiPeran('Admin')) {
-            $baseQuery->where('pelapor_id', $pengguna->id);
-        }
+        // ── Statistik ringkasan (juga scoped per peran) ─────────────
+        $baseQuery = Insiden::untukPeran($pengguna);
 
         $statistik = [
-            'total'          => (clone $baseQuery)->count(),
-            'kasus_baru'     => (clone $baseQuery)->where('status_saat_ini', 'kasus_baru')->count(),
+            'total'           => (clone $baseQuery)->count(),
+            'kasus_baru'      => (clone $baseQuery)->where('status_saat_ini', 'kasus_baru')->count(),
             'sedang_diproses' => (clone $baseQuery)->whereIn('status_saat_ini', ['investigasi', 'tindak_lanjut'])->count(),
-            'selesai'        => (clone $baseQuery)->where('status_saat_ini', 'selesai')->count(),
+            'selesai'         => (clone $baseQuery)->where('status_saat_ini', 'selesai')->count(),
         ];
 
-        return view('laporan.index', [
-            'daftarLaporan' => $daftarLaporan,
-            'statistik'     => $statistik,
-            'pengguna'      => $pengguna,
-        ]);
+        return view('laporan.index', compact('daftarLaporan', 'statistik', 'pengguna'));
     }
+
+    /* ==================================================================
+     | BUAT — Formulir Pembuatan Laporan
+     | =================================================================*/
 
     /**
      * Tampilkan formulir pembuatan laporan insiden baru.
@@ -94,11 +102,15 @@ class LaporanController extends Controller
         return view('laporan.buat');
     }
 
+    /* ==================================================================
+     | SIMPAN — Proses & Simpan Laporan Baru
+     | =================================================================*/
+
     /**
      * Simpan laporan insiden baru ke database.
      *
-     * Menerima data dari formulir 4-tahap wizard, menyimpan ke
-     * tabel pelaporan.insiden dan pelaporan.detail_pasien dalam transaksi.
+     * Menyimpan ke tabel pelaporan.insiden dan pelaporan.detail_pasien
+     * dalam satu transaksi database.
      */
     public function simpan(SimpanLaporanRequest $permintaan): RedirectResponse
     {
@@ -167,27 +179,107 @@ class LaporanController extends Controller
             ->with('sukses', "Laporan insiden {$insiden->nomor_laporan} berhasil dikirim.");
     }
 
+    /* ==================================================================
+     | TAMPIL — Detail Laporan + Histori Tindak Lanjut
+     | =================================================================*/
+
+    /**
+     * Tampilkan detail satu laporan insiden.
+     *
+     * Memuat relasi detailPasien, pelapor, unitKerja, dan tindakLanjut
+     * agar view dapat menampilkan data lengkap termasuk histori tindak lanjut.
+     */
+    public function tampil(Request $permintaan, string $laporan): View
+    {
+        $pengguna = Auth::user();
+
+        $insiden = Insiden::with([
+                'detailPasien',
+                'pelapor',
+                'unitKerja',
+                'tindakLanjut.pengguna',
+            ])
+            ->untukPeran($pengguna)
+            ->findOrFail($laporan);
+
+        // Otomatis tandai sudah dibaca jika Karu/Komite/Admin membuka.
+        if (! $insiden->sudah_dibaca && (
+            $pengguna->memilikiPeran(Peran::KEPALA_RUANGAN)
+            || $pengguna->memilikiPeran(Peran::KOMITE)
+            || $pengguna->memilikiPeran(Peran::ADMIN)
+        )) {
+            $insiden->update(['sudah_dibaca' => true]);
+        }
+
+        return view('laporan.tampil', compact('insiden', 'pengguna'));
+    }
+
+    /* ==================================================================
+     | TINDAK LANJUT — Ubah Status + Catatan (Karu & Komite Only)
+     | =================================================================*/
+
+    /**
+     * Proses tindak lanjut: ubah status insiden dan simpan catatan.
+     *
+     * Dilindungi oleh InsidenPolicy@tindakLanjut sehingga Direktur
+     * dan Perawat TIDAK dapat mengakses endpoint ini meskipun
+     * mencoba bypass UI.
+     */
+    public function tindakLanjut(Request $permintaan, string $laporan): RedirectResponse
+    {
+        $insiden  = Insiden::findOrFail($laporan);
+        $pengguna = Auth::user();
+
+        // Otorisasi via Policy — menolak Direktur & Perawat.
+        $this->authorize('tindakLanjut', $insiden);
+
+        // Validasi input.
+        $data = $permintaan->validate([
+            'status_baru' => ['required', 'in:investigasi,tindak_lanjut,selesai'],
+            'catatan'     => ['required', 'string', 'min:10', 'max:2000'],
+        ], [
+            'status_baru.required' => 'Status baru wajib dipilih.',
+            'status_baru.in'       => 'Status yang dipilih tidak valid.',
+            'catatan.required'     => 'Catatan tindak lanjut wajib diisi.',
+            'catatan.min'          => 'Catatan minimal 10 karakter.',
+            'catatan.max'          => 'Catatan maksimal 2000 karakter.',
+        ]);
+
+        DB::transaction(function () use ($insiden, $pengguna, $data) {
+            // Simpan catatan tindak lanjut.
+            TindakLanjut::create([
+                'insiden_id'  => $insiden->id,
+                'pengguna_id' => $pengguna->id,
+                'status_baru' => $data['status_baru'],
+                'catatan'     => $data['catatan'],
+            ]);
+
+            // Perbarui status insiden.
+            $insiden->update([
+                'status_saat_ini' => $data['status_baru'],
+                'sudah_dibaca'    => true,
+            ]);
+        });
+
+        return back()->with('sukses', 'Tindak lanjut berhasil disimpan.');
+    }
+
+    /* ==================================================================
+     | TANDAI DIBACA
+     | =================================================================*/
+
     /**
      * Tandai laporan sebagai sudah dibaca.
      */
     public function tandaiDibaca(Request $permintaan, string $laporan): RedirectResponse
     {
         $insiden = Insiden::findOrFail($laporan);
+
+        // Otorisasi via Policy.
+        $this->authorize('tandaiDibaca', $insiden);
+
         $insiden->update(['sudah_dibaca' => true]);
 
         return back()->with('sukses', 'Laporan ditandai sudah dibaca.');
-    }
-
-    /**
-     * Tampilkan detail satu laporan insiden.
-     */
-    public function tampil(Request $permintaan, string $laporan): View
-    {
-        $insiden = Insiden::with('detailPasien', 'pelapor')
-            ->findOrFail($laporan);
-
-        return view('laporan.tampil', [
-            'insiden' => $insiden,
-        ]);
     }
 }

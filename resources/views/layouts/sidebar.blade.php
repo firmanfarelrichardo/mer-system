@@ -56,20 +56,25 @@
         @endforeach
 
         {{-- === Menu Pelaporan (Perawat / Kepala Ruangan / Komite) === --}}
+        {{-- Tiap item mem-filter dirinya sendiri via kunci 'peran'. --}}
         @if ($punyaPeran(['Perawat', 'Kepala Ruangan', 'Komite']))
             <div class="my-3 border-t border-white/10"></div>
             <p class="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
                 Pelaporan
             </p>
             @foreach ($menuPelaporan as $item)
-                @include('layouts.partials.sidebar-item', $item)
+                @if (empty($item['peran']) || $punyaPeran($item['peran']))
+                    @include('layouts.partials.sidebar-item', $item)
+                @endif
             @endforeach
         @endif
 
-        {{-- === Notifikasi (semua peran) === --}}
-        @foreach ($menuNotifikasi as $item)
-            @include('layouts.partials.sidebar-item', $item)
-        @endforeach
+        {{-- === Notifikasi (Perawat, Kepala Ruangan, Komite — bukan Direktur) === --}}
+        @unless ($punyaPeran(['Direktur']))
+            @foreach ($menuNotifikasi as $item)
+                @include('layouts.partials.sidebar-item', $item)
+            @endforeach
+        @endunless
 
         {{-- === Menu Admin === --}}
         @if ($punyaPeran(['Admin']))
@@ -82,11 +87,11 @@
             @endforeach
         @endif
 
-        {{-- === Menu Direktur === --}}
+        {{-- === Menu Direktur (Laporan + Statistik, read-only) === --}}
         @if ($punyaPeran(['Direktur']))
             <div class="my-3 border-t border-white/10"></div>
             <p class="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
-                Eksekutif
+                Laporan
             </p>
             @foreach ($menuDirektur as $item)
                 @include('layouts.partials.sidebar-item', $item)

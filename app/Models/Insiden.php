@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -105,6 +107,55 @@ class Insiden extends Model
     public function detailPasien(): HasOne
     {
         return $this->hasOne(DetailPasien::class, 'insiden_id');
+    }
+
+    /**
+     * Riwayat tindak lanjut / umpan balik dari Karu/Komite.
+     */
+    public function tindakLanjut(): HasMany
+    {
+        return $this->hasMany(TindakLanjut::class, 'insiden_id')
+            ->latest('created_at');
+    }
+
+    /* ------------------------------------------------------------------
+     | Local Scopes — Filter data berdasarkan peran pengguna
+     | -----------------------------------------------------------------
+     | Digunakan oleh controller agar query SELALU dibatasi sesuai peran.
+     | Karu   → hanya insiden dari unit kerja miliknya.
+     | Komite → semua insiden tenant.
+     | Direktur → semua insiden tenant (read-only, dibatasi di Policy).
+     | Perawat → hanya insiden yang ia buat sendiri.
+     | ----------------------------------------------------------------*/
+
+    /**
+     * Scope: filter insiden berdasarkan peran pengguna yang terautentikasi.
+     *
+     * Pendekatan: cek peran dari hierarki tertinggi ke terendah.
+     * Komite & Direktur melihat semua data tenant.
+     * Karu hanya melihat data dari unit kerjanya.
+     * Perawat hanya melihat laporan miliknya sendiri.
+     */
+    public function scopeUntukPeran(Builder $query, Pengguna $pengguna): Builder
+    {
+        // Selalu batasi ke tenant pengguna (multi-tenant safety).
+        $query->where($this->qualifyColumn('tenant_id'), $pengguna->tenant_id);
+
+        // Komite & Direktur: lihat SEMUA laporan dalam tenant.
+        if ($pengguna->memilikiPeran(Peran::KOMITE) || $pengguna->memilikiPeran(Peran::DIREKTUR)) {
+            return $query;
+        }
+
+        // Kepala Ruangan: hanya insiden dari unit kerja yang sama.
+        if ($pengguna->memilikiPeran(Peran::KEPALA_RUANGAN)) {
+            return $query->where(function (Builder $q) use ($pengguna) {
+                $q->where($this->qualifyColumn('unit_id'), $pengguna->unit_id)
+                  ->orWhere($this->qualifyColumn('nama_unit_kerja'), $pengguna->unitKerja?->nama_unit);
+            });
+        }
+
+        // Perawat (default): hanya insiden yang ia buat.
+        return $query->where($this->qualifyColumn('pelapor_id'), $pengguna->id);
     }
 
     /* ------------------------------------------------------------------

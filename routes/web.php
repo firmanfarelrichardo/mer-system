@@ -105,6 +105,9 @@ Route::middleware('auth')->group(function (): void {
     Route::patch('/laporan/{laporan}/tandai-dibaca', [LaporanController::class, 'tandaiDibaca'])
         ->name('laporan.tandai-dibaca');
 
+    Route::patch('/laporan/{laporan}/tindak-lanjut', [LaporanController::class, 'tindakLanjut'])
+        ->name('laporan.tindak-lanjut');
+
     Route::get('/laporan/{laporan}', [LaporanController::class, 'tampil'])
         ->name('laporan.tampil');
 

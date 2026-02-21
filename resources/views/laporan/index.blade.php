@@ -181,6 +181,9 @@
                     <tr>
                         <th class="whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:px-5">ID Insiden</th>
                         <th class="whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:px-5">Pasien</th>
+                        @if (! $pengguna->memilikiPeran('Perawat'))
+                            <th class="hidden whitespace-nowrap px-4 py-3 font-semibold text-slate-500 md:table-cell sm:px-5">Unit Kerja</th>
+                        @endif
                         <th class="hidden whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:table-cell sm:px-5">Tanggal</th>
                         <th class="whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:px-5">Jenis</th>
                         <th class="whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:px-5">Status</th>
@@ -206,6 +209,13 @@
                             <td class="whitespace-nowrap px-4 py-3.5 font-medium text-slate-800 sm:px-5">
                                 {{ $laporan->detailPasien?->nama_pasien ?? '—' }}
                             </td>
+
+                            {{-- Unit Kerja (hanya untuk peran manajemen) --}}
+                            @if (! $pengguna->memilikiPeran('Perawat'))
+                                <td class="hidden whitespace-nowrap px-4 py-3.5 text-slate-500 md:table-cell sm:px-5">
+                                    {{ $laporan->nama_unit_kerja ?? $laporan->unitKerja?->nama_unit ?? '—' }}
+                                </td>
+                            @endif
 
                             {{-- Tanggal kejadian --}}
                             <td class="hidden whitespace-nowrap px-4 py-3.5 text-slate-500 sm:table-cell sm:px-5">
@@ -284,7 +294,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-5 py-12 text-center">
+                            <td colspan="{{ $pengguna->memilikiPeran('Perawat') ? 6 : 7 }}" class="px-5 py-12 text-center">
                                 <div class="flex flex-col items-center gap-2">
                                     <svg class="h-10 w-10 text-slate-300" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round"
