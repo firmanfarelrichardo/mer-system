@@ -13,20 +13,27 @@ return [
         't', 'u', 'v', 'w', 'x', 'y', 'z', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
 
     /*
-     | Points directly to vendor package assets — no manual asset copying needed.
-     | base_path() resolves to the Laravel project root at runtime.
+     | Resolved from the mews/captcha vendor package so no manual asset
+     | copying is required. These paths are absolute and container-safe.
      */
     'fontsDirectory' => base_path('vendor/mews/captcha/assets/fonts'),
     'bgsDirectory'   => base_path('vendor/mews/captcha/assets/backgrounds'),
-
     'default' => [
-        'length'  => 6,
-        'width'   => 345,
-        'height'  => 65,
-        'quality' => 90,
-        'math'    => false,
-        'expire'  => 60,
-        'encrypt' => false,
+        'length'     => 4,
+        'width'      => 280,
+        'height'     => 70,
+        'quality'    => 100,
+        'math'       => false,
+        'expire'     => 60,
+        'encrypt'    => false,
+        'angle'      => 8,
+        'lines'      => 2,
+        'bgImage'    => false,
+        'bgColor'    => '#eef2ff',
+        'fontColors' => ['#1a237e', '#b71c1c', '#1b5e20', '#e65100', '#4a148c', '#006064'],
+        'sharpen'    => 15,
+        'blur'       => 0,
+        'contrast'   => -5,
     ],
     'flat' => [
         'length'     => 6,

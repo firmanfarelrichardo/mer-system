@@ -116,46 +116,33 @@
                 Kode Keamanan
             </label>
 
-            {{--
-                Container captcha: satu border tunggal mengelilingi keseluruhan blok.
-                overflow-hidden + rounded-xl menjamin sudut-sudut gambar terpotong rapi
-                tanpa perlu border-radius tambahan pada elemen anak.
-            --}}
-            <div class="overflow-hidden rounded-xl border
+            {{-- Side-by-side: gambar kiri | input kanan --}}
+            <div class="flex overflow-hidden rounded-xl border
                         {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }}">
 
-                {{--
-                    Gambar captcha:
-                    • block  — mencegah gap baseline 3-4px yang muncul pada img inline
-                    • w-full — mengisi lebar container sepenuhnya
-                    • max-w-full — defensive: cegah overflow jika intrinsic-width > container
-                    • h-16   — tinggi tetap 64px; captcha default config 345×65 → muat presisi
-                    • object-contain — skalakan konten gambar agar muat tanpa crop/distorsi
-                    • TIDAK memakai rounded-t-xl (parent overflow-hidden sudah menangani ini)
-                    • TIDAK memakai border-b     (separator hanya dari border-t pada div input)
-                --}}
-                <img
-                    id="gambar-captcha"
-                    src="{{ captcha_src('default') }}"
-                    alt="Kode keamanan captcha"
-                    title="Klik untuk memperbarui kode"
-                    onclick="this.src='{{ url('captcha/default') }}?'+Date.now()"
-                    class="block h-16 w-full max-w-full cursor-pointer object-contain bg-white"
-                >
+                {{-- Kiri: gambar captcha --}}
+                <div class="flex-shrink-0 w-[52%] border-r {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }}">
+                    <img
+                        id="gambar-captcha"
+                        src="{{ captcha_src('default') }}"
+                        alt="Kode keamanan captcha"
+                        title="Klik untuk memperbarui kode"
+                        onclick="this.src='{{ url('captcha/default') }}?'+Date.now()"
+                        class="block h-full w-full cursor-pointer object-contain bg-white"
+                        style="min-height:52px"
+                    >
+                </div>
 
-                {{--
-                    Input kode captcha — dipisahkan dari gambar oleh satu border-t tunggal.
-                    Warna border mengikuti status error agar konsisten dengan border luar.
-                --}}
-                <div class="border-t {{ $errors->has('captcha') ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50' }}">
+                {{-- Kanan: input kode --}}
+                <div class="flex flex-1 items-center {{ $errors->has('captcha') ? 'bg-red-50' : 'bg-slate-50' }}">
                     <input
                         type="text"
                         id="captcha"
                         name="captcha"
                         autocomplete="off"
-                        placeholder="Ketik kode di atas…"
-                        class="w-full bg-transparent px-4 py-2.5 text-sm text-slate-800
-                               placeholder-slate-400 outline-none"
+                        placeholder="Ketik kode…"
+                        class="w-full bg-transparent px-3 py-3 text-sm text-slate-800
+                               placeholder-slate-400 outline-none text-center tracking-widest font-semibold"
                     >
                 </div>
             </div>

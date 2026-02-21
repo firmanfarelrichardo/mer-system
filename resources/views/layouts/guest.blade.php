@@ -71,7 +71,7 @@
                         class="mx-auto mb-4 h-24 w-auto rounded-xl shadow-lg ring-2 ring-white/25"
                     >
                     <h1 class="text-[17px] font-bold leading-tight text-white">
-                        Sistem Pelaporan Insiden Kesalahan Obat
+                        Sistem Pelaporan Insiden Kesalahan Pengobatan
                     </h1>
                     <p class="mt-1 text-[13px] text-primary-200">
                         Medication Errors Report
@@ -101,23 +101,29 @@
                 </div>
 
                 {{-- ========== DOSEN PENELITI ========== --}}
-                <div class="border-t border-slate-100 bg-slate-50 px-8 py-5">
+                <div class="border-t border-slate-100 bg-slate-50 px-8 pt-5 pb-5">
                     <p class="mb-3 text-center text-[10px] font-semibold uppercase tracking-widest text-slate-400">
                         Tim Peneliti
                     </p>
-                    <ul class="space-y-2.5">
+                    <ul class="space-y-2">
                         @foreach ([
-                            ['nama' => 'Bayu Anggileo Pramesona, S.Kep, Ns, MMR, PhD, FISQua', 'id' => 'NIDN: 0002088607'],
-                            ['nama' => 'Prof. Dr. Dyah Wulan Sumekar R. Wardani, SKM, M.Kes',  'id' => 'NIDN: 0028067201'],
-                            ['nama' => 'apt. Dwi Aulia Ramdini, S.Farm., M.Farm',              'id' => 'NIDN: 0027039202'],
-                            ['nama' => 'Prof. Emeritus Surasak Taneepanichskul, MD',            'id' => 'Scopus ID: 56204069300'],
-                        ] as $peneliti)
+                            'Bayu Anggileo Pramesona, S.Kep, Ns, MMR, PhD, FISQua',
+                            'Prof. Dr. Dyah Wulan Sumekar R. Wardani, SKM, M.Kes',
+                            'apt. Dwi Aulia Ramdini, S.Farm., M.Farm',
+                            'Prof. Emeritus Surasak Taneepanichskul, MD',
+                        ] as $nama)
                             <li class="text-center">
-                                <p class="text-[12px] font-semibold leading-snug text-slate-700">{{ $peneliti['nama'] }}</p>
-                                <p class="text-[11px] text-slate-400">{{ $peneliti['id'] }}</p>
+                                <p class="text-[12px] font-semibold leading-snug text-slate-700">{{ $nama }}</p>
                             </li>
                         @endforeach
                     </ul>
+                </div>
+
+                {{-- ========== KREDIT PENDANAAN ========== --}}
+                <div class="bg-gradient-to-r from-primary-800 to-primary-950 px-8 py-3 flex items-center justify-center">
+                    <p class="text-[11px] font-medium tracking-wide text-primary-100">
+                        Dibiayai oleh&nbsp;<span class="font-bold text-white">HETI Project Unila</span>
+                    </p>
                 </div>
 
             </div>

@@ -18,14 +18,12 @@
     {{-- Sisi kiri: Hak cipta --}}
     <span>
         &copy; {{ date('Y') }}
-        <strong class="text-slate-700">RSU Mayjend. H.M. Ryacudu.</strong>
+        <strong class="text-slate-700">RSUD H.M. Ryacudu.</strong>
         All Rights Reserved.
     </span>
 
     {{-- Sisi kanan: Kredit --}}
     <span class="flex items-center gap-1.5">
-        <span class="font-bold text-slate-700">Dibiayai oleh HETI Project Unila</span>
-        <span class="inline-block h-1 w-1 rounded-full bg-slate-300"></span>
         <!-- Designed with by
         <a href="https://github.com/firmanfarelrichardo"
            target="_blank" rel="noopener noreferrer"
