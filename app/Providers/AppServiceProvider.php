@@ -159,11 +159,18 @@ class AppServiceProvider extends ServiceProvider
                     'ikon'   => 'M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z M6 6h.008v.008H6V6Z',
                 ],
                 [
-                    'label'  => 'Log Aktivitas',
-                    'route'  => 'admin.log-aktivitas.index',
-                    'aktif'  => ['admin.log-aktivitas.*'],
+                    'label'  => 'Log Pengguna',
+                    'route'  => 'admin.log-aktivitas.pengguna',
+                    'aktif'  => ['admin.log-aktivitas.pengguna'],
                     'peran'  => ['Admin'],
                     'ikon'   => 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+                ],
+                [
+                    'label'  => 'Log Admin',
+                    'route'  => 'admin.log-aktivitas.admin',
+                    'aktif'  => ['admin.log-aktivitas.admin'],
+                    'peran'  => ['Admin'],
+                    'ikon'   => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
                 ],
             ];
 
