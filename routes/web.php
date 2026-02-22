@@ -3,7 +3,10 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\KategoriController;
+use App\Http\Controllers\Admin\LogAktivitasController;
 use App\Http\Controllers\Admin\PenggunaController;
+use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\NotifikasiController;
@@ -86,6 +89,51 @@ Route::middleware('auth')->group(function (): void {
 
         Route::patch('/pengguna/{pengguna}/reset-sandi', [PenggunaController::class, 'resetKataSandi'])
             ->name('admin.pengguna.reset-sandi');
+
+        // ----- Master Unit Kerja -----
+        Route::get('/unit-kerja', [UnitKerjaController::class, 'index'])
+            ->name('admin.unit-kerja.index');
+
+        Route::get('/unit-kerja/buat', [UnitKerjaController::class, 'buat'])
+            ->name('admin.unit-kerja.buat');
+
+        Route::post('/unit-kerja', [UnitKerjaController::class, 'simpan'])
+            ->name('admin.unit-kerja.simpan');
+
+        Route::get('/unit-kerja/{unit_kerja}/edit', [UnitKerjaController::class, 'edit'])
+            ->name('admin.unit-kerja.edit');
+
+        Route::put('/unit-kerja/{unit_kerja}', [UnitKerjaController::class, 'perbarui'])
+            ->name('admin.unit-kerja.perbarui');
+
+        Route::delete('/unit-kerja/{unit_kerja}', [UnitKerjaController::class, 'hapus'])
+            ->name('admin.unit-kerja.hapus');
+
+        // ----- Master Kategori Insiden -----
+        Route::get('/kategori', [KategoriController::class, 'index'])
+            ->name('admin.kategori.index');
+
+        Route::get('/kategori/buat', [KategoriController::class, 'buat'])
+            ->name('admin.kategori.buat');
+
+        Route::post('/kategori', [KategoriController::class, 'simpan'])
+            ->name('admin.kategori.simpan');
+
+        Route::get('/kategori/{kategori}/edit', [KategoriController::class, 'edit'])
+            ->name('admin.kategori.edit');
+
+        Route::put('/kategori/{kategori}', [KategoriController::class, 'perbarui'])
+            ->name('admin.kategori.perbarui');
+
+        Route::delete('/kategori/{kategori}', [KategoriController::class, 'hapus'])
+            ->name('admin.kategori.hapus');
+
+        // ----- Log Aktivitas -----
+        Route::get('/log-aktivitas', [LogAktivitasController::class, 'index'])
+            ->name('admin.log-aktivitas.index');
+
+        Route::get('/log-aktivitas/{pengguna}', [LogAktivitasController::class, 'detail'])
+            ->name('admin.log-aktivitas.detail');
     });
 
     Route::get('/direktur/dasbor', fn () => view('dashboard'))
