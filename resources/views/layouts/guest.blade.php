@@ -63,8 +63,8 @@
             {{-- ========== KARTU LOGIN ========== --}}
             <div class="w-full max-w-[420px] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
 
-                {{-- Header dengan gradien brand --}}
-                <div class="bg-gradient-to-br from-primary-800 to-primary-950 px-8 pb-6 pt-8 text-center">
+                {{-- Header dengan gradien brand — dimulai dari warna utama #3AE3DC --}}
+                <div class="bg-gradient-to-br from-primary-400 to-primary-800 px-8 pb-6 pt-8 text-center">
                     <img
                         src="{{ asset('images/icon-mer_system.jpg') }}"
                         alt="Logo Sistem MER"
@@ -120,7 +120,7 @@
                 </div>
 
                 {{-- ========== KREDIT PENDANAAN ========== --}}
-                <div class="bg-gradient-to-r from-primary-800 to-primary-950 px-8 py-3 flex items-center justify-center">
+                <div class="bg-gradient-to-r from-primary-600 to-primary-800 px-8 py-3 flex items-center justify-center">
                     <p class="text-[11px] font-medium tracking-wide text-primary-100">
                         Dibiayai oleh&nbsp;<span class="font-bold text-white">HETI Project Unila</span>
                     </p>

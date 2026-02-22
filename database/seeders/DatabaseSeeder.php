@@ -20,9 +20,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            OrganisasiSeeder::class,  // 1. Tenant (required FK for all below)
-            PeranSeeder::class,        // 2. Roles  (required FK for user-role pivot)
-            PenggunaSeeder::class,     // 3. Users + pivot assignments
+            OrganisasiSeeder::class, // 1. Tenant (required FK for all below)
+            PeranSeeder::class,      // 2. Roles  (required FK for user-role pivot)
+            PenggunaSeeder::class,   // 3. Users + pivot assignments
+            InsidenSeeder::class,    // 4. Demo insiden — 100 records (idempotent)
         ]);
     }
 }
