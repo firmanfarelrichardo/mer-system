@@ -2,14 +2,34 @@
 |--------------------------------------------------------------------------
 | Log Aktivitas (admin/log-aktivitas/index.blade.php)
 |--------------------------------------------------------------------------
-| Dashboard audit trail — menampilkan semua log aktivitas dengan filter
-| berdasarkan aksi, pengguna, dan rentang tanggal.
+| View reusable — digunakan oleh 2 route:
+|   • admin.log-aktivitas.pengguna  → $tipePeran = 'pengguna'
+|   • admin.log-aktivitas.admin     → $tipePeran = 'admin'
+|
+| Variabel dari Controller:
+|   $daftarLog  — LengthAwarePaginator (eager: pengguna.peran withTrashed)
+|   $filter     — ['dari_tanggal', 'sampai_tanggal', 'cari']
+|   $tipePeran  — 'admin' | 'pengguna'
 |--------------------------------------------------------------------------
 --}}
 
 @extends('layouts.app')
 
-@section('judul', 'Log Aktivitas — Sistem MER')
+@php
+    $isAdmin   = $tipePeran === 'admin';
+    $judul     = $isAdmin ? 'Log Aktivitas Admin' : 'Log Aktivitas Pengguna';
+    $subjudul  = $isAdmin
+        ? 'Rekam jejak aktivitas IT Admin di sistem.'
+        : 'Rekam jejak aktivitas seluruh pengguna non-admin.';
+    $routeName = $isAdmin ? 'admin.log-aktivitas.admin' : 'admin.log-aktivitas.pengguna';
+    $hariIni   = now()->format('Y-m-d');
+
+    // IP visibility: hanya role yang ada di config/audit.php yang boleh lihat IP penuh
+    $roleAdmin    = auth()->user()?->peran->pluck('nama_peran')->toArray() ?? [];
+    $bolehLihatIp = count(array_intersect($roleAdmin, config('audit.roles_boleh_lihat_ip', []))) > 0;
+@endphp
+
+@section('judul', $judul . ' — Sistem MER')
 
 @section('konten')
 
@@ -17,18 +37,16 @@
          HEADER
          ================================================================ --}}
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-800">Log Aktivitas</h1>
-        <p class="mt-1 text-sm text-slate-400">
-            Audit trail — rekam jejak seluruh aktivitas pengguna di sistem.
-        </p>
+        <h1 class="text-2xl font-bold text-slate-800">{{ $judul }}</h1>
+        <p class="mt-1 text-sm text-slate-400">{{ $subjudul }}</p>
     </div>
 
     {{-- ================================================================
          FILTER
          ================================================================ --}}
-    <form method="GET" action="{{ route('admin.log-aktivitas.index') }}"
+    <form method="GET" action="{{ route($routeName) }}"
           class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
 
             {{-- Pencarian --}}
             <div class="lg:col-span-2">
@@ -41,40 +59,10 @@
                         </svg>
                     </span>
                     <input type="text" id="cari" name="cari" value="{{ $filter['cari'] ?? '' }}"
-                           placeholder="Cari tabel atau nama pengguna…"
+                           placeholder="Cari aktivitas atau nama pengguna…"
                            class="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm placeholder-slate-400
                                   focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
                 </div>
-            </div>
-
-            {{-- Filter Aksi --}}
-            <div>
-                <label for="aksi" class="mb-1 block text-xs font-medium text-slate-500">Aksi</label>
-                <select id="aksi" name="aksi"
-                        class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm text-slate-700
-                               focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
-                    <option value="">Semua Aksi</option>
-                    @foreach ($daftarAksi as $aksi)
-                        <option value="{{ $aksi }}" @selected(($filter['aksi'] ?? '') === $aksi)>
-                            {{ $aksi }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- Filter Pengguna --}}
-            <div>
-                <label for="pengguna_id" class="mb-1 block text-xs font-medium text-slate-500">Pengguna</label>
-                <select id="pengguna_id" name="pengguna_id"
-                        class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm text-slate-700
-                               focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
-                    <option value="">Semua Pengguna</option>
-                    @foreach ($daftarPengguna as $pgn)
-                        <option value="{{ $pgn->id }}" @selected(($filter['pengguna_id'] ?? '') == $pgn->id)>
-                            {{ $pgn->nama_lengkap }} ({{ $pgn->nomor_induk }})
-                        </option>
-                    @endforeach
-                </select>
             </div>
 
             {{-- Dari Tanggal --}}
@@ -97,7 +85,8 @@
         </div>
 
         {{-- Tombol Filter --}}
-        <div class="mt-3 flex items-center gap-2">
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+            {{-- Terapkan Filter --}}
             <button type="submit"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2 text-xs font-semibold text-white
                            transition-colors hover:bg-brand/90">
@@ -107,7 +96,20 @@
                 </svg>
                 Terapkan Filter
             </button>
-            <a href="{{ route('admin.log-aktivitas.index') }}"
+
+            {{-- Aktivitas Hari Ini (quick-filter) --}}
+            <a href="{{ route($routeName, ['dari_tanggal' => $hariIni, 'sampai_tanggal' => $hariIni]) }}"
+               class="inline-flex items-center gap-1.5 rounded-lg border border-brand/30 bg-brand/5 px-4 py-2 text-xs font-semibold text-brand
+                      transition-colors hover:bg-brand/10">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5"/>
+                </svg>
+                Aktivitas Hari Ini
+            </a>
+
+            {{-- Reset --}}
+            <a href="{{ route($routeName) }}"
                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600
                       transition-colors hover:bg-slate-50">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -138,39 +140,52 @@
                         <tr class="border-b border-slate-100 bg-slate-50">
                             <th class="px-5 py-3 font-semibold text-slate-500">Waktu</th>
                             <th class="px-5 py-3 font-semibold text-slate-500">Pengguna</th>
-                            <th class="px-5 py-3 font-semibold text-slate-500">Aksi</th>
-                            <th class="px-5 py-3 font-semibold text-slate-500">Tabel</th>
-                            <th class="px-5 py-3 font-semibold text-slate-500">ID Data</th>
+                            <th class="px-5 py-3 font-semibold text-slate-500">Aktivitas</th>
+                            <th class="px-5 py-3 font-semibold text-slate-500">Alamat IP</th>
                             <th class="px-5 py-3 font-semibold text-slate-500">Detail</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach ($daftarLog as $log)
                             <tr class="transition-colors hover:bg-slate-50/50">
+
                                 {{-- Waktu --}}
                                 <td class="px-5 py-3 whitespace-nowrap">
-                                    <p class="text-xs font-medium text-slate-700">{{ $log->created_at->format('d M Y') }}</p>
-                                    <p class="text-xs text-slate-400">{{ $log->created_at->format('H:i:s') }}</p>
+                                    <p class="text-xs font-medium text-slate-700">
+                                        {{ $log->created_at->format('d/m/Y') }}
+                                    </p>
+                                    <p class="text-xs text-slate-400">
+                                        {{ $log->created_at->format('H:i:s') }}
+                                    </p>
                                 </td>
 
-                                {{-- Pengguna --}}
+                                {{-- Pengguna + Peran --}}
                                 <td class="px-5 py-3">
                                     @if ($log->pengguna)
-                                        <a href="{{ route('admin.log-aktivitas.detail', $log->pengguna->id) }}"
-                                           class="font-medium text-brand hover:underline">
+                                        <p class="text-sm font-medium text-slate-800">
                                             {{ $log->pengguna->nama_lengkap }}
-                                        </a>
+                                        </p>
+                                        {{-- Badge peran --}}
+                                        <div class="mt-0.5 flex flex-wrap gap-1">
+                                            @forelse ($log->pengguna->peran as $peran)
+                                                <span class="inline-block rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold text-brand">
+                                                    {{ $peran->nama_peran }}
+                                                </span>
+                                            @empty
+                                                <span class="text-[10px] italic text-slate-400">Tanpa peran</span>
+                                            @endforelse
+                                        </div>
                                         @if ($log->pengguna->trashed())
-                                            <span class="ml-1 inline-block rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
-                                                Dihapus
+                                            <span class="mt-0.5 inline-block rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">
+                                                Akun Dihapus
                                             </span>
                                         @endif
                                     @else
-                                        <span class="text-slate-400 italic">Sistem</span>
+                                        <span class="text-sm italic text-slate-400">Sistem</span>
                                     @endif
                                 </td>
 
-                                {{-- Aksi (badge berwarna) --}}
+                                {{-- Aktivitas (human-readable) --}}
                                 <td class="px-5 py-3">
                                     @php
                                         $warnaBadge = match($log->aksi) {
@@ -184,20 +199,41 @@
                                             default          => 'bg-slate-100 text-slate-600',
                                         };
                                     @endphp
-                                    <span class="inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $warnaBadge }}">
+                                    <span class="inline-block rounded-full px-2.5 py-0.5 text-[10px] font-semibold {{ $warnaBadge }}">
                                         {{ $log->aksi }}
                                     </span>
+                                    <p class="mt-1 text-xs text-slate-600">
+                                        {{ $log->deskripsi_lengkap }}
+                                    </p>
                                 </td>
 
-                                {{-- Tabel --}}
-                                <td class="px-5 py-3 font-mono text-xs text-slate-600">{{ $log->nama_tabel }}</td>
+                                {{-- Alamat IP (dengan masking jika tidak punya akses) --}}
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    @if ($log->alamat_ip)
+                                        @if ($bolehLihatIp)
+                                            <span class="font-mono text-xs text-slate-500">
+                                                {{ $log->alamat_ip }}
+                                            </span>
+                                        @else
+                                            {{-- Masking: tampilkan 2 oktet pertama saja → "125.160.x.x" --}}
+                                            @php
+                                                $bagianIp = explode('.', $log->alamat_ip);
+                                                $ipSamar  = count($bagianIp) >= 2
+                                                    ? $bagianIp[0] . '.' . $bagianIp[1] . '.x.x'
+                                                    : '—';
+                                            @endphp
+                                            <span class="font-mono text-xs text-slate-400" title="IP disamarkan">
+                                                {{ $ipSamar }}
+                                            </span>
+                                        @endif
+                                    @else
+                                        <span class="text-xs text-slate-300">—</span>
+                                    @endif
+                                </td>
 
-                                {{-- ID Data --}}
-                                <td class="px-5 py-3 font-mono text-xs text-slate-500">{{ $log->id_data ?? '—' }}</td>
-
-                                {{-- Detail (collapsible) --}}
+                                {{-- Detail (collapsible: user_agent + data_lama/baru) --}}
                                 <td class="px-5 py-3">
-                                    @if ($log->data_lama || $log->data_baru)
+                                    @if ($log->user_agent || $log->data_lama || $log->data_baru)
                                         <div x-data="{ buka: false }">
                                             <button @click="buka = !buka" type="button"
                                                     class="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-brand
@@ -209,6 +245,14 @@
                                                 Lihat
                                             </button>
                                             <div x-show="buka" x-collapse class="mt-2 max-w-md space-y-2">
+                                                @if ($log->user_agent)
+                                                    <div>
+                                                        <p class="text-[10px] font-semibold uppercase text-slate-400">Browser / Device</p>
+                                                        <p class="mt-0.5 break-all rounded bg-slate-50 p-2 text-[11px] leading-relaxed text-slate-600">
+                                                            {{ $log->user_agent }}
+                                                        </p>
+                                                    </div>
+                                                @endif
                                                 @if ($log->data_lama)
                                                     <div>
                                                         <p class="text-[10px] font-semibold uppercase text-red-400">Data Lama</p>
@@ -227,6 +271,7 @@
                                         <span class="text-xs text-slate-300">—</span>
                                     @endif
                                 </td>
+
                             </tr>
                         @endforeach
                     </tbody>
