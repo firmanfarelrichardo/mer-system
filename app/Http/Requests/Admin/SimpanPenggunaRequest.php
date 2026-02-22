@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Pengguna;
+use App\Models\Peran;
+use App\Models\UnitKerja;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,21 +31,21 @@ class SimpanPenggunaRequest extends FormRequest
             'nama_lengkap' => ['required', 'string', 'max:255'],
             'nomor_induk'  => [
                 'required', 'string', 'max:100',
-                Rule::unique('akun.pengguna', 'nomor_induk')
+                Rule::unique(Pengguna::class, 'nomor_induk')
                     ->where('tenant_id', $tenantId),
             ],
             'email' => [
                 'required', 'email', 'max:255',
-                Rule::unique('akun.pengguna', 'email')
+                Rule::unique(Pengguna::class, 'email')
                     ->where('tenant_id', $tenantId),
             ],
             'nomor_hp'    => ['required', 'string', 'max:20'],
             'alamat'      => ['nullable', 'string', 'max:255'],
-            'unit_id'     => ['nullable', 'integer', 'exists:master.unit_kerja,id'],
+            'unit_id'     => ['nullable', 'integer', Rule::exists(UnitKerja::class, 'id')],
             'kata_sandi'  => ['required', 'string', 'min:8', 'confirmed'],
             'is_aktif'    => ['sometimes', 'boolean'],
             'peran_ids'   => ['required', 'array', 'min:1'],
-            'peran_ids.*' => ['integer', 'exists:akun.peran,id'],
+            'peran_ids.*' => ['integer', Rule::exists(Peran::class, 'id')],
         ];
     }
 
