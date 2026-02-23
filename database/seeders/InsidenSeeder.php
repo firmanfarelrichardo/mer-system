@@ -15,12 +15,13 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * InsidenSeeder — 100 laporan insiden medication error selama dua tahun.
+ * InsidenSeeder — 500 laporan insiden medication error selama tiga tahun (2024-2026).
  *
  * Urutan seed:
- *   1. Master data  : unit_kerja, kategori_kesalahan, matriks_dampak/probabilitas
- *   2. Pengguna     : tambahan perawat & kepala ruangan per unit
- *   3. Insiden      : 100 laporan tersebar acak di rentang 2 tahun
+ *   1. Master data  : kategori_kesalahan, matriks_dampak/probabilitas
+ *                     (unit_kerja diambil dari UnitKerjaSeeder)
+ *   2. Pengguna     : tambahan nakes & kepala ruangan per unit
+ *   3. Insiden      : 500 laporan tersebar acak di rentang 3 tahun (2024-2026)
  *   4. Detail pasien: 1 record per insiden
  *   5. Kategori     : 1-3 kategori per insiden (pivot)
  *   6. Penilaian    : untuk insiden berstatus investigasi/tindak_lanjut/selesai
@@ -163,17 +164,17 @@ class InsidenSeeder extends Seeder
         $this->command->info('  ▶ Seeding master data ...');
         [$unitKerja, $kategori, $dampakList, $probabilitasList] = $this->seedMasterData($tenant->id);
 
-        $this->command->info('  ▶ Seeding tambahan pengguna perawat & kepala ruangan ...');
-        [$perawatList, $karuList, $komite, $admin] = $this->seedTambahanPengguna($tenant->id, $unitKerja);
+        $this->command->info('  ▶ Seeding tambahan pengguna nakes & kepala ruangan ...');
+        [$nakesList, $karuList, $komite, $admin] = $this->seedTambahanPengguna($tenant->id, $unitKerja);
 
-        $this->command->info('  ▶ Seeding 100 insiden (2 tahun acak) ...');
+        $this->command->info('  ▶ Seeding 500 insiden (3 tahun: 2024-2026) ...');
         $this->seedInsiden(
             $tenant->id,
             $unitKerja,
             $kategori,
             $dampakList,
             $probabilitasList,
-            $perawatList,
+            $nakesList,
             $karuList,
             $komite,
             $admin,
@@ -188,36 +189,19 @@ class InsidenSeeder extends Seeder
 
     private function seedMasterData(int $tenantId): array
     {
-        // -- Unit Kerja --
-        $unitData = [
-            ['kode_unit' => 'IGD',   'nama_unit' => 'Instalasi Gawat Darurat',       'keterangan' => 'Unit layanan darurat 24 jam'],
-            ['kode_unit' => 'ICU',   'nama_unit' => 'Intensive Care Unit',            'keterangan' => 'Unit perawatan intensif'],
-            ['kode_unit' => 'NICU',  'nama_unit' => 'Neonatal ICU',                   'keterangan' => 'Unit perawatan bayi kritis'],
-            ['kode_unit' => 'RAWAT', 'nama_unit' => 'Rawat Inap Umum',               'keterangan' => 'Ruang rawat inap umum'],
-            ['kode_unit' => 'POLI',  'nama_unit' => 'Poliklinik Umum',               'keterangan' => 'Layanan rawat jalan umum'],
-            ['kode_unit' => 'BEDAH', 'nama_unit' => 'Ruang Bedah',                   'keterangan' => 'Ruang operasi dan pemulihan'],
-            ['kode_unit' => 'ANAK',  'nama_unit' => 'Ruang Anak',                    'keterangan' => 'Perawatan pasien pediatri'],
-            ['kode_unit' => 'KARDIO','nama_unit' => 'Ruang Kardiologi',              'keterangan' => 'Unit layanan jantung'],
-            ['kode_unit' => 'FARMASI','nama_unit' => 'Instalasi Farmasi',            'keterangan' => 'Dispensing dan manajemen obat'],
-            ['kode_unit' => 'VK',    'nama_unit' => 'Kamar Bersalin (VK)',           'keterangan' => 'Unit persalinan dan kebidanan'],
-        ];
+        // -- Unit Kerja (diambil dari tabel, sudah di-seed oleh UnitKerjaSeeder) --
+        $unitRows = DB::table('master.unit_kerja')
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->get();
+
+        if ($unitRows->isEmpty()) {
+            throw new \RuntimeException('Tidak ada unit kerja ditemukan. Pastikan UnitKerjaSeeder sudah dijalankan.');
+        }
 
         $unitKerja = [];
-        foreach ($unitData as $data) {
-            $unit = DB::table('master.unit_kerja')
-                ->where('tenant_id', $tenantId)
-                ->where('kode_unit', $data['kode_unit'])
-                ->first();
-
-            if (! $unit) {
-                $id = DB::table('master.unit_kerja')->insertGetId(array_merge(
-                    $data,
-                    ['tenant_id' => $tenantId, 'created_at' => now(), 'updated_at' => now()],
-                ));
-                $unitKerja[$data['kode_unit']] = (object) array_merge($data, ['id' => $id]);
-            } else {
-                $unitKerja[$data['kode_unit']] = $unit;
-            }
+        foreach ($unitRows as $unit) {
+            $unitKerja[$unit->kode_unit] = $unit;
         }
 
         // -- Kategori Kesalahan --
@@ -311,24 +295,28 @@ class InsidenSeeder extends Seeder
 
     private function seedTambahanPengguna(int $tenantId, array $unitKerja): array
     {
-        $peranPerawat = Peran::where(['tenant_id' => $tenantId, 'nama_peran' => Peran::PERAWAT])->firstOrFail();
+        $peranNakes   = Peran::where(['tenant_id' => $tenantId, 'nama_peran' => Peran::NAKES])->firstOrFail();
         $peranKaru    = Peran::where(['tenant_id' => $tenantId, 'nama_peran' => Peran::KEPALA_RUANGAN])->firstOrFail();
         $peranKomite  = Peran::where(['tenant_id' => $tenantId, 'nama_peran' => Peran::KOMITE])->firstOrFail();
         $peranAdmin   = Peran::where(['tenant_id' => $tenantId, 'nama_peran' => Peran::ADMIN])->firstOrFail();
 
         $unitIds = array_column(array_values($unitKerja), 'id');
 
-        // Perawat tambahan (10 orang, disebar ke berbagai unit)
-        $namaPerawat = [
+        // Nakes tambahan (25 orang, disebar ke berbagai unit)
+        $namaNakes = [
             'Ayu Rahmawati', 'Budi Hartono', 'Citra Dewi', 'Doni Firmansyah',
             'Eka Susilawati', 'Fahmi Nugroho', 'Gita Purnama', 'Hendra Saputra',
-            'Indah Lestari', 'Joko Pramono',
+            'Indah Lestari', 'Joko Pramono', 'Kartini Sari', 'Lukman Hakim',
+            'Mega Pratiwi', 'Nanda Permana', 'Oktaviani Putri', 'Purnama Sandi',
+            'Qori Aisyah', 'Rahmat Hidayat', 'Siska Amelia', 'Taufik Ismail',
+            'Umar Fadillah', 'Vina Oktavia', 'Wulandari Agustin', 'Yudha Pratama',
+            'Zahra Nurfadilah',
         ];
 
-        $perawatList = [];
-        foreach ($namaPerawat as $i => $nama) {
+        $nakesList = [];
+        foreach ($namaNakes as $i => $nama) {
             $nip   = sprintf('P%03d', $i + 10);
-            $email = sprintf('perawat%02d@mer.test', $i + 1);
+            $email = sprintf('nakes%02d@mer.test', $i + 1);
             $unitId = $unitIds[$i % count($unitIds)];
 
             $p = Pengguna::firstOrCreate(
@@ -339,19 +327,21 @@ class InsidenSeeder extends Seeder
                     'nomor_induk'  => $nip,
                     'email'        => $email,
                     'nomor_hp'     => sprintf('0812%07d', 1000 + $i),
-                    'alamat'       => "Jl. Perawat No. {$i}",
+                    'alamat'       => "Jl. Nakes No. {$i}",
                     'nama_lengkap' => $nama,
                     'kata_sandi'   => 'password',
                     'is_aktif'     => true,
                 ],
             );
-            $p->peran()->syncWithoutDetaching([$peranPerawat->id]);
-            $perawatList[] = $p;
+            $p->peran()->syncWithoutDetaching([$peranNakes->id]);
+            $nakesList[] = $p;
         }
 
-        // Kepala Ruangan tambahan (3 orang)
+        // Kepala Ruangan tambahan (8 orang, disebar ke berbagai unit)
         $namaKaru = [
             'Ns. Sari Ratnasari, S.Kep', 'Ns. Andi Wicaksono, S.Kep', 'Ns. Maya Kusuma, S.Kep',
+            'Ns. Dewi Anggraini, S.Kep', 'Ns. Riko Setiawan, S.Kep', 'Ns. Lina Marlina, S.Kep',
+            'Ns. Bayu Nugroho, S.Kep', 'Ns. Fitria Sari, S.Kep',
         ];
 
         $karuList = [];
@@ -388,7 +378,7 @@ class InsidenSeeder extends Seeder
             ->whereHas('peran', fn ($q) => $q->where('nama_peran', Peran::ADMIN))
             ->first();
 
-        return [$perawatList, $karuList, $komite, $admin];
+        return [$nakesList, $karuList, $komite, $admin];
     }
 
     /* ---------------------------------------------------------------
@@ -401,7 +391,7 @@ class InsidenSeeder extends Seeder
         array $kategori,
         array $dampakList,
         array $probabilitasList,
-        array $perawatList,
+        array $nakesList,
         array $karuList,
         ?Pengguna $komite,
         ?Pengguna $admin,
@@ -414,15 +404,15 @@ class InsidenSeeder extends Seeder
         DB::table('pelaporan.detail_pasien')->truncate();
         DB::table('pelaporan.insiden')->truncate();
 
-        $sekarang   = Carbon::now();
-        $duaTahunLalu = $sekarang->copy()->subYears(2);
+        $sekarang   = Carbon::parse('2026-12-31 23:59:59');
+        $tigaTahunLalu = Carbon::parse('2024-01-01 00:00:00');
         $unitList   = array_values($unitKerja);
         $nomorUrut  = [];  // key: "YYYY" => int
 
-        for ($i = 1; $i <= 100; $i++) {
-            // ── Tanggal acak dalam 2 tahun ──────────────────────────────
+        for ($i = 1; $i <= 500; $i++) {
+            // ── Tanggal acak dalam 3 tahun (2024-2026) ──────────────────
             $tglKejadian = Carbon::createFromTimestamp(
-                random_int($duaTahunLalu->timestamp, $sekarang->timestamp),
+                random_int($tigaTahunLalu->timestamp, $sekarang->timestamp),
             );
             $tglLapor = $tglKejadian->copy()->addMinutes(random_int(10, 300));
 
@@ -432,7 +422,7 @@ class InsidenSeeder extends Seeder
             $nomorLaporan = sprintf('INC-%s-%04d', $tahun, $nomorUrut[$tahun]);
 
             // ── Pelapor & unit secara acak ───────────────────────────────
-            $pelapor  = $perawatList[array_rand($perawatList)];
+            $pelapor  = $nakesList[array_rand($nakesList)];
             $unit     = $unitList[array_rand($unitList)];
             $isAnonim = (bool) random_int(0, 1);
 
@@ -441,7 +431,7 @@ class InsidenSeeder extends Seeder
 
             // ── Status berdasarkan umur laporan ──────────────────────────
             $usiaHari = $sekarang->diffInDays($tglKejadian);
-            $status   = $this->tentukanStatus($usiaHari);
+            $status   = $this->tentukanStatus((int) $usiaHari);
 
             // ── Insert insiden ───────────────────────────────────────────
             $insidenId = DB::table('pelaporan.insiden')->insertGetId([

@@ -241,7 +241,7 @@ class AuthController extends Controller
             in_array('Admin',          $daftarPeran, true) => route('admin.dashboard'),
             in_array('Komite',         $daftarPeran, true) => route('komite.dashboard'),
             in_array('Kepala Ruangan', $daftarPeran, true) => route('kepala-ruangan.dashboard'),
-            in_array('Perawat',        $daftarPeran, true) => route('perawat.dashboard'),
+            in_array('Nakes',          $daftarPeran, true) => route('nakes.dashboard'),
             default                                         => route('dashboard'),
         };
     }

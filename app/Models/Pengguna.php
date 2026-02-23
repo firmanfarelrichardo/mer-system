@@ -128,12 +128,13 @@ class Pengguna extends Authenticatable
     }
 
     /**
-     * Kembalikan daftar nama peran pengguna.
+     * Kembalikan daftar label tampilan peran pengguna (menggunakan accessor nama_display).
+     * Contoh: ['Tenaga Kesehatan'] bukan ['Nakes'].
      *
      * @return list<string>
      */
     public function daftarPeran(): array
     {
-        return $this->peran->pluck('nama_peran')->all();
+        return $this->peran->map(fn (Peran $p) => $p->nama_display)->all();
     }
 }

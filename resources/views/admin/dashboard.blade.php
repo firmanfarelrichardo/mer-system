@@ -113,7 +113,7 @@
                                 <td class="px-5 py-3">
                                     @foreach ($user->peran as $p)
                                         <span class="inline-block rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-medium text-brand">
-                                            {{ $p->nama_peran }}
+                                            {{ $p->nama_display }}
                                         </span>
                                     @endforeach
                                 </td>

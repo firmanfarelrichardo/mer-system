@@ -12,7 +12,8 @@ class DatabaseSeeder extends Seeder
      * Seed the application's database.
      *
      * Order matters — foreign-key constraints require tenants before
-     * roles, and roles before users.
+     * roles, and roles before users. Unit kerja must exist before
+     * incidents reference them.
      *
      * IMPORTANT: PenggunaSeeder creates dev-only test accounts.
      * Never run db:seed on production without excluding it.
@@ -20,10 +21,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            OrganisasiSeeder::class,  // 1. Tenant (required FK for all below)
-            PeranSeeder::class,        // 2. Roles  (required FK for user-role pivot)
-            PenggunaSeeder::class,     // 3. Users + pivot assignments
-            InsidenSeeder::class,      // 4. 100 sample incident reports (2 years)
+            OrganisasiSeeder::class,    // 1. Tenant (required FK for all below)
+            PeranSeeder::class,          // 2. Roles  (required FK for user-role pivot)
+            PenggunaSeeder::class,       // 3. Users + pivot assignments
+            UnitKerjaSeeder::class,      // 4. 31 unit kerja rumah sakit
+            InsidenSeeder::class,        // 5. 500 sample incident reports (2024-2026)
+            LogAktivitasSeeder::class,   // 6. Audit log entries (2024-2026)
         ]);
     }
 }

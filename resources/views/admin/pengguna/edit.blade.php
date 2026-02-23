@@ -158,7 +158,7 @@
                                 <input type="checkbox" name="peran_ids[]" value="{{ $peran->id }}"
                                        @checked(in_array($peran->id, $peranTerpilih))
                                        class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/50">
-                                {{ $peran->nama_peran }}
+                                {{ $peran->nama_display }}
                             </label>
                         @endforeach
                     </div>
