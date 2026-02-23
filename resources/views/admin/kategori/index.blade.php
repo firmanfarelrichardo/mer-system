@@ -179,7 +179,10 @@
                             <tr class="transition-colors hover:bg-slate-50/50">
                                 <td class="px-5 py-3 text-xs text-slate-400">{{ $loop->iteration + ($daftarKategori->currentPage() - 1) * $daftarKategori->perPage() }}</td>
                                 <td class="px-5 py-3 font-medium text-slate-800">{{ $kategori->nama_kategori }}</td>
-                                <td class="px-5 py-3 text-xs text-slate-400">{{ $kategori->created_at?->format('d M Y') }}</td>
+                                <td class="px-5 py-3 text-xs text-slate-800">
+                                    <span class="block">{{ $kategori->created_at?->format('d M Y') }}</span>
+                                    <span class="text-slate-500">{{ $kategori->created_at?->format('H:i:s') }}</span>
+                                </td>
                                 <td class="px-5 py-3 text-center">
                                     <div class="flex items-center justify-center gap-1">
                                         {{-- Edit: data-kategori berisi JSON kategori, dibaca Alpine via JSON.parse --}}

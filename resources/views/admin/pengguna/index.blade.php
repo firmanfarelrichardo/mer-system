@@ -179,6 +179,7 @@
                             <th class="px-5 py-3 font-semibold text-slate-500">Peran</th>
                             <th class="px-5 py-3 font-semibold text-slate-500">Unit Kerja</th>
                             <th class="px-5 py-3 text-center font-semibold text-slate-500">Status</th>
+                            <th class="px-5 py-3 font-semibold text-slate-500">Login Terakhir</th>
                             <th class="px-5 py-3 text-center font-semibold text-slate-500">Aksi</th>
                         </tr>
                     </thead>
@@ -227,6 +228,16 @@
                                             <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span>
                                             Nonaktif
                                         </span>
+                                    @endif
+                                </td>
+
+                                {{-- Login Terakhir --}}
+                                <td class="px-5 py-3 text-xs text-slate-400">
+                                    @if ($akun->terakhir_login_pada)
+                                        <span class="block">{{ $akun->terakhir_login_pada->format('d M Y') }}</span>
+                                        <span class="text-slate-500">{{ $akun->terakhir_login_pada->format('H:i:s') }}</span>
+                                    @else
+                                        <span class="text-slate-500">—</span>
                                     @endif
                                 </td>
 
