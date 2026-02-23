@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 /**
  * Model Pengguna — memetakan tabel `akun.pengguna`.
@@ -19,6 +20,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 class Pengguna extends Authenticatable
 {
     use HasFactory;
+    use Notifiable;
     use SoftDeletes;
 
     /* ------------------------------------------------------------------
@@ -136,5 +138,22 @@ class Pengguna extends Authenticatable
     public function daftarPeran(): array
     {
         return $this->peran->map(fn (Peran $p) => $p->nama_display)->all();
+    }
+
+    /* ------------------------------------------------------------------
+     | Override Notifiable: Custom Notification Table
+     | -----------------------------------------------------------------
+     | Mengarahkan ke tabel `akun.notifikasi` alih-alih `notifications`.
+     | ----------------------------------------------------------------*/
+
+    /**
+     * Dapatkan relasi notifications dari tabel akun.notifikasi.
+     */
+    public function notifications(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(
+            Notifikasi::class,
+            'notifiable',
+        )->orderBy('created_at', 'desc');
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Events\InsidenStatusBerubah;
 use App\Http\Requests\SimpanLaporanRequest;
 use App\Models\DetailPasien;
 use App\Models\Insiden;
@@ -174,6 +175,9 @@ class LaporanController extends Controller
             return $insiden;
         });
 
+        // Dispatch event — listener akan mengirim notifikasi ke Kepala Ruangan.
+        InsidenStatusBerubah::dispatch($insiden, 'kasus_baru', $pengguna);
+
         return redirect()
             ->route('laporan.index')
             ->with('sukses', "Laporan insiden {$insiden->nomor_laporan} berhasil dikirim.");
@@ -260,6 +264,9 @@ class LaporanController extends Controller
                 'sudah_dibaca'    => true,
             ]);
         });
+
+        // Dispatch event — listener akan mengirim notifikasi sesuai state-routing.
+        InsidenStatusBerubah::dispatch($insiden->fresh(), $data['status_baru'], $pengguna);
 
         return back()->with('sukses', 'Tindak lanjut berhasil disimpan.');
     }

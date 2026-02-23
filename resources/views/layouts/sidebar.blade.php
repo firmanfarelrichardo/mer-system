@@ -55,6 +55,13 @@
             @include('layouts.partials.sidebar-item', $item)
         @endforeach
 
+        {{-- === Notifikasi (tepat di bawah Dashboard — bukan Admin/Direktur) === --}}
+        @unless ($punyaPeran(['Admin']))
+            @foreach ($menuNotifikasi as $item)
+                @include('layouts.partials.sidebar-item', $item)
+            @endforeach
+        @endunless
+
         {{-- === Menu Pelaporan (Nakes / Kepala Ruangan / Komite) === --}}
         {{-- Tiap item mem-filter dirinya sendiri via kunci 'peran'. --}}
         @if ($punyaPeran(['Nakes', 'Kepala Ruangan', 'Komite']))
@@ -68,13 +75,6 @@
                 @endif
             @endforeach
         @endif
-
-        {{-- === Notifikasi (Nakes, Kepala Ruangan, Komite — bukan Direktur) === --}}
-        @unless ($punyaPeran(['Direktur']))
-            @foreach ($menuNotifikasi as $item)
-                @include('layouts.partials.sidebar-item', $item)
-            @endforeach
-        @endunless
 
         {{-- === Menu Admin === --}}
         @if ($punyaPeran(['Admin']))

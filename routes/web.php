@@ -176,4 +176,13 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])
         ->name('notifikasi.index');
+
+    Route::get('/notifikasi/{notifikasi}/baca', [NotifikasiController::class, 'bacaDanArahkan'])
+        ->name('notifikasi.baca');
+
+    Route::patch('/notifikasi/{notifikasi}/tandai-dibaca', [NotifikasiController::class, 'tandaiDibaca'])
+        ->name('notifikasi.tandai-dibaca');
+
+    Route::post('/notifikasi/tandai-semua-dibaca', [NotifikasiController::class, 'tandaiSemuaDibaca'])
+        ->name('notifikasi.tandai-semua-dibaca');
 });
