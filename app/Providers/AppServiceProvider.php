@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use App\Models\Insiden;
+use App\Models\KategoriKesalahan;
 use App\Models\Peran;
+use App\Models\UnitKerja;
+use App\Observers\KategoriKesalahanObserver;
+use App\Observers\UnitKerjaObserver;
 use App\Policies\InsidenPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
@@ -29,6 +33,13 @@ class AppServiceProvider extends ServiceProvider
         // Mendaftarkan policy secara eksplisit untuk kejelasan.
         // ----------------------------------------------------------------
         Gate::policy(Insiden::class, InsidenPolicy::class);
+
+        // ----------------------------------------------------------------
+        // Observer: Audit Logging (decoupled)
+        // Mencatat audit log otomatis setiap kali model dimanipulasi.
+        // ----------------------------------------------------------------
+        UnitKerja::observe(UnitKerjaObserver::class);
+        KategoriKesalahan::observe(KategoriKesalahanObserver::class);
 
         // ----------------------------------------------------------------
         // Gate: Peran Manajemen
@@ -135,27 +146,31 @@ class AppServiceProvider extends ServiceProvider
                 ],
                 [
                     'label'  => 'Master Unit Kerja',
-                    'route'  => null,
-                    'aktif'  => [],
+                    'route'  => 'admin.unit-kerja.index',
+                    'aktif'  => ['admin.unit-kerja.*'],
                     'peran'  => ['Admin'],
-                    'segera' => true,
                     'ikon'   => 'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21m0 0v2.625',
                 ],
                 [
                     'label'  => 'Master Kategori Insiden',
-                    'route'  => null,
-                    'aktif'  => [],
+                    'route'  => 'admin.kategori.index',
+                    'aktif'  => ['admin.kategori.*'],
                     'peran'  => ['Admin'],
-                    'segera' => true,
                     'ikon'   => 'M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z M6 6h.008v.008H6V6Z',
                 ],
                 [
-                    'label'  => 'Log Aktivitas',
-                    'route'  => null,
-                    'aktif'  => [],
+                    'label'  => 'Log Pengguna',
+                    'route'  => 'admin.log-aktivitas.pengguna',
+                    'aktif'  => ['admin.log-aktivitas.pengguna'],
                     'peran'  => ['Admin'],
-                    'segera' => true,
                     'ikon'   => 'M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+                ],
+                [
+                    'label'  => 'Log Admin',
+                    'route'  => 'admin.log-aktivitas.admin',
+                    'aktif'  => ['admin.log-aktivitas.admin'],
+                    'peran'  => ['Admin'],
+                    'ikon'   => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
                 ],
             ];
 

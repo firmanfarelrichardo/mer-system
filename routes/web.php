@@ -128,12 +128,12 @@ Route::middleware('auth')->group(function (): void {
         Route::delete('/kategori/{kategori}', [KategoriController::class, 'hapus'])
             ->name('admin.kategori.hapus');
 
-        // ----- Log Aktivitas -----
-        Route::get('/log-aktivitas', [LogAktivitasController::class, 'index'])
-            ->name('admin.log-aktivitas.index');
+        // ----- Log Aktivitas (dipisah: Pengguna & Admin) -----
+        Route::get('/log-aktivitas/pengguna', [LogAktivitasController::class, 'indexPengguna'])
+            ->name('admin.log-aktivitas.pengguna');
 
-        Route::get('/log-aktivitas/{pengguna}', [LogAktivitasController::class, 'detail'])
-            ->name('admin.log-aktivitas.detail');
+        Route::get('/log-aktivitas/admin', [LogAktivitasController::class, 'indexAdmin'])
+            ->name('admin.log-aktivitas.admin');
     });
 
     Route::get('/direktur/dasbor', fn () => view('dashboard'))
