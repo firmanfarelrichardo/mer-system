@@ -11,6 +11,7 @@ use App\Models\UnitKerja;
 use App\Observers\KategoriKesalahanObserver;
 use App\Observers\UnitKerjaObserver;
 use App\Policies\InsidenPolicy;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
@@ -31,6 +32,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ----------------------------------------------------------------
+        // Timezone & Locale: Asia/Jakarta (WIB), Bahasa Indonesia
+        // Memastikan Carbon menggunakan bahasa Indonesia untuk semua output
+        // waktu relatif — diffForHumans() → "2 menit yang lalu", dll.
+        // Zona waktu ditangani oleh config/app.php (env APP_TIMEZONE).
+        // ----------------------------------------------------------------
+        Carbon::setLocale('id');
+
         // ----------------------------------------------------------------
         // Policy: Insiden
         // Mendaftarkan policy secara eksplisit untuk kejelasan.
