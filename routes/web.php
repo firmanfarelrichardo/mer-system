@@ -61,7 +61,7 @@ Route::middleware('auth')->group(function (): void {
             in_array('Admin',          $peran, true) => redirect()->route('admin.dashboard'),
             in_array('Komite',         $peran, true) => redirect()->route('komite.dashboard'),
             in_array('Kepala Ruangan', $peran, true) => redirect()->route('kepala-ruangan.dashboard'),
-            in_array('Perawat',        $peran, true) => redirect()->route('perawat.dashboard'),
+            in_array('Nakes',          $peran, true) => redirect()->route('nakes.dashboard'),
             default                                  => redirect()->route('laporan.index'),
         };
     })->name('dashboard');
@@ -69,7 +69,7 @@ Route::middleware('auth')->group(function (): void {
     // ----- Dasbor per peran -----
     // Setiap peran memiliki endpoint dasbor tersendiri.
     // Ganti closure dengan kontroler nyata saat dasbor selesai dibuat.
-    Route::get('/perawat/dasbor',        fn () => view('dashboard'))->name('perawat.dashboard');
+    Route::get('/nakes/dasbor',           fn () => view('dashboard'))->name('nakes.dashboard');
     Route::get('/kepala-ruangan/dasbor', fn () => view('dashboard'))->name('kepala-ruangan.dashboard');
     Route::get('/komite/dasbor',         fn () => view('dashboard'))->name('komite.dashboard');
     Route::get('/direktur/dasbor',       fn () => view('dashboard'))->name('direktur.dashboard');
@@ -176,4 +176,13 @@ Route::middleware('auth')->group(function (): void {
 
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])
         ->name('notifikasi.index');
+
+    Route::get('/notifikasi/{notifikasi}/baca', [NotifikasiController::class, 'bacaDanArahkan'])
+        ->name('notifikasi.baca');
+
+    Route::patch('/notifikasi/{notifikasi}/tandai-dibaca', [NotifikasiController::class, 'tandaiDibaca'])
+        ->name('notifikasi.tandai-dibaca');
+
+    Route::post('/notifikasi/tandai-semua-dibaca', [NotifikasiController::class, 'tandaiSemuaDibaca'])
+        ->name('notifikasi.tandai-semua-dibaca');
 });

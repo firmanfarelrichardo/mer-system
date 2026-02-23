@@ -185,7 +185,10 @@
                                 <td class="px-5 py-3 font-mono text-xs font-medium text-slate-700">{{ $unit->kode_unit }}</td>
                                 <td class="px-5 py-3 font-medium text-slate-800">{{ $unit->nama_unit }}</td>
                                 <td class="px-5 py-3 text-slate-500">{{ $unit->keterangan ?? '—' }}</td>
-                                <td class="px-5 py-3 text-xs text-slate-400">{{ $unit->created_at?->format('d M Y') }}</td>
+                                <td class="px-5 py-3 text-xs text-slate-600">
+                                    <span class="block">{{ $unit->created_at?->format('d M Y') }}</span>
+                                    <span class="text-slate-500">{{ $unit->created_at?->format('H:i:s') }}</span>
+                                </td>
                                 <td class="px-5 py-3 text-center">
                                     <div class="flex items-center justify-center gap-1">
                                         {{-- Edit: data-unit berisi JSON unit, dibaca Alpine via JSON.parse --}}

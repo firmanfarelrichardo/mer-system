@@ -2,7 +2,7 @@
 |--------------------------------------------------------------------------
 | Halaman Dashboard Utama (dashboard.blade.php)
 |--------------------------------------------------------------------------
-| Digunakan oleh semua rute dasbor per-peran (perawat, admin, dll.).
+| Digunakan oleh semua rute dasbor per-peran (nakes, admin, dll.).
 | Menampilkan sapaan, ringkasan cepat, dan akses pintas berdasarkan peran.
 |--------------------------------------------------------------------------
 --}}
@@ -41,9 +41,9 @@
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 
         {{-- ============================================================
-             PERAWAT — Membuat & melihat laporan milik sendiri
+             NAKES — Membuat & melihat laporan milik sendiri
              ============================================================ --}}
-        @if ($pengguna->memilikiPeran('Perawat'))
+        @if ($pengguna->memilikiPeran('Nakes'))
 
             <a href="{{ route('laporan.buat') }}"
                class="group flex items-start gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
@@ -169,7 +169,7 @@
         @endif
 
         {{-- ============================================================
-             NOTIFIKASI — Perawat, Kepala Ruangan, Komite, Admin
+             NOTIFIKASI — Nakes, Kepala Ruangan, Komite, Admin
              Direktur tidak menggunakan notifikasi.
              ============================================================ --}}
         @unless ($pengguna->memilikiPeran('Direktur'))

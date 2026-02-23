@@ -15,13 +15,15 @@
 @php
     $pengguna    = auth()->user();
     $namaLengkap = $pengguna->nama_lengkap ?? 'Pengguna';
-    $daftarPeran = $pengguna->daftarPeran();
-    $peranUtama  = $daftarPeran[0] ?? '—';
+
+    // Ambil peran utama dengan label display (menggunakan accessor nama_display)
+    $peranUtamaModel = $pengguna->peran->first();
+    $peranUtama      = $peranUtamaModel?->nama_display ?? '—';
 
     // Ambil nama unit kerja jika ada relasi, fallback ke strip
     $namaUnit = $pengguna->unitKerja?->nama_unit ?? null;
 
-    // Gabungkan peran + unit untuk tampilan ringkas, mis. "Perawat - ICU"
+    // Gabungkan peran + unit untuk tampilan ringkas, mis. "Tenaga Kesehatan - ICU"
     $labelPeran = $namaUnit ? "{$peranUtama} - {$namaUnit}" : $peranUtama;
 
     // Inisial untuk avatar lingkaran (ambil huruf pertama tiap kata, maks 2)
@@ -45,14 +47,14 @@
             </svg>
         </button>
 
-        {{-- Ikon rumah sakit kecil (SVG inline agar tidak perlu library ikon) --}}
+        <!-- {{-- Ikon rumah sakit kecil (SVG inline agar tidak perlu library ikon) --}}
         <svg class="hidden h-6 w-6 text-brand sm:block" xmlns="http://www.w3.org/2000/svg" fill="none"
              viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round"
                   d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332
                      A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21" />
         </svg>
-        <span class="text-lg font-bold text-brand">Sistem MER</span>
+        <span class="text-lg font-bold text-brand">Sistem MER</span> -->
     </div>
 
     {{-- Sisi kanan: Info pengguna + avatar inisial --}}

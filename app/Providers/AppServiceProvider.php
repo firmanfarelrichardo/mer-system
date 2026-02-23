@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\InsidenStatusBerubah;
+use App\Listeners\KirimNotifikasiInsiden;
 use App\Models\Insiden;
 use App\Models\KategoriKesalahan;
 use App\Models\Peran;
@@ -9,6 +11,8 @@ use App\Models\UnitKerja;
 use App\Observers\KategoriKesalahanObserver;
 use App\Observers\UnitKerjaObserver;
 use App\Policies\InsidenPolicy;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -29,6 +33,14 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // ----------------------------------------------------------------
+        // Timezone & Locale: Asia/Jakarta (WIB), Bahasa Indonesia
+        // Memastikan Carbon menggunakan bahasa Indonesia untuk semua output
+        // waktu relatif — diffForHumans() → "2 menit yang lalu", dll.
+        // Zona waktu ditangani oleh config/app.php (env APP_TIMEZONE).
+        // ----------------------------------------------------------------
+        Carbon::setLocale('id');
+
+        // ----------------------------------------------------------------
         // Policy: Insiden
         // Mendaftarkan policy secara eksplisit untuk kejelasan.
         // ----------------------------------------------------------------
@@ -40,6 +52,12 @@ class AppServiceProvider extends ServiceProvider
         // ----------------------------------------------------------------
         UnitKerja::observe(UnitKerjaObserver::class);
         KategoriKesalahan::observe(KategoriKesalahanObserver::class);
+
+        // ----------------------------------------------------------------
+        // Event → Listener: Notifikasi Insiden
+        // Setiap perubahan status insiden memicu notifikasi ke peran terkait.
+        // ----------------------------------------------------------------
+        Event::listen(InsidenStatusBerubah::class, KirimNotifikasiInsiden::class);
 
         // ----------------------------------------------------------------
         // Gate: Peran Manajemen
@@ -71,7 +89,7 @@ class AppServiceProvider extends ServiceProvider
                 $pengguna?->memilikiPeran('Admin')          => 'admin.dashboard',
                 $pengguna?->memilikiPeran('Komite')         => 'komite.dashboard',
                 $pengguna?->memilikiPeran('Kepala Ruangan') => 'kepala-ruangan.dashboard',
-                $pengguna?->memilikiPeran('Perawat')        => 'perawat.dashboard',
+                $pengguna?->memilikiPeran('Nakes')           => 'nakes.dashboard',
                 default                                      => 'dashboard',
             };
 
@@ -79,7 +97,7 @@ class AppServiceProvider extends ServiceProvider
                 [
                     'label' => 'Dashboard',
                     'route' => $routeDashboard,
-                    'aktif' => ['admin.dashboard', 'perawat.dashboard', 'kepala-ruangan.dashboard', 'komite.dashboard', 'direktur.dashboard'],
+                    'aktif' => ['admin.dashboard', 'nakes.dashboard', 'kepala-ruangan.dashboard', 'komite.dashboard', 'direktur.dashboard'],
                     'peran' => [],
                     'ikon'  => 'M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z',
                 ],
@@ -89,19 +107,19 @@ class AppServiceProvider extends ServiceProvider
             // Item dibedakan per peran menggunakan kunci 'peran'.
             // Sidebar melakukan filter per-item di loop masing-masing.
             $menuPelaporan = [
-                // Perawat: membuat & melihat laporan milik sendiri.
+                // Nakes: membuat & melihat laporan milik sendiri.
                 [
                     'label' => 'Buat Laporan',
                     'route' => 'laporan.buat',
                     'aktif' => ['laporan.buat'],
-                    'peran' => [Peran::PERAWAT],
+                    'peran' => [Peran::NAKES],
                     'ikon'  => 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 0v6m3-3H9m1.5-3H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z',
                 ],
                 [
                     'label' => 'Riwayat Laporan',
                     'route' => 'laporan.index',
                     'aktif' => ['laporan.index', 'laporan.tampil'],
-                    'peran' => [Peran::PERAWAT],
+                    'peran' => [Peran::NAKES],
                     'ikon'  => 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15a2.25 2.25 0 0 1 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z',
                 ],
 
@@ -132,7 +150,7 @@ class AppServiceProvider extends ServiceProvider
                     'aktif' => ['notifikasi.*'],
                     'peran' => [],
                     'ikon'  => 'M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0',
-                    'badge' => 0,
+                    'badge' => $pengguna ? $pengguna->unreadNotifications()->count() : 0,
                 ],
             ];
 

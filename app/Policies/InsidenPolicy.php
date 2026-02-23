@@ -14,7 +14,7 @@ use App\Models\Peran;
  * Prinsip:
  *   - Direktur hanya READ-ONLY (monitoring).
  *   - Kepala Ruangan & Komite dapat mengubah status dan menambah catatan tindak lanjut.
- *   - Perawat tidak bisa mengubah status (hanya membuat & melihat laporan sendiri).
+ *   - Nakes tidak bisa mengubah status (hanya membuat & melihat laporan sendiri).
  *
  * Catatan: Policy ini auto-discovered oleh Laravel (konvensi penamaan).
  * Jika auto-discovery gagal, daftarkan manual di AuthServiceProvider.
@@ -52,7 +52,7 @@ class InsidenPolicy
      | -----------------------------------------------------------------
      | HANYA Kepala Ruangan dan Komite yang diizinkan.
      | Direktur TIDAK boleh — read-only monitoring.
-     | Perawat TIDAK boleh — hanya membuat laporan.
+     | Nakes TIDAK boleh — hanya membuat laporan.
      | ----------------------------------------------------------------*/
 
     /**

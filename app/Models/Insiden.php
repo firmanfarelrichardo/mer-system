@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * Model Insiden — memetakan tabel `pelaporan.insiden`.
  *
  * Merepresentasikan satu laporan insiden medication error
- * yang diajukan oleh pelapor (perawat/nakes).
+ * yang diajukan oleh pelapor (nakes).
  */
 class Insiden extends Model
 {
@@ -125,7 +125,7 @@ class Insiden extends Model
      | Karu   → hanya insiden dari unit kerja miliknya.
      | Komite → semua insiden tenant.
      | Direktur → semua insiden tenant (read-only, dibatasi di Policy).
-     | Perawat → hanya insiden yang ia buat sendiri.
+     | Nakes → hanya insiden yang ia buat sendiri.
      | ----------------------------------------------------------------*/
 
     /**
@@ -134,7 +134,7 @@ class Insiden extends Model
      * Pendekatan: cek peran dari hierarki tertinggi ke terendah.
      * Komite & Direktur melihat semua data tenant.
      * Karu hanya melihat data dari unit kerjanya.
-     * Perawat hanya melihat laporan miliknya sendiri.
+     * Nakes hanya melihat laporan miliknya sendiri.
      */
     public function scopeUntukPeran(Builder $query, Pengguna $pengguna): Builder
     {
@@ -154,7 +154,7 @@ class Insiden extends Model
             });
         }
 
-        // Perawat (default): hanya insiden yang ia buat.
+        // Nakes (default): hanya insiden yang ia buat.
         return $query->where($this->qualifyColumn('pelapor_id'), $pengguna->id);
     }
 
