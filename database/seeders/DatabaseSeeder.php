@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             OrganisasiSeeder::class,  // 1. Tenant (required FK for all below)
             PeranSeeder::class,        // 2. Roles  (required FK for user-role pivot)
             PenggunaSeeder::class,     // 3. Users + pivot assignments
+            InsidenSeeder::class,      // 4. 100 sample incident reports (2 years)
         ]);
     }
 }

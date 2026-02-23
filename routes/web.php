@@ -47,21 +47,32 @@ Route::middleware('auth')->group(function (): void {
     Route::post('keluar', [AuthController::class, 'keluar'])
         ->name('logout');
 
-    // Dasbor umum — akan diganti ke kontroler terpisah nantinya.
-    Route::get('/dasbor', fn () => view('dashboard'))
-        ->name('dashboard');
+    // ----- Hub Dasbor -----
+    // Route 'dashboard' wajib ada: digunakan oleh Laravel's RedirectIfAuthenticated
+    // (middleware 'guest') sebagai fallback — mencegah infinite redirect loop.
+    // Sekaligus sebagai fallback default setelah login berhasil.
+    Route::get('/dasbor', function () {
+        /** @var \App\Models\Pengguna $pengguna */
+        $pengguna = auth()->user();
+        $peran    = $pengguna?->daftarPeran() ?? [];
 
-    // ----- Placeholder dasbor per peran -----
-    // Rute ini akan diarahkan ke kontroler nyata setelah dasbor selesai dibuat.
+        return match (true) {
+            in_array('Direktur',       $peran, true) => redirect()->route('direktur.dashboard'),
+            in_array('Admin',          $peran, true) => redirect()->route('admin.dashboard'),
+            in_array('Komite',         $peran, true) => redirect()->route('komite.dashboard'),
+            in_array('Kepala Ruangan', $peran, true) => redirect()->route('kepala-ruangan.dashboard'),
+            in_array('Perawat',        $peran, true) => redirect()->route('perawat.dashboard'),
+            default                                  => redirect()->route('laporan.index'),
+        };
+    })->name('dashboard');
 
-    Route::get('/perawat/dasbor', fn () => view('dashboard'))
-        ->name('perawat.dashboard');
-
-    Route::get('/kepala-ruangan/dasbor', fn () => view('dashboard'))
-        ->name('kepala-ruangan.dashboard');
-
-    Route::get('/komite/dasbor', fn () => view('dashboard'))
-        ->name('komite.dashboard');
+    // ----- Dasbor per peran -----
+    // Setiap peran memiliki endpoint dasbor tersendiri.
+    // Ganti closure dengan kontroler nyata saat dasbor selesai dibuat.
+    Route::get('/perawat/dasbor',        fn () => view('dashboard'))->name('perawat.dashboard');
+    Route::get('/kepala-ruangan/dasbor', fn () => view('dashboard'))->name('kepala-ruangan.dashboard');
+    Route::get('/komite/dasbor',         fn () => view('dashboard'))->name('komite.dashboard');
+    Route::get('/direktur/dasbor',       fn () => view('dashboard'))->name('direktur.dashboard');
 
     // ----- Admin: Dasbor & Manajemen Pengguna -----
     Route::prefix('admin')->group(function (): void {
@@ -135,9 +146,6 @@ Route::middleware('auth')->group(function (): void {
         Route::get('/log-aktivitas/admin', [LogAktivitasController::class, 'indexAdmin'])
             ->name('admin.log-aktivitas.admin');
     });
-
-    Route::get('/direktur/dasbor', fn () => view('dashboard'))
-        ->name('direktur.dashboard');
 
     // ----- Laporan Insiden -----
     // Riwayat laporan dan formulir pembuatan laporan baru.
