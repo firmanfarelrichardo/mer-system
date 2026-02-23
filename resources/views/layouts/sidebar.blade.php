@@ -8,7 +8,7 @@
 |   $pengguna        — Auth::user()
 |   $punyaPeran      — closure: fn(array) => bool
 |   $menuUtama       — menu dashboard (semua peran)
-|   $menuPelaporan   — menu laporan (Perawat / Kepala Ruangan / Komite)
+|   $menuPelaporan   — menu laporan (Nakes / Kepala Ruangan / Komite)
 |   $menuNotifikasi  — menu notifikasi (semua peran)
 |   $menuAdmin       — menu administrasi (Admin)
 |   $menuDirektur    — menu eksekutif (Direktur)
@@ -55,9 +55,9 @@
             @include('layouts.partials.sidebar-item', $item)
         @endforeach
 
-        {{-- === Menu Pelaporan (Perawat / Kepala Ruangan / Komite) === --}}
+        {{-- === Menu Pelaporan (Nakes / Kepala Ruangan / Komite) === --}}
         {{-- Tiap item mem-filter dirinya sendiri via kunci 'peran'. --}}
-        @if ($punyaPeran(['Perawat', 'Kepala Ruangan', 'Komite']))
+        @if ($punyaPeran(['Nakes', 'Kepala Ruangan', 'Komite']))
             <div class="my-3 border-t border-white/10"></div>
             <p class="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
                 Pelaporan
@@ -69,7 +69,7 @@
             @endforeach
         @endif
 
-        {{-- === Notifikasi (Perawat, Kepala Ruangan, Komite — bukan Direktur) === --}}
+        {{-- === Notifikasi (Nakes, Kepala Ruangan, Komite — bukan Direktur) === --}}
         @unless ($punyaPeran(['Direktur']))
             @foreach ($menuNotifikasi as $item)
                 @include('layouts.partials.sidebar-item', $item)

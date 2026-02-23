@@ -4,7 +4,7 @@
 |--------------------------------------------------------------------------
 | Menampilkan daftar notifikasi pengguna (dibaca dan belum dibaca).
 | Konten notifikasi menyesuaikan per peran:
-|   - Perawat: notif status laporan sendiri
+|   - Nakes: notif status laporan sendiri
 |   - Kepala Ruangan: notif laporan baru di unit
 |   - Komite: notif laporan butuh investigasi
 |   - Admin: notif pengguna baru, akun nonaktif
