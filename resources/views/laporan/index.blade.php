@@ -123,6 +123,9 @@
             @if (request('tipe'))
                 <input type="hidden" name="tipe" value="{{ request('tipe') }}">
             @endif
+            @if (request('per_halaman'))
+                <input type="hidden" name="per_halaman" value="{{ request('per_halaman') }}">
+            @endif
 
             <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
                  fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -331,16 +334,7 @@
             </table>
         </div>
 
-        {{-- Pagination --}}
-        @if ($daftarLaporan->hasPages())
-            <div class="border-t border-slate-200 px-4 py-3 sm:px-5">
-                {{ $daftarLaporan->links() }}
-            </div>
-        @else
-            <div class="border-t border-slate-200 px-4 py-3 text-sm text-slate-400 sm:px-5">
-                Menampilkan {{ $daftarLaporan->count() }} dari {{ $daftarLaporan->total() }} laporan
-            </div>
-        @endif
+        <x-pagination :paginator="$daftarLaporan" />
     </div>
 
 @endsection

@@ -252,12 +252,7 @@
                 </table>
             </div>
 
-            {{-- Pagination --}}
-            @if ($daftarLog->hasPages())
-                <div class="border-t border-slate-100 px-5 py-4">
-                    {{ $daftarLog->withQueryString()->links() }}
-                </div>
-            @endif
+            <x-pagination :paginator="$daftarLog" />
         @endif
     </div>
 

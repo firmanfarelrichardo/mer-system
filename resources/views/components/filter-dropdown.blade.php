@@ -103,6 +103,10 @@
 
             {{-- Form --}}
             <form method="{{ strtoupper($method) === 'GET' ? 'GET' : 'POST' }}" action="{{ $action }}">
+                {{-- Pertahankan nilai per_halaman yang sedang aktif --}}
+                @if(strtoupper($method) === 'GET' && request()->has('per_halaman'))
+                    <input type="hidden" name="per_halaman" value="{{ request('per_halaman') }}">
+                @endif
                 @unless(strtoupper($method) === 'GET')
                     @csrf
                     @if(! in_array(strtoupper($method), ['GET', 'POST']))

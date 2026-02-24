@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PerbaruiKategoriRequest;
 use App\Http\Requests\Admin\SimpanKategoriRequest;
 use App\Services\KategoriKesalahanService;
+use App\Support\Paginasi;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,7 +38,7 @@ class KategoriController extends Controller
             'cari' => $request->input('cari'),
         ];
 
-        $daftarKategori = $this->kategoriService->daftar($tenantId, $filter);
+        $daftarKategori = $this->kategoriService->daftar($tenantId, $filter, Paginasi::perHalaman());
 
         return view('admin.kategori.index', compact('daftarKategori', 'filter'));
     }

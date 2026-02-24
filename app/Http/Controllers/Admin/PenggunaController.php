@@ -11,6 +11,7 @@ use App\Http\Requests\Admin\SimpanPenggunaRequest;
 use App\Models\Peran;
 use App\Models\UnitKerja;
 use App\Services\PenggunaService;
+use App\Support\Paginasi;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,7 +50,7 @@ class PenggunaController extends Controller
             $filter['status'] = (int) $request->input('status');
         }
 
-        $daftarPengguna = $this->penggunaService->daftar($tenantId, $filter);
+        $daftarPengguna = $this->penggunaService->daftar($tenantId, $filter, Paginasi::perHalaman());
         $daftarPeran    = Peran::where('tenant_id', $tenantId)->orderBy('nama_peran')->get();
         $daftarUnit     = UnitKerja::where('tenant_id', $tenantId)->orderBy('nama_unit')->get();
 

@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\PerbaruiUnitKerjaRequest;
 use App\Http\Requests\Admin\SimpanUnitKerjaRequest;
 use App\Services\UnitKerjaService;
+use App\Support\Paginasi;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,7 +38,7 @@ class UnitKerjaController extends Controller
             'cari' => $request->input('cari'),
         ];
 
-        $daftarUnit = $this->unitKerjaService->daftar($tenantId, $filter);
+        $daftarUnit = $this->unitKerjaService->daftar($tenantId, $filter, Paginasi::perHalaman());
 
         return view('admin.unit-kerja.index', compact('daftarUnit', 'filter'));
     }
