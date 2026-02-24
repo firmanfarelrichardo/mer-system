@@ -27,6 +27,11 @@ return new class extends Migration
 
             $table->text('kronologi');
             $table->text('tindakan_awal')->nullable();
+            $table->jsonb('jenis_kesalahan')->nullable();
+            $table->jsonb('cedera')->nullable();
+            $table->jsonb('faktor_penyebab')->nullable();
+            $table->jsonb('intervensi_pasien')->nullable();
+            $table->boolean('pernyataan_kronologi')->default(false);
 
             $table->timestamp('created_at')->useCurrent();
         });

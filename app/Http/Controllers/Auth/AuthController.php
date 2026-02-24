@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Pengguna;
+use App\Services\AuditLogService;
+use App\Services\SuspiciousLoginService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +28,11 @@ use Illuminate\Support\Facades\Log;
  */
 class AuthController extends Controller
 {
+    public function __construct(
+        private readonly AuditLogService        $auditLog,
+        private readonly SuspiciousLoginService $suspiciousLogin,
+    ) {}
+
     /* ==================================================================
      | MASUK — Tampilkan Formulir
      | ================================================================*/
@@ -142,6 +149,38 @@ class AuthController extends Controller
             'ip'          => $permintaan->ip(),
         ]);
 
+        // ----------------------------------------------------------
+        // 9. Catat event LOGIN ke audit trail.
+        // ----------------------------------------------------------
+        $this->auditLog->catat(
+            namaTabel:  'akun.pengguna',
+            aksi:       'LOGIN',
+            idData:     $pengguna->id,
+            idPengguna: $pengguna->id,
+        );
+
+        // ----------------------------------------------------------
+        // 10. Deteksi login mencurigakan (IP baru, jam aneh, dsb.).
+        //     Skor >= 61 dicatat sebagai warning untuk investigasi admin.
+        // ----------------------------------------------------------
+        $risikoLogin = $this->suspiciousLogin->periksa(
+            idPengguna: $pengguna->id,
+            alamatIp:   (string) $permintaan->ip(),
+            userAgent:  $permintaan->userAgent(),
+        );
+
+        if ($risikoLogin['level'] !== 'normal') {
+            Log::warning('Login mencurigakan terdeteksi.', [
+                'pengguna_id' => $pengguna->id,
+                'skor_risiko' => $risikoLogin['skor'],
+                'level'       => $risikoLogin['level'],
+                'alasan'      => $risikoLogin['alasan'],
+                'ip'          => $permintaan->ip(),
+            ]);
+            // TODO (fase berikutnya): kirim notifikasi email ke admin
+            //      jika level === 'mencurigakan'
+        }
+
         return redirect()
             ->intended($this->tentukanHalamanSesuaiPeran($pengguna))
             ->with('sukses', 'Selamat datang, ' . $pengguna->nama_lengkap . '.');
@@ -202,7 +241,7 @@ class AuthController extends Controller
             in_array('Admin',          $daftarPeran, true) => route('admin.dashboard'),
             in_array('Komite',         $daftarPeran, true) => route('komite.dashboard'),
             in_array('Kepala Ruangan', $daftarPeran, true) => route('kepala-ruangan.dashboard'),
-            in_array('Perawat',        $daftarPeran, true) => route('perawat.dashboard'),
+            in_array('Nakes',          $daftarPeran, true) => route('nakes.dashboard'),
             default                                         => route('dashboard'),
         };
     }

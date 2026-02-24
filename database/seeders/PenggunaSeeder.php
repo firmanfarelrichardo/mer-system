@@ -23,7 +23,7 @@ use Illuminate\Database\Seeder;
  * │ Direktur       │ direktur@mer.test             │ Admin123!  │
  * │ Komite         │ komite@mer.test               │ Admin123!  │
  * │ Kepala Ruangan │ kepala.ruangan@mer.test       │ Admin123!  │
- * │ Perawat        │ perawat@mer.test              │ Admin123!  │
+ * │ Nakes          │ nakes@mer.test                │ Admin123!  │
  * └────────────────┴──────────────────────────────┴────────────┘
  */
 class PenggunaSeeder extends Seeder
@@ -98,14 +98,14 @@ class PenggunaSeeder extends Seeder
                 'pengguna' => [
                     'tenant_id'   => $tenantId,
                     'nomor_induk' => 'nakes',
-                    'email'       => 'perawat@mer.test',
+                    'email'       => 'nakes@mer.test',
                     'nomor_hp'    => '08100000005',
-                    'alamat'      => 'Jl. Perawat No. 1',
-                    'nama_lengkap'=> 'Perawat IGD',
+                    'alamat'      => 'Jl. Nakes No. 1',
+                    'nama_lengkap'=> 'Tenaga Kesehatan IGD',
                     'kata_sandi'  => $devPassword,
                     'is_aktif'    => true,
                 ],
-                'peran' => Peran::PERAWAT,
+                'peran' => Peran::NAKES,
             ],
         ];
     }

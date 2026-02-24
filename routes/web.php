@@ -3,7 +3,10 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\KategoriController;
+use App\Http\Controllers\Admin\LogAktivitasController;
 use App\Http\Controllers\Admin\PenggunaController;
+use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\NotifikasiController;
@@ -45,21 +48,32 @@ Route::middleware('auth')->group(function (): void {
     Route::post('keluar', [AuthController::class, 'keluar'])
         ->name('logout');
 
-    // Dasbor umum — akan diganti ke kontroler terpisah nantinya.
-    Route::get('/dasbor', fn () => view('dashboard'))
-        ->name('dashboard');
+    // ----- Hub Dasbor -----
+    // Route 'dashboard' wajib ada: digunakan oleh Laravel's RedirectIfAuthenticated
+    // (middleware 'guest') sebagai fallback — mencegah infinite redirect loop.
+    // Sekaligus sebagai fallback default setelah login berhasil.
+    Route::get('/dasbor', function () {
+        /** @var \App\Models\Pengguna $pengguna */
+        $pengguna = auth()->user();
+        $peran    = $pengguna?->daftarPeran() ?? [];
 
-    // ----- Placeholder dasbor per peran -----
-    // Rute ini akan diarahkan ke kontroler nyata setelah dasbor selesai dibuat.
+        return match (true) {
+            in_array('Direktur',       $peran, true) => redirect()->route('direktur.dashboard'),
+            in_array('Admin',          $peran, true) => redirect()->route('admin.dashboard'),
+            in_array('Komite',         $peran, true) => redirect()->route('komite.dashboard'),
+            in_array('Kepala Ruangan', $peran, true) => redirect()->route('kepala-ruangan.dashboard'),
+            in_array('Nakes',          $peran, true) => redirect()->route('nakes.dashboard'),
+            default                                  => redirect()->route('laporan.index'),
+        };
+    })->name('dashboard');
 
-    Route::get('/perawat/dasbor', fn () => view('dashboard'))
-        ->name('perawat.dashboard');
-
-    Route::get('/kepala-ruangan/dasbor', fn () => view('dashboard'))
-        ->name('kepala-ruangan.dashboard');
-
-    Route::get('/komite/dasbor', fn () => view('dashboard'))
-        ->name('komite.dashboard');
+    // ----- Dasbor per peran -----
+    // Setiap peran memiliki endpoint dasbor tersendiri.
+    // Ganti closure dengan kontroler nyata saat dasbor selesai dibuat.
+    Route::get('/nakes/dasbor',           fn () => view('dashboard'))->name('nakes.dashboard');
+    Route::get('/kepala-ruangan/dasbor', fn () => view('dashboard'))->name('kepala-ruangan.dashboard');
+    Route::get('/komite/dasbor',         fn () => view('dashboard'))->name('komite.dashboard');
+    Route::get('/direktur/dasbor',       fn () => view('dashboard'))->name('direktur.dashboard');
 
     // ----- Admin: Dasbor & Manajemen Pengguna -----
     Route::prefix('admin')->group(function (): void {
@@ -87,10 +101,52 @@ Route::middleware('auth')->group(function (): void {
 
         Route::patch('/pengguna/{pengguna}/reset-sandi', [PenggunaController::class, 'resetKataSandi'])
             ->name('admin.pengguna.reset-sandi');
-    });
 
-    Route::get('/direktur/dasbor', fn () => view('dashboard'))
-        ->name('direktur.dashboard');
+        // ----- Master Unit Kerja -----
+        Route::get('/unit-kerja', [UnitKerjaController::class, 'index'])
+            ->name('admin.unit-kerja.index');
+
+        Route::get('/unit-kerja/buat', [UnitKerjaController::class, 'buat'])
+            ->name('admin.unit-kerja.buat');
+
+        Route::post('/unit-kerja', [UnitKerjaController::class, 'simpan'])
+            ->name('admin.unit-kerja.simpan');
+
+        Route::get('/unit-kerja/{unit_kerja}/edit', [UnitKerjaController::class, 'edit'])
+            ->name('admin.unit-kerja.edit');
+
+        Route::put('/unit-kerja/{unit_kerja}', [UnitKerjaController::class, 'perbarui'])
+            ->name('admin.unit-kerja.perbarui');
+
+        Route::delete('/unit-kerja/{unit_kerja}', [UnitKerjaController::class, 'hapus'])
+            ->name('admin.unit-kerja.hapus');
+
+        // ----- Master Kategori Insiden -----
+        Route::get('/kategori', [KategoriController::class, 'index'])
+            ->name('admin.kategori.index');
+
+        Route::get('/kategori/buat', [KategoriController::class, 'buat'])
+            ->name('admin.kategori.buat');
+
+        Route::post('/kategori', [KategoriController::class, 'simpan'])
+            ->name('admin.kategori.simpan');
+
+        Route::get('/kategori/{kategori}/edit', [KategoriController::class, 'edit'])
+            ->name('admin.kategori.edit');
+
+        Route::put('/kategori/{kategori}', [KategoriController::class, 'perbarui'])
+            ->name('admin.kategori.perbarui');
+
+        Route::delete('/kategori/{kategori}', [KategoriController::class, 'hapus'])
+            ->name('admin.kategori.hapus');
+
+        // ----- Log Aktivitas (dipisah: Pengguna & Admin) -----
+        Route::get('/log-aktivitas/pengguna', [LogAktivitasController::class, 'indexPengguna'])
+            ->name('admin.log-aktivitas.pengguna');
+
+        Route::get('/log-aktivitas/admin', [LogAktivitasController::class, 'indexAdmin'])
+            ->name('admin.log-aktivitas.admin');
+    });
 
     // ----- Laporan Insiden -----
     // Riwayat laporan dan formulir pembuatan laporan baru.
@@ -126,4 +182,12 @@ Route::middleware('auth')->group(function (): void {
     // Akses: Kepala Ruangan, Komite, Direktur (otorisasi dihandle controller).
     Route::get('/statistik', [StatistikController::class, 'index'])
         ->name('statistik.index');
+    Route::get('/notifikasi/{notifikasi}/baca', [NotifikasiController::class, 'bacaDanArahkan'])
+        ->name('notifikasi.baca');
+
+    Route::patch('/notifikasi/{notifikasi}/tandai-dibaca', [NotifikasiController::class, 'tandaiDibaca'])
+        ->name('notifikasi.tandai-dibaca');
+
+    Route::post('/notifikasi/tandai-semua-dibaca', [NotifikasiController::class, 'tandaiSemuaDibaca'])
+        ->name('notifikasi.tandai-semua-dibaca');
 });

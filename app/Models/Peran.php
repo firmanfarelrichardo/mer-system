@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * Model Peran — maps to the `akun.peran` table.
  *
  * Represents an application role such as:
- *   Perawat, Kepala Ruangan, Komite, Admin, Direktur.
+ *   Nakes, Kepala Ruangan, Komite, Admin, Direktur.
  */
 class Peran extends Model
 {
@@ -41,11 +41,23 @@ class Peran extends Model
      | the codebase. Seeders and policies should reference these.
      | ----------------------------------------------------------------*/
 
-    public const PERAWAT         = 'Perawat';
+    public const NAKES            = 'Nakes';
     public const KEPALA_RUANGAN  = 'Kepala Ruangan';
     public const KOMITE          = 'Komite';
     public const ADMIN           = 'Admin';
     public const DIREKTUR        = 'Direktur';
+
+    /**
+     * Peta nama peran internal → label tampilan di UI.
+     * Sentralisasi di sini agar seluruh aplikasi konsisten.
+     */
+    public const PETA_LABEL_DISPLAY = [
+        'Nakes'          => 'Tenaga Kesehatan',
+        'Kepala Ruangan' => 'Kepala Ruangan',
+        'Komite'         => 'Komite',
+        'Admin'          => 'Admin',
+        'Direktur'       => 'Direktur',
+    ];
 
     /* ------------------------------------------------------------------
      | Relationships
@@ -64,5 +76,20 @@ class Peran extends Model
     public function tenant(): BelongsTo
     {
         return $this->belongsTo(Organisasi::class, 'tenant_id');
+    }
+
+    /* ------------------------------------------------------------------
+     | Accessors
+     | ----------------------------------------------------------------*/
+
+    /**
+     * Accessor: nama peran yang ramah pengguna untuk ditampilkan di UI.
+     *
+     * Contoh: 'Nakes' → 'Tenaga Kesehatan'
+     * Gunakan $peran->nama_display di Blade.
+     */
+    public function getNamaDisplayAttribute(): string
+    {
+        return self::PETA_LABEL_DISPLAY[$this->nama_peran] ?? $this->nama_peran;
     }
 }

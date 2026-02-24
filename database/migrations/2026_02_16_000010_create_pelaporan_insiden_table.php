@@ -22,13 +22,19 @@ return new class extends Migration
             $table->string('nomor_laporan', 100);
 
             $table->foreignId('pelapor_id')->nullable()->index()->constrained('akun.pengguna');
-            $table->foreignId('unit_id')->index()->constrained('master.unit_kerja');
+            $table->foreignId('unit_id')->nullable()->index()->constrained('master.unit_kerja');
+            $table->string('nama_unit_kerja', 255)->nullable();
 
             $table->string('tipe_insiden', 100);
+            $table->string('fase_kesalahan', 50)->nullable();
             $table->string('status_saat_ini', 50)->index();
 
             $table->dateTime('tgl_kejadian')->index();
             $table->dateTime('tgl_lapor')->index();
+            $table->string('nama_pelapor', 255)->nullable();
+            $table->string('kontak_pelapor', 255)->nullable();
+            $table->boolean('is_anonim')->default(true);
+            $table->boolean('sudah_dibaca')->default(false);
 
             $table->timestamps();
             $table->softDeletes();

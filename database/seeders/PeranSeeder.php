@@ -21,7 +21,7 @@ class PeranSeeder extends Seeder
         $tenant = Organisasi::where('kode_organisasi', 'default')->firstOrFail();
 
         $roles = [
-            Peran::PERAWAT,
+            Peran::NAKES,
             Peran::KEPALA_RUANGAN,
             Peran::KOMITE,
             Peran::ADMIN,

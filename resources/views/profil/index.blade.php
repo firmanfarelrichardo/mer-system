@@ -177,7 +177,7 @@
             </div>
 
             {{-- Statistik khusus peran --}}
-            @if($pengguna->memilikiPeran('Perawat') || $pengguna->memilikiPeran('Kepala Ruangan') || $pengguna->memilikiPeran('Komite'))
+            @if($pengguna->memilikiPeran('Nakes') || $pengguna->memilikiPeran('Kepala Ruangan') || $pengguna->memilikiPeran('Komite'))
                 <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h3 class="mb-4 text-base font-semibold text-slate-800">Ringkasan Aktivitas</h3>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">

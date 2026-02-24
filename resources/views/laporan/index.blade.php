@@ -31,7 +31,7 @@
             <h1 class="text-2xl font-bold text-slate-800">Riwayat Laporan</h1>
             <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Insiden Obat</p>
         </div>
-        @if ($pengguna->memilikiPeran('Perawat') || $pengguna->memilikiPeran('Kepala Ruangan') || $pengguna->memilikiPeran('Komite'))
+        @if ($pengguna->memilikiPeran('Nakes') || $pengguna->memilikiPeran('Kepala Ruangan') || $pengguna->memilikiPeran('Komite'))
             <a href="{{ route('laporan.buat') }}"
                class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -112,10 +112,18 @@
     {{-- ================================================================
          FILTER & PENCARIAN
          ================================================================ --}}
-    <form method="GET" action="{{ route('laporan.index') }}" class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-        {{-- Input pencarian --}}
-        <div class="relative flex-1">
+        {{-- Input pencarian (tetap di luar komponen untuk akses cepat) --}}
+        <form method="GET" action="{{ route('laporan.index') }}" class="relative flex-1">
+            {{-- Pertahankan filter lain yang aktif --}}
+            @if (request('status'))
+                <input type="hidden" name="status" value="{{ request('status') }}">
+            @endif
+            @if (request('tipe'))
+                <input type="hidden" name="tipe" value="{{ request('tipe') }}">
+            @endif
+
             <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
                  fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
@@ -124,51 +132,64 @@
                    placeholder="Cari nama pasien atau ID..."
                    class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-sm
                           placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
+        </form>
+
+        <div class="flex items-center gap-2">
+            {{-- Reusable Filter Component --}}
+            <x-filter-dropdown :action="route('laporan.index')" title="Filter Laporan">
+
+                {{-- Pencarian --}}
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-500">Kata Kunci</label>
+                    <input type="text" name="cari" value="{{ request('cari') }}"
+                           placeholder="Cari nama pasien atau ID..."
+                           class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm placeholder-slate-400
+                                  focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
+                </div>
+
+                {{-- Status --}}
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-500">Status</label>
+                    <select name="status"
+                            class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm text-slate-700
+                                   focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
+                        <option value="">Semua Status</option>
+                        <option value="kasus_baru" @selected(request('status') === 'kasus_baru')>Kasus Baru</option>
+                        <option value="investigasi" @selected(request('status') === 'investigasi')>Investigasi</option>
+                        <option value="tindak_lanjut" @selected(request('status') === 'tindak_lanjut')>Tindak Lanjut</option>
+                        <option value="selesai" @selected(request('status') === 'selesai')>Selesai</option>
+                    </select>
+                </div>
+
+                {{-- Tipe Insiden --}}
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-slate-500">Tipe Insiden</label>
+                    <select name="tipe"
+                            class="w-full rounded-lg border border-slate-200 py-2 px-3 text-sm text-slate-700
+                                   focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
+                        <option value="">Semua Tipe</option>
+                        <option value="KTD" @selected(request('tipe') === 'KTD')>KTD</option>
+                        <option value="KNC" @selected(request('tipe') === 'KNC')>KNC</option>
+                        <option value="KTC" @selected(request('tipe') === 'KTC')>KTC</option>
+                        <option value="KPC" @selected(request('tipe') === 'KPC')>KPC</option>
+                        <option value="SENTINEL" @selected(request('tipe') === 'SENTINEL')>Sentinel</option>
+                    </select>
+                </div>
+
+            </x-filter-dropdown>
+
+            @if (request()->hasAny(['cari', 'status', 'tipe']))
+                <a href="{{ route('laporan.index') }}"
+                   class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-600
+                          shadow-sm transition-colors hover:bg-slate-50">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                    </svg>
+                    Reset
+                </a>
+            @endif
         </div>
-
-        {{-- Dropdown: Status --}}
-        <select name="status"
-                class="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm
-                       focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
-            <option value="">Semua Status</option>
-            <option value="kasus_baru" {{ request('status') === 'kasus_baru' ? 'selected' : '' }}>Kasus Baru</option>
-            <option value="investigasi" {{ request('status') === 'investigasi' ? 'selected' : '' }}>Investigasi</option>
-            <option value="tindak_lanjut" {{ request('status') === 'tindak_lanjut' ? 'selected' : '' }}>Tindak Lanjut</option>
-            <option value="selesai" {{ request('status') === 'selesai' ? 'selected' : '' }}>Selesai</option>
-        </select>
-
-        {{-- Dropdown: Tipe Insiden --}}
-        <select name="tipe"
-                class="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-700 shadow-sm
-                       focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
-            <option value="">Semua Tipe</option>
-            <option value="KTD" {{ request('tipe') === 'KTD' ? 'selected' : '' }}>KTD</option>
-            <option value="KNC" {{ request('tipe') === 'KNC' ? 'selected' : '' }}>KNC</option>
-            <option value="KTC" {{ request('tipe') === 'KTC' ? 'selected' : '' }}>KTC</option>
-            <option value="KPC" {{ request('tipe') === 'KPC' ? 'selected' : '' }}>KPC</option>
-            <option value="SENTINEL" {{ request('tipe') === 'SENTINEL' ? 'selected' : '' }}>Sentinel</option>
-        </select>
-
-        <button type="submit"
-                class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white shadow-sm
-                       transition-colors hover:bg-brand-hover">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"/>
-            </svg>
-            Filter
-        </button>
-
-        @if (request()->hasAny(['cari', 'status', 'tipe']))
-            <a href="{{ route('laporan.index') }}"
-               class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-medium text-slate-600
-                      shadow-sm transition-colors hover:bg-slate-50">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                </svg>
-                Reset
-            </a>
-        @endif
-    </form>
+    </div>
 
     {{-- ================================================================
          TABEL DATA LAPORAN
@@ -181,7 +202,7 @@
                     <tr>
                         <th class="whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:px-5">ID Insiden</th>
                         <th class="whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:px-5">Pasien</th>
-                        @if (! $pengguna->memilikiPeran('Perawat'))
+                        @if (! $pengguna->memilikiPeran('Nakes'))
                             <th class="hidden whitespace-nowrap px-4 py-3 font-semibold text-slate-500 md:table-cell sm:px-5">Unit Kerja</th>
                         @endif
                         <th class="hidden whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:table-cell sm:px-5">Tanggal</th>
@@ -211,8 +232,8 @@
                             </td>
 
                             {{-- Unit Kerja (hanya untuk peran manajemen) --}}
-                            @if (! $pengguna->memilikiPeran('Perawat'))
-                                <td class="hidden whitespace-nowrap px-4 py-3.5 text-slate-500 md:table-cell sm:px-5">
+                            @if (! $pengguna->memilikiPeran('Nakes'))
+                                <td class="hidden whitespace-nowrap px-4 py-3.5 text-slate-500 md:table-cell sm:px-5">>
                                     {{ $laporan->nama_unit_kerja ?? $laporan->unitKerja?->nama_unit ?? '—' }}
                                 </td>
                             @endif
@@ -269,7 +290,7 @@
                                         </form>
                                     @endif
 
-                                    {{-- Tombol Hapus — TIDAK tersedia untuk Perawat (nakes).
+                                    {{-- Tombol Hapus — TIDAK tersedia untuk Nakes.
                                          Hanya Kepala Ruangan / Komite / Admin yang bisa hapus,
                                          dan hanya jika status masih kasus_baru. --}}
                                     @if ($laporan->status_saat_ini === 'kasus_baru'
@@ -294,7 +315,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $pengguna->memilikiPeran('Perawat') ? 6 : 7 }}" class="px-5 py-12 text-center">
+                            <td colspan="{{ $pengguna->memilikiPeran('Nakes') ? 6 : 7 }}" class="px-5 py-12 text-center">
                                 <div class="flex flex-col items-center gap-2">
                                     <svg class="h-10 w-10 text-slate-300" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round"

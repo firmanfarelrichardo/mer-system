@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Events\InsidenStatusBerubah;
 use App\Http\Requests\SimpanLaporanRequest;
 use App\Models\DetailPasien;
 use App\Models\Insiden;
@@ -19,7 +20,7 @@ use Illuminate\View\View;
  * LaporanController — menangani CRUD laporan insiden medication error.
  *
  * Prinsip DRY (Don't Repeat Yourself):
- *   - SATU controller untuk SEMUA peran (Perawat, Karu, Komite, Direktur).
+ *   - SATU controller untuk SEMUA peran (Nakes, Karu, Komite, Direktur).
  *   - Data di-filter secara otomatis di level database menggunakan
  *     local scope `scopeUntukPeran()` pada model Insiden.
  *   - Otorisasi aksi (tindak lanjut, ubah status) melalui InsidenPolicy.
@@ -43,7 +44,7 @@ class LaporanController extends Controller
      * Tampilkan halaman daftar laporan insiden.
      *
      * Query SELALU melewati scopeUntukPeran() sehingga:
-     *   - Perawat    → hanya laporan miliknya
+     *   - Nakes     → hanya laporan miliknya
      *   - Karu       → hanya laporan dari unit kerjanya
      *   - Komite     → semua laporan tenant
      *   - Direktur   → semua laporan tenant (read-only)
@@ -174,6 +175,9 @@ class LaporanController extends Controller
             return $insiden;
         });
 
+        // Dispatch event — listener akan mengirim notifikasi ke Kepala Ruangan.
+        InsidenStatusBerubah::dispatch($insiden, 'kasus_baru', $pengguna);
+
         return redirect()
             ->route('laporan.index')
             ->with('sukses', "Laporan insiden {$insiden->nomor_laporan} berhasil dikirim.");
@@ -222,7 +226,7 @@ class LaporanController extends Controller
      * Proses tindak lanjut: ubah status insiden dan simpan catatan.
      *
      * Dilindungi oleh InsidenPolicy@tindakLanjut sehingga Direktur
-     * dan Perawat TIDAK dapat mengakses endpoint ini meskipun
+     * dan Nakes TIDAK dapat mengakses endpoint ini meskipun
      * mencoba bypass UI.
      */
     public function tindakLanjut(Request $permintaan, string $laporan): RedirectResponse
@@ -230,7 +234,7 @@ class LaporanController extends Controller
         $insiden  = Insiden::findOrFail($laporan);
         $pengguna = Auth::user();
 
-        // Otorisasi via Policy — menolak Direktur & Perawat.
+        // Otorisasi via Policy — menolak Direktur & Nakes.
         $this->authorize('tindakLanjut', $insiden);
 
         // Validasi input.
@@ -260,6 +264,9 @@ class LaporanController extends Controller
                 'sudah_dibaca'    => true,
             ]);
         });
+
+        // Dispatch event — listener akan mengirim notifikasi sesuai state-routing.
+        InsidenStatusBerubah::dispatch($insiden->fresh(), $data['status_baru'], $pengguna);
 
         return back()->with('sukses', 'Tindak lanjut berhasil disimpan.');
     }
