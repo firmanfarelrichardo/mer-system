@@ -12,6 +12,7 @@ use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\StatistikController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -177,6 +178,10 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])
         ->name('notifikasi.index');
 
+    // ----- Statistik & Analisis -----
+    // Akses: Kepala Ruangan, Komite, Direktur (otorisasi dihandle controller).
+    Route::get('/statistik', [StatistikController::class, 'index'])
+        ->name('statistik.index');
     Route::get('/notifikasi/{notifikasi}/baca', [NotifikasiController::class, 'bacaDanArahkan'])
         ->name('notifikasi.baca');
 

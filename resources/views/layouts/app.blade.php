@@ -87,5 +87,8 @@
             }
         }
     </script>
+
+    {{-- Script yang di-push oleh halaman/komponen individual (mis. Chart.js) --}}
+    @stack('scripts')
 </body>
 </html>

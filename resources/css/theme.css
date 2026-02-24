@@ -40,21 +40,26 @@
 :root {
 
     /* ----------------------------------------------------------
-       PRIMARY — Teal / Hijau-Toska Medis
-       Referensi logo: warna utama palang medis (toska cerah)
+       PRIMARY — Cyan-Teal Medis  (brand anchor: #3AE3DC)
+       Referensi logo: warna utama palang medis (toska cerah-vivid)
        Gunakan untuk: sidebar, tombol primer, state aktif, badge
+
+       Shade 400 = #3AE3DC (warna utama yang diberikan).
+       Shade 600 = warna sidebar & tombol (kontras cukup untuk teks putih).
+       Shade 400 dipakai untuk gradient, focus ring, dan elemen aktif
+       untuk memastikan #3AE3DC TERLIHAT JELAS di seluruh sistem.
        ---------------------------------------------------------- */
-    --palette-primary-50:  #f0fdfa;
-    --palette-primary-100: #ccfbf1;
-    --palette-primary-200: #99f6e4;
-    --palette-primary-300: #5eead4;
-    --palette-primary-400: #2dd4bf;
-    --palette-primary-500: #14b8a6;
-    --palette-primary-600: #0d9488;
-    --palette-primary-700: #0f766e;
-    --palette-primary-800: #115e56;
-    --palette-primary-900: #134e4a;
-    --palette-primary-950: #042f2e;
+    --palette-primary-50:  #ecfffe;
+    --palette-primary-100: #c8fbf8;
+    --palette-primary-200: #93f4ee;
+    --palette-primary-300: #5ceae2;
+    --palette-primary-400: #3ae3dc;  /* ← brand anchor — warna utama */
+    --palette-primary-500: #11c7bf;  /* ← sidebar hover             */
+    --palette-primary-600: #0d9f99;  /* ← sidebar bg & tombol       */
+    --palette-primary-700: #0f7f7a;
+    --palette-primary-800: #116462;
+    --palette-primary-900: #125250;
+    --palette-primary-950: #083332;
 
     /* ----------------------------------------------------------
        SECONDARY — Biru Profesional / Medis
@@ -138,14 +143,18 @@
     /* --- BRAND (Identity Utama Sistem) -----------------------
        Digunakan untuk sidebar, tombol primer, elemen aktif.
        Default: Teal (primary)
-       Untuk ganti ke biru: ubah ke var(--palette-secondary-*)
+
+       Mapping:
+         brand (sidebar/tombol) → 600 (#0D9F99) — medium teal terang
+         hover                  → 500 (#11C7BF) — lebih terang saat hover
+         active                 → 400 (#3AE3DC) — warna utama user!
        --------------------------------------------------------- */
-    --token-brand:          var(--palette-primary-800);   /* sidebar bg           */
-    --token-brand-hover:    var(--palette-primary-700);   /* sidebar hover state  */
-    --token-brand-active:   var(--palette-primary-600);   /* item menu aktif      */
+    --token-brand:          var(--palette-primary-600);   /* sidebar bg & tombol  */
+    --token-brand-hover:    var(--palette-primary-500);   /* sidebar hover state  */
+    --token-brand-active:   var(--palette-primary-400);   /* item menu aktif (#3AE3DC) */
     --token-brand-subtle:   var(--palette-primary-50);    /* bg ringan (card tint)*/
     --token-brand-border:   var(--palette-primary-200);   /* border ringan        */
-    --token-brand-text:     var(--palette-primary-700);   /* teks berwarna brand  */
+    --token-brand-text:     var(--palette-primary-600);   /* teks berwarna brand  */
     --token-brand-muted:    var(--palette-primary-500);   /* teks brand lebih terang */
 
     /* --- SURFACE & BACKGROUND --------------------------------- */

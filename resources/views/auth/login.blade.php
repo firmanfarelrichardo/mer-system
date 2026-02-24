@@ -163,9 +163,9 @@
         <button
             type="submit"
             class="group relative mt-1 flex w-full items-center justify-center gap-2 overflow-hidden rounded-xl
-                   bg-primary-800 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary-900/30
-                   transition hover:bg-primary-700 active:scale-[.98] active:bg-primary-900
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                   bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-primary-900/30
+                   transition hover:bg-primary-500 active:scale-[.98] active:bg-primary-700
+                   focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2"
         >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round"
