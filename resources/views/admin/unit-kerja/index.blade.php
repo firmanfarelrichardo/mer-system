@@ -100,6 +100,9 @@
          ================================================================ --}}
     <form method="GET" action="{{ route('admin.unit-kerja.index') }}"
           class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        @if (request('per_halaman'))
+            <input type="hidden" name="per_halaman" value="{{ request('per_halaman') }}">
+        @endif
         <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
 
             {{-- Pencarian --}}

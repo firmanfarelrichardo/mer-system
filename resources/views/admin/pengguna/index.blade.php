@@ -68,6 +68,9 @@
             @if (isset($filter['status']) && $filter['status'] !== '')
                 <input type="hidden" name="status" value="{{ $filter['status'] }}">
             @endif
+            @if (request('per_halaman'))
+                <input type="hidden" name="per_halaman" value="{{ request('per_halaman') }}">
+            @endif
 
             <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">

@@ -77,11 +77,21 @@
     {{-- Kontrol: selector per halaman + navigasi halaman --}}
     <div class="flex flex-wrap items-center gap-3">
 
-        {{-- Selector jumlah per halaman --}}
-        <div class="flex items-center gap-2">
-            <label class="whitespace-nowrap text-xs text-slate-400">Per halaman</label>
+        {{-- Selector jumlah per halaman (form GET agar semua filter aktif ikut terbawa) --}}
+        <form method="GET" action="{{ url()->current() }}" class="flex items-center gap-2">
+            {{-- Bawa semua query param aktif kecuali 'page' dan 'per_halaman' --}}
+            @foreach (request()->except(['page', 'per_halaman']) as $key => $value)
+                @if (!is_null($value) && $value !== '')
+                    <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                @endif
+            @endforeach
+
+            <label for="per_halaman" class="whitespace-nowrap text-xs text-slate-400">Per halaman</label>
             <select
-                onchange="const u=new URL(window.location.href);u.searchParams.set('per_halaman',this.value);u.searchParams.delete('page');window.location.href=u.toString()"
+                id="per_halaman"
+                name="per_halaman"
+                onchange="this.form.submit()"
+                autocomplete="off"
                 class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium
                        text-slate-600 shadow-sm focus:border-brand focus:outline-none focus:ring-1
                        focus:ring-brand"
@@ -92,7 +102,7 @@
                     </option>
                 @endforeach
             </select>
-        </div>
+        </form>
 
         {{-- Navigasi halaman (custom — tanpa teks bawaan Laravel) --}}
         @if ($paginator->hasPages())
