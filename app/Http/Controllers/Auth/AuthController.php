@@ -234,15 +234,13 @@ class AuthController extends Controller
      */
     private function tentukanHalamanSesuaiPeran(Pengguna $pengguna): string
     {
-        $daftarPeran = $pengguna->daftarPeran();
-
         return match (true) {
-            in_array('Direktur',       $daftarPeran, true) => route('direktur.dashboard'),
-            in_array('Admin',          $daftarPeran, true) => route('admin.dashboard'),
-            in_array('Komite',         $daftarPeran, true) => route('komite.dashboard'),
-            in_array('Kepala Ruangan', $daftarPeran, true) => route('kepala-ruangan.dashboard'),
-            in_array('Nakes',          $daftarPeran, true) => route('nakes.dashboard'),
-            default                                         => route('dashboard'),
+            $pengguna->memilikiPeran('Direktur')       => route('direktur.dashboard'),
+            $pengguna->memilikiPeran('Admin')          => route('admin.dashboard'),
+            $pengguna->memilikiPeran('Komite')         => route('komite.dashboard'),
+            $pengguna->memilikiPeran('Kepala Ruangan') => route('kepala-ruangan.dashboard'),
+            $pengguna->memilikiPeran('Nakes')          => route('nakes.dashboard'),
+            default                                    => route('dashboard'),
         };
     }
 }

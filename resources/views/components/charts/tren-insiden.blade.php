@@ -14,7 +14,7 @@
 @props(['trenBulanan'])
 
 {{-- Muat Chart.js CDN satu kali untuk seluruh halaman. --}}
-@pushOnce('chart-cdn')
+@pushOnce('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
             integrity="sha256-oVuPpCd0re4VaHStGbFbTc9sVD8koU7gkS7vpNL7fZg="
             crossorigin="anonymous" defer></script>

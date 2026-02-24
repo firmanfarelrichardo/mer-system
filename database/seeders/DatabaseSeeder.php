@@ -23,8 +23,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             OrganisasiSeeder::class,    // 1. Tenant (required FK for all below)
             PeranSeeder::class,          // 2. Roles  (required FK for user-role pivot)
-            PenggunaSeeder::class,       // 3. Users + pivot assignments
-            UnitKerjaSeeder::class,      // 4. 31 unit kerja rumah sakit
+            UnitKerjaSeeder::class,      // 3. Unit kerja (required FK for pengguna.unit_id)
+            PenggunaSeeder::class,       // 4. Users + pivot assignments
             InsidenSeeder::class,        // 5. 500 sample incident reports (2024-2026)
             LogAktivitasSeeder::class,   // 6. Audit log entries (2024-2026)
         ]);

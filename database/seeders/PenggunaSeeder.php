@@ -17,13 +17,13 @@ use Illuminate\Database\Seeder;
  * │  Remove this seeder from production or guard it with        │
  * │  `if (app()->isLocal()) { ... }` inside DatabaseSeeder.     │
  * ├────────────────┬──────────────────────────────┬────────────┤
- * │ Role           │ Email                        │ Password   │
+ * │ Role           │ Username (nomor_induk)       │ Password   │
  * ├────────────────┼──────────────────────────────┼────────────┤
- * │ Admin          │ admin@mer.test                │ Admin123!  │
- * │ Direktur       │ direktur@mer.test             │ Admin123!  │
- * │ Komite         │ komite@mer.test               │ Admin123!  │
- * │ Kepala Ruangan │ kepala.ruangan@mer.test       │ Admin123!  │
- * │ Nakes          │ nakes@mer.test                │ Admin123!  │
+ * │ Admin          │ admin                        │ password   │
+ * │ Direktur       │ direktur                     │ password   │
+ * │ Komite         │ komite                       │ password   │
+ * │ Kepala Ruangan │ kepalaruangan                │ password   │
+ * │ Nakes          │ nakes                        │ password   │
  * └────────────────┴──────────────────────────────┴────────────┘
  */
 class PenggunaSeeder extends Seeder
@@ -114,7 +114,19 @@ class PenggunaSeeder extends Seeder
     {
         $tenant = Organisasi::where('kode_organisasi', 'default')->firstOrFail();
 
+        // Cari unit IGD untuk test user Kepala Ruangan & Nakes.
+        // Menggunakan query langsung agar tidak bergantung pada urutan seeder.
+        $unitIgd = \Illuminate\Support\Facades\DB::table('master.unit_kerja')
+            ->where('tenant_id', $tenant->id)
+            ->where('kode_unit', 'IGD')
+            ->first();
+
         foreach ($this->userDefinitions($tenant->id) as $definition) {
+            // Tetapkan unit_id untuk Kepala Ruangan & Nakes ke IGD (jika tersedia).
+            if ($unitIgd && in_array($definition['peran'], [Peran::KEPALA_RUANGAN, Peran::NAKES], true)) {
+                $definition['pengguna']['unit_id'] = $unitIgd->id;
+            }
+
             // firstOrCreate prevents duplicates on re-runs (idempotent)
             $pengguna = Pengguna::firstOrCreate(
                 [
