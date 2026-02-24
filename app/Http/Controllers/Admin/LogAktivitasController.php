@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Admin;
 use App\DataTransferObjects\LogAktivitasFilterDTO;
 use App\Http\Controllers\Controller;
 use App\Services\LogAktivitasService;
+use App\Support\Paginasi;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
@@ -52,7 +53,7 @@ class LogAktivitasController extends Controller
             tipePeran: $tipePeran,
         );
 
-        $daftarLog = $this->logService->daftar($dto);
+        $daftarLog = $this->logService->daftar($dto, Paginasi::perHalaman());
 
         return view('admin.log-aktivitas.index', [
             'daftarLog'  => $daftarLog,

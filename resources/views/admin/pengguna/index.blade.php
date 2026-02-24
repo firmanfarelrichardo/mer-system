@@ -300,12 +300,7 @@
                 </table>
             </div>
 
-            {{-- Pagination --}}
-            @if ($daftarPengguna->hasPages())
-                <div class="border-t border-slate-100 px-5 py-4">
-                    {{ $daftarPengguna->withQueryString()->links() }}
-                </div>
-            @endif
+            <x-pagination :paginator="$daftarPengguna" />
         @endif
     </div>
 

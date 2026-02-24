@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Services\NotifikasiService;
+use App\Support\Paginasi;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -34,7 +35,7 @@ class NotifikasiController extends Controller
     public function index(Request $permintaan): View
     {
         $pengguna          = Auth::user();
-        $daftarNotifikasi  = $this->service->daftarNotifikasi($pengguna, 15);
+        $daftarNotifikasi  = $this->service->daftarNotifikasi($pengguna, Paginasi::perHalaman());
         $belumDibaca       = $this->service->hitungBelumDibaca($pengguna);
 
         return view('notifikasi.index', compact('daftarNotifikasi', 'belumDibaca'));

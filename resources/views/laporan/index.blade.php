@@ -331,16 +331,7 @@
             </table>
         </div>
 
-        {{-- Pagination --}}
-        @if ($daftarLaporan->hasPages())
-            <div class="border-t border-slate-200 px-4 py-3 sm:px-5">
-                {{ $daftarLaporan->links() }}
-            </div>
-        @else
-            <div class="border-t border-slate-200 px-4 py-3 text-sm text-slate-400 sm:px-5">
-                Menampilkan {{ $daftarLaporan->count() }} dari {{ $daftarLaporan->total() }} laporan
-            </div>
-        @endif
+        <x-pagination :paginator="$daftarLaporan" />
     </div>
 
 @endsection

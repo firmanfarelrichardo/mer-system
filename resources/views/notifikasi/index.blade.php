@@ -169,12 +169,7 @@
                 @endforeach
             </div>
 
-            {{-- Paginasi --}}
-            @if ($daftarNotifikasi->hasPages())
-                <div class="border-t border-slate-200 px-5 py-3">
-                    {{ $daftarNotifikasi->links() }}
-                </div>
-            @endif
+            <x-pagination :paginator="$daftarNotifikasi" />
         @endif
     </div>
 

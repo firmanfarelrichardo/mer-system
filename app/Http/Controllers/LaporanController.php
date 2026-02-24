@@ -10,6 +10,7 @@ use App\Models\DetailPasien;
 use App\Models\Insiden;
 use App\Models\Peran;
 use App\Models\TindakLanjut;
+use App\Support\Paginasi;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -76,7 +77,7 @@ class LaporanController extends Controller
             $query->where('tipe_insiden', $tipe);
         }
 
-        $daftarLaporan = $query->paginate(10)->withQueryString();
+        $daftarLaporan = $query->paginate(Paginasi::perHalaman())->withQueryString();
 
         // ── Statistik ringkasan (juga scoped per peran) ─────────────
         $baseQuery = Insiden::untukPeran($pengguna);
