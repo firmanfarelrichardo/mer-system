@@ -27,10 +27,10 @@
             <img
                 src="{{ asset('images/icon-mer_system.jpg') }}"
                 alt="Logo Sistem MER"
-                class="h-9 w-auto shrink-0 rounded-lg"
+                class="h-13 w-auto shrink-0 rounded-lg"
             >
             <div>
-                <h2 class="text-sm font-bold leading-tight tracking-wide">Sistem MER</h2>
+                <h2 class="text-md font-bold leading-tight tracking-wide">Sistem MER</h2>
                 <p class="text-[11px] text-white/60">Pelaporan Insiden Obat</p>
             </div>
         </div>
