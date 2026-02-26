@@ -303,21 +303,20 @@
                         <label for="status_baru" class="block text-sm font-medium text-slate-700">
                             Ubah Status <span class="text-red-500">*</span>
                         </label>
+                        {{--
+                            Dropdown menampilkan semua status yang tersedia.
+                            Karu dan Komite memiliki alur status INDEPENDEN:
+                            pilihan tidak dibatasi oleh status yang dipilih peran lain.
+                        --}}
                         <select name="status_baru" id="status_baru"
                                 class="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5
                                        text-sm text-slate-700 shadow-sm focus:border-brand focus:outline-none
                                        focus:ring-2 focus:ring-brand/20 sm:w-64"
                                 required>
                             <option value="">— Pilih status —</option>
-                            @if ($insiden->status_saat_ini === 'kasus_baru')
-                                <option value="investigasi" {{ old('status_baru') === 'investigasi' ? 'selected' : '' }}>Investigasi</option>
-                            @endif
-                            @if (in_array($insiden->status_saat_ini, ['kasus_baru', 'investigasi']))
-                                <option value="tindak_lanjut" {{ old('status_baru') === 'tindak_lanjut' ? 'selected' : '' }}>Tindak Lanjut</option>
-                            @endif
-                            @if (in_array($insiden->status_saat_ini, ['investigasi', 'tindak_lanjut']))
-                                <option value="selesai" {{ old('status_baru') === 'selesai' ? 'selected' : '' }}>Selesai</option>
-                            @endif
+                            <option value="investigasi" {{ old('status_baru') === 'investigasi' ? 'selected' : '' }}>Investigasi</option>
+                            <option value="tindak_lanjut" {{ old('status_baru') === 'tindak_lanjut' ? 'selected' : '' }}>Tindak Lanjut</option>
+                            <option value="selesai" {{ old('status_baru') === 'selesai' ? 'selected' : '' }}>Selesai</option>
                         </select>
                     </div>
 
