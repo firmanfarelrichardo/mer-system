@@ -148,6 +148,16 @@ class Insiden extends Model
 
         // Kepala Ruangan: hanya insiden dari unit kerja yang sama (kecuali DRAF).
         if ($pengguna->memilikiPeran(Peran::KEPALA_RUANGAN)) {
+            // Jika Karu belum ditugaskan ke unit manapun, tampilkan 0 data
+            // (bukan semua data). Admin harus menetapkan unit_id terlebih dahulu.
+            if ($pengguna->unit_id === null) {
+                return $query->whereRaw('1 = 0');
+            }
+
+            return $query->where(function (Builder $q) use ($pengguna) {
+                $q->where($this->qualifyColumn('unit_id'), $pengguna->unit_id)
+                  ->orWhere($this->qualifyColumn('nama_unit_kerja'), $pengguna->unitKerja?->nama_unit);
+            });
             return $query->where($this->qualifyColumn('status_saat_ini'), '!=', 'DRAF')
                 ->where(function (Builder $q) use ($pengguna) {
                     $q->where($this->qualifyColumn('unit_id'), $pengguna->unit_id)

@@ -55,15 +55,14 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/dasbor', function () {
         /** @var \App\Models\Pengguna $pengguna */
         $pengguna = auth()->user();
-        $peran    = $pengguna?->daftarPeran() ?? [];
 
         return match (true) {
-            in_array('Direktur',       $peran, true) => redirect()->route('direktur.dashboard'),
-            in_array('Admin',          $peran, true) => redirect()->route('admin.dashboard'),
-            in_array('Komite',         $peran, true) => redirect()->route('komite.dashboard'),
-            in_array('Kepala Ruangan', $peran, true) => redirect()->route('kepala-ruangan.dashboard'),
-            in_array('Nakes',          $peran, true) => redirect()->route('nakes.dashboard'),
-            default                                  => redirect()->route('laporan.index'),
+            $pengguna->memilikiPeran('Direktur')       => redirect()->route('direktur.dashboard'),
+            $pengguna->memilikiPeran('Admin')          => redirect()->route('admin.dashboard'),
+            $pengguna->memilikiPeran('Komite')         => redirect()->route('komite.dashboard'),
+            $pengguna->memilikiPeran('Kepala Ruangan') => redirect()->route('kepala-ruangan.dashboard'),
+            $pengguna->memilikiPeran('Nakes')          => redirect()->route('nakes.dashboard'),
+            default                                    => redirect()->route('laporan.index'),
         };
     })->name('dashboard');
 

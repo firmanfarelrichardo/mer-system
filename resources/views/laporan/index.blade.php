@@ -239,7 +239,7 @@
 
                             {{-- Unit Kerja (hanya untuk peran manajemen) --}}
                             @if (! $pengguna->memilikiPeran('Nakes'))
-                                <td class="hidden whitespace-nowrap px-4 py-3.5 text-slate-500 md:table-cell sm:px-5">>
+                                <td class="hidden whitespace-nowrap px-4 py-3.5 text-slate-500 md:table-cell sm:px-5">
                                     {{ $laporan->nama_unit_kerja ?? $laporan->unitKerja?->nama_unit ?? '—' }}
                                 </td>
                             @endif

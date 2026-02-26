@@ -15,7 +15,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('audit.log_aktivitas', function (Blueprint $table) {
-            $table->string('alamat_ip', 45)->nullable()->after('id_pengguna');
+            $table->string('alamat_ip', 45)->nullable();
         });
     }
 

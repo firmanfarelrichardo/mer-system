@@ -161,36 +161,6 @@ class InsidenSeeder extends Seeder
     {
         $tenant = Organisasi::where('kode_organisasi', 'default')->firstOrFail();
 
-        // Ambil pelapor valid (perawat/karu) milik tenant ini.
-        // Jika tidak ada, biarkan pelapor_id NULL (kolom memang nullable).
-        $pelaporIds = Pengguna::where('tenant_id', $tenant->id)
-            ->whereHas('peran', fn ($q) => $q->whereIn('nama_peran', ['Perawat', 'Kepala Ruangan']))
-            ->pluck('id')
-            ->all();
-
-        $this->command?->info("Membuat " . self::JUMLAH_INSIDEN . " insiden dummy ...");
-
-        $tahun = now()->format('Y');
-
-        // Buat dalam kelompok kecil agar nomor laporan unik & rapi.
-        for ($i = 1; $i <= self::JUMLAH_INSIDEN; $i++) {
-            $nomorLaporan = sprintf('INC-%s-DEMO-%03d', $tahun, $i);
-
-            // Lewati jika sudah ada (idempoten).
-            if (Insiden::where('nomor_laporan', $nomorLaporan)
-                       ->where('tenant_id', $tenant->id)
-                       ->exists()) {
-                continue;
-            }
-
-            Insiden::factory()->create([
-                'tenant_id'     => $tenant->id,
-                'nomor_laporan' => $nomorLaporan,
-                'pelapor_id'    => $pelaporIds ? $pelaporIds[array_rand($pelaporIds)] : null,
-            ]);
-        }
-
-        $this->command?->info("✓ " . self::JUMLAH_INSIDEN . " insiden berhasil dibuat.");
         $this->command->info('  ▶ Seeding master data ...');
         [$unitKerja, $kategori, $dampakList, $probabilitasList] = $this->seedMasterData($tenant->id);
 

@@ -168,7 +168,11 @@ class StatistikController extends Controller
         $distribusiStatus  = $this->hitungDistribusiStatus(clone $baseQuery);
         $distribusiTipe    = $this->hitungDistribusiTipe(clone $baseQuery);
         $distribusiTahapan = $this->hitungDistribusiPerTahapan(clone $baseQuery, $totalInsiden);
-        $ringkasanPerUnit  = $this->hitungRingkasanPerUnit(clone $baseQuery, $pengguna);
+
+        // Ringkasan per unit & distribusi ruangan hanya untuk direktur & komite.
+        $ringkasanPerUnit  = $bisaLihatSemua
+            ? $this->hitungRingkasanPerUnit(clone $baseQuery, $pengguna)
+            : [];
 
         // Distribusi per ruangan hanya untuk direktur & komite.
         $distribusiRuangan = $bisaLihatSemua
@@ -225,9 +229,13 @@ class StatistikController extends Controller
 
         // Unit kerja hanya bisa difilter oleh direktur & komite.
         if ($bisaLihatSemua && $request->filled('unit_kerja')) {
-            $query->where('nama_unit_kerja', $request->input('unit_kerja'));
+            $namaUnit = $request->input('unit_kerja');
+            $query->where(function ($q) use ($namaUnit) {
+                $q->where('nama_unit_kerja', $namaUnit)
+                  ->orWhereHas('unitKerja', fn ($uk) => $uk->where('nama_unit', $namaUnit));
+            });
             $filterAktif          = true;
-            $data['unit_kerja']   = $request->input('unit_kerja');
+            $data['unit_kerja']   = $namaUnit;
         }
 
         if ($request->filled('tipe_insiden')) {
@@ -467,11 +475,6 @@ class StatistikController extends Controller
         ];
     }
 
-    /**
-     * Ambil daftar nama unit kerja untuk dropdown filter.
-     *
-     * @return \Illuminate\Support\Collection<int, string>
-     */
     /**
      * Ambil daftar nama unit kerja untuk dropdown filter.
      *
