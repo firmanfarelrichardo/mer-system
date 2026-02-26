@@ -2,12 +2,20 @@
 
 namespace App\Providers;
 
+use App\Models\FaktorPenyebab;
 use App\Models\Insiden;
+use App\Models\JenisKesalahan;
 use App\Models\KategoriKesalahan;
 use App\Models\Peran;
+use App\Models\TindakanIntervensi;
+use App\Models\TipeCedera;
 use App\Models\UnitKerja;
+use App\Observers\FaktorPenyebabObserver;
 use App\Observers\InsidenObserver;
+use App\Observers\IntervensiObserver;
+use App\Observers\JenisKesalahanObserver;
 use App\Observers\KategoriKesalahanObserver;
+use App\Observers\TipeCederaObserver;
 use App\Observers\UnitKerjaObserver;
 use App\Policies\InsidenPolicy;
 use App\Repositories\InsidenRepository;
@@ -52,6 +60,10 @@ class AppServiceProvider extends ServiceProvider
         UnitKerja::observe(UnitKerjaObserver::class);
         KategoriKesalahan::observe(KategoriKesalahanObserver::class);
         Insiden::observe(InsidenObserver::class);
+        TipeCedera::observe(TipeCederaObserver::class);
+        FaktorPenyebab::observe(FaktorPenyebabObserver::class);
+        TindakanIntervensi::observe(IntervensiObserver::class);
+        JenisKesalahan::observe(JenisKesalahanObserver::class);
 
         // ----------------------------------------------------------------
         // Gate: Peran Manajemen
@@ -172,13 +184,7 @@ class AppServiceProvider extends ServiceProvider
                     'peran'  => ['Admin'],
                     'ikon'   => 'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21m0 0v2.625',
                 ],
-                [
-                    'label'  => 'Master Kategori Insiden',
-                    'route'  => 'admin.kategori.index',
-                    'aktif'  => ['admin.kategori.*'],
-                    'peran'  => ['Admin'],
-                    'ikon'   => 'M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z M6 6h.008v.008H6V6Z',
-                ],
+
                 [
                     'label'  => 'Log Pengguna',
                     'route'  => 'admin.log-aktivitas.pengguna',
@@ -192,6 +198,39 @@ class AppServiceProvider extends ServiceProvider
                     'aktif'  => ['admin.log-aktivitas.admin'],
                     'peran'  => ['Admin'],
                     'ikon'   => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+                ],
+            ];
+
+            // ── Menu Manajemen Formulir (Admin) ──────────────────────
+            // Sub-menu untuk mengelola isi dropdown/checkbox di formulir Nakes.
+            $menuFormulir = [
+                [
+                    'label'  => 'Jenis Kesalahan',
+                    'route'  => 'admin.jenis-kesalahan.index',
+                    'aktif'  => ['admin.jenis-kesalahan.*'],
+                    'peran'  => ['Admin'],
+                    'ikon'   => 'M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z M6 6h.008v.008H6V6Z',
+                ],
+                [
+                    'label'  => 'Tipe Cedera',
+                    'route'  => 'admin.tipe-cedera.index',
+                    'aktif'  => ['admin.tipe-cedera.*'],
+                    'peran'  => ['Admin'],
+                    'ikon'   => 'M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z',
+                ],
+                [
+                    'label'  => 'Faktor Penyebab',
+                    'route'  => 'admin.faktor-penyebab.index',
+                    'aktif'  => ['admin.faktor-penyebab.*'],
+                    'peran'  => ['Admin'],
+                    'ikon'   => 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z',
+                ],
+                [
+                    'label'  => 'Intervensi Pasien',
+                    'route'  => 'admin.intervensi.index',
+                    'aktif'  => ['admin.intervensi.*'],
+                    'peran'  => ['Admin'],
+                    'ikon'   => 'M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085',
                 ],
             ];
 
@@ -236,6 +275,7 @@ class AppServiceProvider extends ServiceProvider
                 'menuPelaporan',
                 'menuNotifikasi',
                 'menuAdmin',
+                'menuFormulir',
                 'menuDirektur',
                 'menuBawah',
             ));

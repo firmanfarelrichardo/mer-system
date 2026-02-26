@@ -85,6 +85,15 @@
             @foreach ($menuAdmin as $item)
                 @include('layouts.partials.sidebar-item', $item)
             @endforeach
+
+            {{-- === Sub-grup: Manajemen Formulir === --}}
+            <div class="my-3 border-t border-white/10"></div>
+            <p class="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
+                Manajemen Formulir
+            </p>
+            @foreach ($menuFormulir as $item)
+                @include('layouts.partials.sidebar-item', $item)
+            @endforeach
         @endif
 
         {{-- === Menu Direktur (Laporan + Statistik, read-only) === --}}

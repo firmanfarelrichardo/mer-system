@@ -12,7 +12,11 @@ use App\Models\Insiden;
 use App\Models\Peran;
 use App\Models\TindakLanjut;
 use App\Repositories\InsidenRepository;
+use App\Services\FaktorPenyebabService;
+use App\Services\IntervensiService;
+use App\Services\JenisKesalahanService;
 use App\Services\LaporanService;
+use App\Services\TipeCederaService;
 use App\Support\Paginasi;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -42,8 +46,12 @@ use Illuminate\View\View;
 class LaporanController extends Controller
 {
     public function __construct(
-        private readonly LaporanService    $laporanService,
-        private readonly InsidenRepository $insidenRepository,
+        private readonly LaporanService          $laporanService,
+        private readonly InsidenRepository       $insidenRepository,
+        private readonly JenisKesalahanService   $jenisKesalahanService,
+        private readonly TipeCederaService       $tipeCederaService,
+        private readonly FaktorPenyebabService   $faktorPenyebabService,
+        private readonly IntervensiService       $intervensiService,
     ) {}
 
     /* ==================================================================
@@ -111,7 +119,19 @@ class LaporanController extends Controller
      */
     public function buat(Request $permintaan): View
     {
-        return view('laporan.buat');
+        $tenantId = Auth::user()->tenant_id;
+
+        $masterJenisKesalahan  = $this->jenisKesalahanService->getAktifUntukForm($tenantId);
+        $masterTipeCedera      = $this->tipeCederaService->getAktifUntukForm($tenantId);
+        $masterFaktorPenyebab  = $this->faktorPenyebabService->getAktifUntukForm($tenantId);
+        $masterIntervensi      = $this->intervensiService->getAktifUntukForm($tenantId);
+
+        return view('laporan.buat', compact(
+            'masterJenisKesalahan',
+            'masterTipeCedera',
+            'masterFaktorPenyebab',
+            'masterIntervensi',
+        ));
     }
 
     /* ==================================================================
@@ -184,7 +204,21 @@ class LaporanController extends Controller
             abort(404, 'Draf laporan tidak ditemukan.');
         }
 
-        return view('laporan.edit', compact('insiden', 'pengguna'));
+        $tenantId = $pengguna->tenant_id;
+
+        $masterJenisKesalahan  = $this->jenisKesalahanService->getAktifUntukForm($tenantId);
+        $masterTipeCedera      = $this->tipeCederaService->getAktifUntukForm($tenantId);
+        $masterFaktorPenyebab  = $this->faktorPenyebabService->getAktifUntukForm($tenantId);
+        $masterIntervensi      = $this->intervensiService->getAktifUntukForm($tenantId);
+
+        return view('laporan.edit', compact(
+            'insiden',
+            'pengguna',
+            'masterJenisKesalahan',
+            'masterTipeCedera',
+            'masterFaktorPenyebab',
+            'masterIntervensi',
+        ));
     }
 
     /* ==================================================================
