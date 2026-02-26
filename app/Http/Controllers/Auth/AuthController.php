@@ -124,6 +124,9 @@ class AuthController extends Controller
         Auth::login($pengguna);
         $permintaan->session()->regenerate();
 
+        // Simpan waktu masuk untuk penegakan batas durasi sesi (SesiMaksimalMasuk middleware).
+        $permintaan->session()->put(\App\Http\Middleware\SesiMaksimalMasuk::KUNCI_LOGIN_PADA, now()->timestamp);
+
         // ----------------------------------------------------------
         // 6. Hapus catatan throttle setelah masuk berhasil.
         // ----------------------------------------------------------

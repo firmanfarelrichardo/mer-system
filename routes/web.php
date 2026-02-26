@@ -43,7 +43,7 @@ Route::middleware('guest')->group(function (): void {
 // -----------------------------------------------------------------------
 // Rute Terautentikasi (harus sudah masuk)
 // -----------------------------------------------------------------------
-Route::middleware('auth')->group(function (): void {
+Route::middleware(['auth', 'sesi.maks'])->group(function (): void {
 
     Route::post('keluar', [AuthController::class, 'keluar'])
         ->name('logout');
