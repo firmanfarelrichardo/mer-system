@@ -8,9 +8,11 @@ use App\Models\Insiden;
 use App\Models\KategoriKesalahan;
 use App\Models\Peran;
 use App\Models\UnitKerja;
+use App\Observers\InsidenObserver;
 use App\Observers\KategoriKesalahanObserver;
 use App\Observers\UnitKerjaObserver;
 use App\Policies\InsidenPolicy;
+use App\Repositories\InsidenRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -52,6 +54,7 @@ class AppServiceProvider extends ServiceProvider
         // ----------------------------------------------------------------
         UnitKerja::observe(UnitKerjaObserver::class);
         KategoriKesalahan::observe(KategoriKesalahanObserver::class);
+        Insiden::observe(InsidenObserver::class);
 
         // ----------------------------------------------------------------
         // Event → Listener: Notifikasi Insiden
@@ -114,6 +117,16 @@ class AppServiceProvider extends ServiceProvider
                     'aktif' => ['laporan.buat'],
                     'peran' => [Peran::NAKES],
                     'ikon'  => 'M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m3.75 0v6m3-3H9m1.5-3H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z',
+                ],
+                [
+                    'label' => 'Draf Laporan',
+                    'route' => 'laporan.draf',
+                    'aktif' => ['laporan.draf', 'laporan.edit'],
+                    'peran' => [Peran::NAKES],
+                    'ikon'  => 'M16.862 4.487l1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10',
+                    'badge' => ($pengguna && $pengguna->memilikiPeran(Peran::NAKES))
+                        ? app(InsidenRepository::class)->countDraft($pengguna->id, $pengguna->tenant_id)
+                        : 0,
                 ],
                 [
                     'label' => 'Riwayat Laporan',

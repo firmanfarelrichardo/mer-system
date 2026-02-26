@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\DataTransferObjects\InsidenData;
 use App\Events\InsidenStatusBerubah;
 use App\Http\Requests\SimpanLaporanRequest;
 use App\Models\DetailPasien;
 use App\Models\Insiden;
 use App\Models\Peran;
 use App\Models\TindakLanjut;
+use App\Repositories\InsidenRepository;
+use App\Services\LaporanService;
 use App\Support\Paginasi;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,8 +40,13 @@ use Illuminate\View\View;
  */
 class LaporanController extends Controller
 {
+    public function __construct(
+        private readonly LaporanService    $laporanService,
+        private readonly InsidenRepository $insidenRepository,
+    ) {}
+
     /* ==================================================================
-     | INDEX — Daftar Laporan & Statistik
+     | INDEX — Daftar Laporan & Statistik (hanya yang sudah di-submit)
      | =================================================================*/
 
     /**
@@ -54,9 +62,10 @@ class LaporanController extends Controller
     {
         $pengguna = Auth::user();
 
-        // ── Query utama (scoped per peran) ──────────────────────────
+        // ── Query utama (scoped per peran, selalu kecualikan DRAF) ───
         $query = Insiden::with(['detailPasien', 'unitKerja'])
             ->untukPeran($pengguna)
+            ->bukanDraf()
             ->latest('tgl_lapor');
 
         // Filter: pencarian nama pasien atau nomor laporan.
@@ -79,8 +88,8 @@ class LaporanController extends Controller
 
         $daftarLaporan = $query->paginate(Paginasi::perHalaman())->withQueryString();
 
-        // ── Statistik ringkasan (juga scoped per peran) ─────────────
-        $baseQuery = Insiden::untukPeran($pengguna);
+        // ── Statistik ringkasan (juga scoped per peran, tanpa draf) ───
+        $baseQuery = Insiden::untukPeran($pengguna)->bukanDraf();
 
         $statistik = [
             'total'           => (clone $baseQuery)->count(),
@@ -109,79 +118,72 @@ class LaporanController extends Controller
      | =================================================================*/
 
     /**
-     * Simpan laporan insiden baru ke database.
+     * Simpan laporan insiden baru / draf ke database.
      *
-     * Menyimpan ke tabel pelaporan.insiden dan pelaporan.detail_pasien
-     * dalam satu transaksi database.
+     * Mendelegasikan ke LaporanService yang menangani:
+     *   - Buat baru vs update draf (berdasarkan insiden_id).
+     *   - Set status DRAF vs kasus_baru (berdasarkan action).
+     *   - Audit log & notifikasi secara kondisional.
      */
     public function simpan(SimpanLaporanRequest $permintaan): RedirectResponse
     {
-        $data     = $permintaan->validated();
         $pengguna = Auth::user();
+        $dto      = InsidenData::fromRequest($permintaan);
 
-        $isAnonim = empty($data['nama_pelapor']);
+        $insiden = $this->laporanService->save($dto, $pengguna);
 
-        $insiden = DB::transaction(function () use ($data, $pengguna, $isAnonim) {
-            // Buat record insiden.
-            $insiden = Insiden::create([
-                'tenant_id'       => $pengguna->tenant_id,
-                'nomor_laporan'   => Insiden::generateNomorLaporan($pengguna->tenant_id),
-                'pelapor_id'      => $pengguna->id,
-                'unit_id'         => null,
-                'nama_unit_kerja' => $data['unit_kerja'],
-                'tipe_insiden'    => $data['jenis_insiden'],
-                'fase_kesalahan'  => $data['fase_kesalahan'],
-                'status_saat_ini' => 'kasus_baru',
-                'tgl_kejadian'    => $data['tanggal_kejadian'] . ' ' . $data['waktu_kejadian'] . ':00',
-                'tgl_lapor'       => now(),
-                'nama_pelapor'    => $data['nama_pelapor'] ?? null,
-                'kontak_pelapor'  => $data['kontak_pelapor'] ?? null,
-                'is_anonim'       => $isAnonim,
-                'sudah_dibaca'    => false,
-            ]);
-
-            // Gabungkan array checkbox dengan nilai "lainnya".
-            $jenisKesalahan   = $data['jenis_kesalahan'] ?? [];
-            $cedera           = $data['cedera'] ?? [];
-            $faktorPenyebab   = $data['faktor_penyebab'] ?? [];
-            $intervensiPasien = $data['intervensi_pasien'] ?? [];
-
-            if (! empty($data['jenis_kesalahan_lainnya'])) {
-                $jenisKesalahan[] = $data['jenis_kesalahan_lainnya'];
-            }
-            if (! empty($data['cedera_lainnya'])) {
-                $cedera[] = $data['cedera_lainnya'];
-            }
-            if (! empty($data['faktor_penyebab_lainnya'])) {
-                $faktorPenyebab[] = $data['faktor_penyebab_lainnya'];
-            }
-            if (! empty($data['intervensi_pasien_lainnya'])) {
-                $intervensiPasien[] = $data['intervensi_pasien_lainnya'];
-            }
-
-            // Buat record detail pasien.
-            DetailPasien::create([
-                'insiden_id'           => $insiden->id,
-                'nama_pasien'          => $data['nama_pasien'],
-                'nomor_rekam_medis'    => $data['nomor_rekam_medis'],
-                'obat_terkait'         => $data['nama_obat'],
-                'kronologi'            => $data['kronologi_kejadian'],
-                'jenis_kesalahan'      => $jenisKesalahan,
-                'cedera'               => $cedera,
-                'faktor_penyebab'      => $faktorPenyebab,
-                'intervensi_pasien'    => $intervensiPasien,
-                'pernyataan_kronologi' => true,
-            ]);
-
-            return $insiden;
-        });
-
-        // Dispatch event — listener akan mengirim notifikasi ke Kepala Ruangan.
-        InsidenStatusBerubah::dispatch($insiden, 'kasus_baru', $pengguna);
+        if ($dto->isDraft) {
+            return redirect()
+                ->route('laporan.draf')
+                ->with('sukses', 'Draf laporan berhasil disimpan.');
+        }
 
         return redirect()
             ->route('laporan.index')
             ->with('sukses', "Laporan insiden {$insiden->nomor_laporan} berhasil dikirim.");
+    }
+
+    /* ==================================================================
+     | DRAF — Daftar Draf Laporan (Nakes Only)
+     | =================================================================*/
+
+    /**
+     * Tampilkan halaman daftar draf laporan milik Nakes.
+     */
+    public function draf(Request $permintaan): View
+    {
+        $pengguna = Auth::user();
+
+        $daftarDraf = $this->insidenRepository->getDraftLaporan(
+            nakesId:  $pengguna->id,
+            tenantId: $pengguna->tenant_id,
+            cari:     $permintaan->input('cari'),
+        );
+
+        return view('laporan.draf', compact('daftarDraf', 'pengguna'));
+    }
+
+    /* ==================================================================
+     | EDIT — Form Edit Draf (Nakes melanjutkan pengisian)
+     | =================================================================*/
+
+    /**
+     * Tampilkan formulir edit untuk melanjutkan pengisian draf.
+     */
+    public function edit(Request $permintaan, string $laporan): View
+    {
+        $pengguna = Auth::user();
+
+        $insiden = $this->insidenRepository->findDraftById(
+            insidenId: (int) $laporan,
+            nakesId:   $pengguna->id,
+        );
+
+        if (! $insiden) {
+            abort(404, 'Draf laporan tidak ditemukan.');
+        }
+
+        return view('laporan.edit', compact('insiden', 'pengguna'));
     }
 
     /* ==================================================================
