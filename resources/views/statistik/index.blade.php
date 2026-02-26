@@ -51,66 +51,60 @@
             @endif
         </p>
     </div>
-    <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs text-slate-500 shadow-sm">
-        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25"/>
-        </svg>
-        <span>
-            @if ($filterAktif && isset($filterAktifData['start_date']))
-                {{ \Carbon\Carbon::parse($filterAktifData['start_date'])->translatedFormat('d M Y') }}
-                @if (isset($filterAktifData['end_date']))
-                    &nbsp;–&nbsp;{{ \Carbon\Carbon::parse($filterAktifData['end_date'])->translatedFormat('d M Y') }}
+    <div class="flex items-center gap-3">
+
+        {{-- Badge tanggal --}}
+        <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs text-slate-500 shadow-sm">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25"/>
+            </svg>
+            <span>
+                @if ($filterAktif && isset($filterAktifData['start_date']))
+                    {{ \Carbon\Carbon::parse($filterAktifData['start_date'])->translatedFormat('d M Y') }}
+                    @if (isset($filterAktifData['end_date']))
+                        &nbsp;–&nbsp;{{ \Carbon\Carbon::parse($filterAktifData['end_date'])->translatedFormat('d M Y') }}
+                    @endif
+                @else
+                    Data hingga {{ now()->translatedFormat('d F Y') }}
                 @endif
-            @else
-                Data hingga {{ now()->translatedFormat('d F Y') }}
-            @endif
-        </span>
-    </div>
-</div>
+            </span>
+        </div>
 
-{{-- ================================================================
-     FILTER DATA
-     ================================================================ --}}
-<div class="mb-8 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-    <div class="mb-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
-        <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"/>
-        </svg>
-        Filter Data
-        @if ($filterAktif)
-            <span class="ml-1 rounded-full bg-brand/10 px-2 py-0.5 text-xs font-medium text-brand">Aktif</span>
-        @endif
-    </div>
-
-    <form method="GET" action="{{ route('statistik.index') }}">
-        <div class="grid gap-4 sm:grid-cols-2 {{ $bisaLihatSemua ? 'lg:grid-cols-4' : 'lg:grid-cols-3' }}">
+        {{-- Komponen Filter Modal --}}
+        <x-filter-dropdown
+            :action="route('statistik.index')"
+            title="Filter Data"
+            :maxWidth="$bisaLihatSemua ? 'max-w-lg' : 'max-w-md'">
 
             {{-- Tanggal Mulai --}}
             <div>
-                <label for="start_date" class="mb-1 block text-xs font-medium text-slate-600">Tanggal Mulai</label>
-                <input type="date" id="start_date" name="start_date"
+                <label class="mb-1 block text-xs font-medium text-slate-500">Tanggal Mulai</label>
+                <input type="date" name="start_date"
                        value="{{ request('start_date', $filterAktifData['start_date'] ?? '') }}"
-                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
+                       class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm
+                              focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
             </div>
 
             {{-- Tanggal Selesai --}}
             <div>
-                <label for="end_date" class="mb-1 block text-xs font-medium text-slate-600">Tanggal Selesai</label>
-                <input type="date" id="end_date" name="end_date"
+                <label class="mb-1 block text-xs font-medium text-slate-500">Tanggal Selesai</label>
+                <input type="date" name="end_date"
                        value="{{ request('end_date', $filterAktifData['end_date'] ?? '') }}"
-                       class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
+                       class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm
+                              focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
             </div>
 
-            {{-- Filter Unit Kerja — hanya direktur & komite --}}
+            {{-- Unit Kerja — hanya direktur & komite --}}
             @if ($bisaLihatSemua)
                 <div>
-                    <label for="unit_kerja" class="mb-1 block text-xs font-medium text-slate-600">Unit Kerja</label>
-                    <select id="unit_kerja" name="unit_kerja"
-                            class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
+                    <label class="mb-1 block text-xs font-medium text-slate-500">Unit Kerja</label>
+                    <select name="unit_kerja"
+                            class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700
+                                   focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
                         <option value="">— Semua Unit —</option>
                         @foreach ($daftarUnit as $unit)
                             <option value="{{ $unit }}"
-                                    {{ request('unit_kerja', $filterAktifData['unit_kerja'] ?? '') === $unit ? 'selected' : '' }}>
+                                    @selected(request('unit_kerja', $filterAktifData['unit_kerja'] ?? '') === $unit)>
                                 {{ $unit }}
                             </option>
                         @endforeach
@@ -118,43 +112,42 @@
                 </div>
             @endif
 
-            {{-- Filter Tipe Insiden --}}
+            {{-- Tipe Insiden --}}
             <div>
-                <label for="tipe_insiden" class="mb-1 block text-xs font-medium text-slate-600">Tipe Insiden</label>
-                <select id="tipe_insiden" name="tipe_insiden"
-                        class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
+                <label class="mb-1 block text-xs font-medium text-slate-500">Tipe Insiden</label>
+                <select name="tipe_insiden"
+                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700
+                               focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
                     <option value="">— Semua Tipe —</option>
-                    @foreach (['KPC' => 'KPC – Potensial Cedera', 'KNC' => 'KNC – Nyaris Cedera', 'KTC' => 'KTC – Tidak Cedera', 'KTD' => 'KTD – Tidak Diharapkan', 'SENTINEL' => 'Sentinel'] as $kode => $label)
+                    @foreach ([
+                        'KPC'      => 'KPC – Potensial Cedera',
+                        'KNC'      => 'KNC – Nyaris Cedera',
+                        'KTC'      => 'KTC – Tidak Cedera',
+                        'KTD'      => 'KTD – Tidak Diharapkan',
+                        'SENTINEL' => 'Sentinel',
+                    ] as $kode => $label)
                         <option value="{{ $kode }}"
-                                {{ request('tipe_insiden', $filterAktifData['tipe_insiden'] ?? '') === $kode ? 'selected' : '' }}>
+                                @selected(request('tipe_insiden', $filterAktifData['tipe_insiden'] ?? '') === $kode)>
                             {{ $label }}
                         </option>
                     @endforeach
                 </select>
             </div>
 
-        </div>
+        </x-filter-dropdown>
 
-        {{-- Tombol aksi filter --}}
-        <div class="mt-4 flex items-center gap-3">
-            <button type="submit"
-                    class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover">
+        {{-- Tombol Reset — tampil jika ada filter aktif --}}
+        @if ($filterAktif)
+            <a href="{{ route('statistik.index') }}"
+               class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm
+                      font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
                 </svg>
-                Terapkan Filter
-            </button>
-            @if ($filterAktif)
-                <a href="{{ route('statistik.index') }}"
-                   class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                    </svg>
-                    Reset
-                </a>
-            @endif
-        </div>
-    </form>
+            </a>
+        @endif
+
+    </div>
 </div>
 
 {{-- ================================================================
@@ -238,8 +231,10 @@
 
 {{-- ================================================================
      TABEL RINGKASAN PER UNIT KERJA
-     Akses: semua peran (karu hanya melihat unitnya sendiri)
+     RBAC: HANYA direktur & komite (kepala ruangan tidak perlu,
+     karena grafik lainnya sudah mewakili data unit kerjanya)
      ================================================================ --}}
+@if ($bisaLihatSemua)
 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
     <div class="mb-5 flex items-start justify-between">
         <div>
@@ -353,5 +348,6 @@
         </div>
     @endif
 </div>
+@endif
 
 @endsection

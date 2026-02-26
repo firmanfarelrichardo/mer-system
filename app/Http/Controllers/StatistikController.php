@@ -168,7 +168,11 @@ class StatistikController extends Controller
         $distribusiStatus  = $this->hitungDistribusiStatus(clone $baseQuery);
         $distribusiTipe    = $this->hitungDistribusiTipe(clone $baseQuery);
         $distribusiTahapan = $this->hitungDistribusiPerTahapan(clone $baseQuery, $totalInsiden);
-        $ringkasanPerUnit  = $this->hitungRingkasanPerUnit(clone $baseQuery, $pengguna);
+
+        // Ringkasan per unit & distribusi ruangan hanya untuk direktur & komite.
+        $ringkasanPerUnit  = $bisaLihatSemua
+            ? $this->hitungRingkasanPerUnit(clone $baseQuery, $pengguna)
+            : [];
 
         // Distribusi per ruangan hanya untuk direktur & komite.
         $distribusiRuangan = $bisaLihatSemua
