@@ -26,20 +26,9 @@
     {{-- ================================================================
          HEADER HALAMAN
          ================================================================ --}}
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800">Riwayat Laporan</h1>
-            <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Insiden Obat</p>
-        </div>
-        @if ($pengguna->memilikiPeran('Nakes') || $pengguna->memilikiPeran('Kepala Ruangan') || $pengguna->memilikiPeran('Komite'))
-            <a href="{{ route('laporan.buat') }}"
-               class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-                </svg>
-                Buat Laporan
-            </a>
-        @endif
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-800">Riwayat Laporan</h1>
+        <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Insiden Obat</p>
     </div>
 
     {{-- Flash Messages --}}

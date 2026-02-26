@@ -23,18 +23,9 @@
     {{-- ================================================================
          HEADER HALAMAN
          ================================================================ --}}
-    <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-            <h1 class="text-2xl font-bold text-slate-800">Draf Laporan</h1>
-            <p class="mt-1 text-sm text-slate-400">Laporan yang belum selesai dan belum dikirim</p>
-        </div>
-        <a href="{{ route('laporan.buat') }}"
-           class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-colors hover:bg-brand-hover">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
-            </svg>
-            Buat Laporan Baru
-        </a>
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-slate-800">Draf Laporan</h1>
+        <p class="mt-1 text-sm text-slate-400">Laporan yang belum selesai dan belum dikirim</p>
     </div>
 
     {{-- Flash Messages --}}
