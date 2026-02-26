@@ -155,8 +155,14 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/laporan/buat', [LaporanController::class, 'buat'])
         ->name('laporan.buat');
 
+    Route::get('/laporan/draf', [LaporanController::class, 'draf'])
+        ->name('laporan.draf');
+
     Route::post('/laporan', [LaporanController::class, 'simpan'])
         ->name('laporan.simpan');
+
+    Route::get('/laporan/{laporan}/edit', [LaporanController::class, 'edit'])
+        ->name('laporan.edit');
 
     Route::patch('/laporan/{laporan}/tandai-dibaca', [LaporanController::class, 'tandaiDibaca'])
         ->name('laporan.tandai-dibaca');

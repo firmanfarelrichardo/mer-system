@@ -141,12 +141,12 @@ class Insiden extends Model
         // Selalu batasi ke tenant pengguna (multi-tenant safety).
         $query->where($this->qualifyColumn('tenant_id'), $pengguna->tenant_id);
 
-        // Komite & Direktur: lihat SEMUA laporan dalam tenant.
+        // Komite & Direktur: lihat SEMUA laporan dalam tenant (kecuali DRAF milik Nakes lain).
         if ($pengguna->memilikiPeran(Peran::KOMITE) || $pengguna->memilikiPeran(Peran::DIREKTUR)) {
-            return $query;
+            return $query->where($this->qualifyColumn('status_saat_ini'), '!=', 'DRAF');
         }
 
-        // Kepala Ruangan: hanya insiden dari unit kerja yang sama.
+        // Kepala Ruangan: hanya insiden dari unit kerja yang sama (kecuali DRAF).
         if ($pengguna->memilikiPeran(Peran::KEPALA_RUANGAN)) {
             // Jika Karu belum ditugaskan ke unit manapun, tampilkan 0 data
             // (bukan semua data). Admin harus menetapkan unit_id terlebih dahulu.
@@ -158,6 +158,11 @@ class Insiden extends Model
                 $q->where($this->qualifyColumn('unit_id'), $pengguna->unit_id)
                   ->orWhere($this->qualifyColumn('nama_unit_kerja'), $pengguna->unitKerja?->nama_unit);
             });
+            return $query->where($this->qualifyColumn('status_saat_ini'), '!=', 'DRAF')
+                ->where(function (Builder $q) use ($pengguna) {
+                    $q->where($this->qualifyColumn('unit_id'), $pengguna->unit_id)
+                      ->orWhere($this->qualifyColumn('nama_unit_kerja'), $pengguna->unitKerja?->nama_unit);
+                });
         }
 
         // Nakes (default): hanya insiden yang ia buat.
@@ -204,6 +209,7 @@ class Insiden extends Model
     public function labelStatus(): string
     {
         return match ($this->status_saat_ini) {
+            'DRAF'          => 'Draf',
             'kasus_baru'   => 'Kasus Baru',
             'investigasi'  => 'Investigasi',
             'tindak_lanjut' => 'Tindak Lanjut',
@@ -218,6 +224,7 @@ class Insiden extends Model
     public function warnaStatus(): string
     {
         return match ($this->status_saat_ini) {
+            'DRAF'          => 'bg-slate-100 text-slate-600',
             'kasus_baru'    => 'bg-amber-100 text-amber-700',
             'investigasi'   => 'bg-blue-100 text-blue-700',
             'tindak_lanjut' => 'bg-violet-100 text-violet-700',
@@ -237,5 +244,30 @@ class Insiden extends Model
             ->count() + 1;
 
         return sprintf('INC-%s-%04d', $tahun, $urutan);
+    }
+
+    /**
+     * Cek apakah insiden berstatus draf.
+     */
+    public function isDraf(): bool
+    {
+        return $this->status_saat_ini === 'DRAF';
+    }
+
+    /**
+     * Scope: hanya ambil laporan draf milik Nakes tertentu.
+     */
+    public function scopeDrafMilik(Builder $query, int $nakesId): Builder
+    {
+        return $query->where('pelapor_id', $nakesId)
+            ->where('status_saat_ini', 'DRAF');
+    }
+
+    /**
+     * Scope: hanya ambil laporan yang sudah di-submit (bukan draf).
+     */
+    public function scopeBukanDraf(Builder $query): Builder
+    {
+        return $query->where('status_saat_ini', '!=', 'DRAF');
     }
 }

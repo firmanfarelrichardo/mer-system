@@ -208,7 +208,10 @@
                         @if (! $pengguna->memilikiPeran('Nakes'))
                             <th class="hidden whitespace-nowrap px-4 py-3 font-semibold text-slate-500 md:table-cell sm:px-5">Unit Kerja</th>
                         @endif
-                        <th class="hidden whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:table-cell sm:px-5">Tanggal</th>
+                        <th class="hidden whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:table-cell sm:px-5">Tgl Kejadian</th>
+                        @if ($pengguna->memilikiPeran('Nakes'))
+                            <th class="hidden whitespace-nowrap px-4 py-3 font-semibold text-slate-500 lg:table-cell sm:px-5">Tgl Dilaporkan</th>
+                        @endif
                         <th class="whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:px-5">Jenis</th>
                         <th class="whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:px-5">Status</th>
                         <th class="whitespace-nowrap px-4 py-3 font-semibold text-slate-500 sm:px-5">Aksi</th>
@@ -242,9 +245,26 @@
                             @endif
 
                             {{-- Tanggal kejadian --}}
-                            <td class="hidden whitespace-nowrap px-4 py-3.5 text-slate-500 sm:table-cell sm:px-5">
-                                {{ $laporan->tgl_kejadian?->format('d M Y') ?? '—' }}
+                            <td class="hidden whitespace-nowrap px-4 py-3.5 sm:table-cell sm:px-5">
+                                @if ($laporan->tgl_kejadian)
+                                    <span class="block text-xs font-medium text-slate-700">{{ $laporan->tgl_kejadian->format('d M Y') }}</span>
+                                    <span class="block text-xs text-slate-400">{{ $laporan->tgl_kejadian->format('H:i') }}</span>
+                                @else
+                                    <span class="text-slate-500">—</span>
+                                @endif
                             </td>
+
+                            {{-- Tgl Dilaporkan — hanya untuk Nakes --}}
+                            @if ($pengguna->memilikiPeran('Nakes'))
+                                <td class="hidden whitespace-nowrap px-4 py-3.5 lg:table-cell sm:px-5">
+                                    @if ($laporan->tgl_lapor)
+                                        <span class="block text-xs font-medium text-slate-700">{{ $laporan->tgl_lapor->format('d M Y, H:i:s') }}</span>
+                                        <span class="block text-xs text-slate-400">{{ $laporan->tgl_lapor->diffForHumans() }}</span>
+                                    @else
+                                        <span class="text-xs text-slate-400">—</span>
+                                    @endif
+                                </td>
+                            @endif
 
                             {{-- Jenis insiden (badge berwarna) --}}
                             <td class="whitespace-nowrap px-4 py-3.5 sm:px-5">
@@ -318,7 +338,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $pengguna->memilikiPeran('Nakes') ? 6 : 7 }}" class="px-5 py-12 text-center">
+                            <td colspan="{{ $pengguna->memilikiPeran('Nakes') ? 7 : 7 }}" class="px-5 py-12 text-center">
                                 <div class="flex flex-col items-center gap-2">
                                     <svg class="h-10 w-10 text-slate-300" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round"

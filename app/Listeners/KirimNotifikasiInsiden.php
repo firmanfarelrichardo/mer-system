@@ -30,6 +30,11 @@ class KirimNotifikasiInsiden
      */
     public function handle(InsidenStatusBerubah $event): void
     {
+        // DRAF: DILARANG memicu notifikasi apapun ke pihak lain.
+        if ($event->statusBaru === 'DRAF') {
+            return;
+        }
+
         $insiden  = $event->insiden;
         $pelaku   = $event->pelaku;
         $tenantId = $insiden->tenant_id;
