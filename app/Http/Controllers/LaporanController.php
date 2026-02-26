@@ -18,6 +18,7 @@ use App\Services\JenisKesalahanService;
 use App\Services\LaporanService;
 use App\Services\TipeCederaService;
 use App\Support\Paginasi;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -162,6 +163,51 @@ class LaporanController extends Controller
         return redirect()
             ->route('laporan.index')
             ->with('sukses', "Laporan insiden {$insiden->nomor_laporan} berhasil dikirim.");
+    }
+
+    /* ==================================================================
+     | AUTO-SAVE — Simpan Draf Otomatis via AJAX/Fetch (Background)
+     | =================================================================*/
+
+    /**
+     * Simpan draf laporan secara otomatis di background.
+     *
+     * Endpoint ini dipanggil oleh Alpine.js autoSaveForm() setiap kali
+     * Nakes berhenti mengetik (debounce 2 detik). Menerima data parsial
+     * tanpa validasi ketat — tujuannya mencegah data hilang.
+     *
+     * Anti-spam: LaporanService->autoSave() menggunakan saveQuietly()
+     * pada UPDATE sehingga InsidenObserver tidak terpicu berulang kali.
+     */
+    public function autoSave(Request $permintaan): JsonResponse
+    {
+        // Hanya terima request AJAX / JSON.
+        if (! $permintaan->ajax() && ! $permintaan->wantsJson()) {
+            return response()->json([
+                'status' => 'error',
+                'pesan'  => 'Hanya menerima request AJAX.',
+            ], 400);
+        }
+
+        try {
+            $pengguna = Auth::user();
+            $dto      = InsidenData::fromAutoSaveRequest($permintaan);
+            $insiden  = $this->laporanService->autoSave($dto, $pengguna);
+
+            return response()->json([
+                'status'    => 'ok',
+                'pesan'     => 'Draf tersimpan otomatis.',
+                'insiden_id' => $insiden->id,
+                'waktu'     => now()->format('H:i:s'),
+            ]);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'status' => 'error',
+                'pesan'  => 'Gagal menyimpan draf otomatis.',
+            ], 500);
+        }
     }
 
     /* ==================================================================

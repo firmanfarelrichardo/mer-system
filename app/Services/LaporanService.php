@@ -141,6 +141,95 @@ class LaporanService
     }
 
     /**
+     * Auto-save laporan insiden di background (AJAX).
+     *
+     * Perbedaan dengan save():
+     *   - Selalu status DRAF — tidak pernah submit.
+     *   - UPDATE menggunakan saveQuietly() agar InsidenObserver tidak dipicu
+     *     (mencegah spam audit log setiap 2 detik).
+     *   - Audit log HANYA dicatat pada CREATE pertama, bukan pada update berikutnya.
+     *   - Tidak ada dispatch event InsidenStatusBerubah.
+     *
+     * @return Insiden  Model insiden yang tersimpan.
+     */
+    public function autoSave(InsidenData $dto, Pengguna $pengguna): Insiden
+    {
+        $isUpdate = $dto->insidenId !== null;
+
+        return DB::transaction(function () use ($dto, $pengguna, $isUpdate): Insiden {
+
+            // ── Bangun data insiden ─────────────────────────────────
+            $tglKejadian = $dto->tanggalKejadian;
+            if ($tglKejadian && $dto->waktuKejadian) {
+                $tglKejadian .= ' ' . $dto->waktuKejadian . ':00';
+            }
+
+            $isAnonim = empty($dto->namaPelapor);
+
+            $dataInsiden = [
+                'tenant_id'       => $pengguna->tenant_id,
+                'pelapor_id'      => $pengguna->id,
+                'unit_id'         => null,
+                'nama_unit_kerja' => $dto->unitKerja,
+                'tipe_insiden'    => $dto->jenisInsiden,
+                'fase_kesalahan'  => $dto->faseKesalahan,
+                'status_saat_ini' => 'DRAF',
+                'tgl_kejadian'    => $tglKejadian,
+                'tgl_lapor'       => null,
+                'nama_pelapor'    => $dto->namaPelapor,
+                'kontak_pelapor'  => $dto->kontakPelapor,
+                'is_anonim'       => $isAnonim,
+                'sudah_dibaca'    => false,
+            ];
+
+            // ── Bangun data detail pasien ───────────────────────────
+            $dataDetail = [
+                'nama_pasien'          => $dto->namaPasien,
+                'nomor_rekam_medis'    => $dto->nomorRekamMedis,
+                'obat_terkait'         => $dto->namaObat,
+                'kronologi'            => $dto->kronologiKejadian,
+                'jenis_kesalahan'      => $dto->jenisKesalahanGabungan() ?: null,
+                'cedera'               => $dto->cederaGabungan() ?: null,
+                'faktor_penyebab'      => $dto->faktorPenyebabGabungan() ?: null,
+                'intervensi_pasien'    => $dto->intervensiPasienGabungan() ?: null,
+                'pernyataan_kronologi' => $dto->pernyataanKronologi,
+            ];
+
+            if ($isUpdate) {
+                // ── UPDATE: Perbarui draf yang sudah ada ─────────────
+                // Gunakan saveQuietly() agar InsidenObserver tidak terpicu
+                // → mencegah spam audit log setiap siklus auto-save.
+                $insiden = Insiden::where('id', $dto->insidenId)
+                    ->where('pelapor_id', $pengguna->id)
+                    ->where('status_saat_ini', 'DRAF')
+                    ->firstOrFail();
+
+                $insiden->fill($dataInsiden)->saveQuietly();
+
+                // Update atau create detail pasien (juga quietly).
+                if ($insiden->detailPasien) {
+                    $insiden->detailPasien->fill($dataDetail)->saveQuietly();
+                } else {
+                    $dataDetail['insiden_id'] = $insiden->id;
+                    $detail = new DetailPasien($dataDetail);
+                    $detail->saveQuietly();
+                }
+            } else {
+                // ── CREATE: Draf baru ────────────────────────────────
+                // Biarkan Observer `created` terpicu untuk audit log pertama kali.
+                $dataInsiden['nomor_laporan'] = 'DRAF-' . now()->format('YmdHis') . '-' . $pengguna->id;
+
+                $insiden = Insiden::create($dataInsiden);
+
+                $dataDetail['insiden_id'] = $insiden->id;
+                DetailPasien::create($dataDetail);
+            }
+
+            return $insiden;
+        });
+    }
+
+    /**
      * Generate PDF laporan insiden untuk dicetak / diunduh.
      *
      * @param  int  $id  ID insiden.

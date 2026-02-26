@@ -228,6 +228,9 @@ Route::middleware(['auth', 'sesi.maks'])->group(function (): void {
     Route::post('/laporan', [LaporanController::class, 'simpan'])
         ->name('laporan.simpan');
 
+    Route::post('/laporan/auto-save', [LaporanController::class, 'autoSave'])
+        ->name('laporan.auto-save');
+
     Route::get('/laporan/{laporan}/edit', [LaporanController::class, 'edit'])
         ->name('laporan.edit');
 
