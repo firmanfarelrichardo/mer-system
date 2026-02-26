@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\LogAktivitasController;
 use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PengaturanController;
@@ -51,28 +52,26 @@ Route::middleware(['auth', 'sesi.maks'])->group(function (): void {
     // ----- Hub Dasbor -----
     // Route 'dashboard' wajib ada: digunakan oleh Laravel's RedirectIfAuthenticated
     // (middleware 'guest') sebagai fallback — mencegah infinite redirect loop.
-    // Sekaligus sebagai fallback default setelah login berhasil.
+    // Admin di-redirect ke admin dashboard sendiri; peran lain ke DashboardController.
     Route::get('/dasbor', function () {
         /** @var \App\Models\Pengguna $pengguna */
         $pengguna = auth()->user();
 
         return match (true) {
-            $pengguna->memilikiPeran('Direktur')       => redirect()->route('direktur.dashboard'),
-            $pengguna->memilikiPeran('Admin')          => redirect()->route('admin.dashboard'),
-            $pengguna->memilikiPeran('Komite')         => redirect()->route('komite.dashboard'),
-            $pengguna->memilikiPeran('Kepala Ruangan') => redirect()->route('kepala-ruangan.dashboard'),
-            $pengguna->memilikiPeran('Nakes')          => redirect()->route('nakes.dashboard'),
-            default                                    => redirect()->route('laporan.index'),
+            $pengguna->memilikiPeran('Admin')           => redirect()->route('admin.dashboard'),
+            $pengguna->memilikiPeran('Direktur')        => redirect()->route('direktur.dashboard'),
+            $pengguna->memilikiPeran('Komite')          => redirect()->route('komite.dashboard'),
+            $pengguna->memilikiPeran('Kepala Ruangan')  => redirect()->route('kepala-ruangan.dashboard'),
+            $pengguna->memilikiPeran('Nakes')           => redirect()->route('nakes.dashboard'),
+            default                                     => redirect()->route('laporan.index'),
         };
     })->name('dashboard');
 
-    // ----- Dasbor per peran -----
-    // Setiap peran memiliki endpoint dasbor tersendiri.
-    // Ganti closure dengan kontroler nyata saat dasbor selesai dibuat.
-    Route::get('/nakes/dasbor',           fn () => view('dashboard'))->name('nakes.dashboard');
-    Route::get('/kepala-ruangan/dasbor', fn () => view('dashboard'))->name('kepala-ruangan.dashboard');
-    Route::get('/komite/dasbor',         fn () => view('dashboard'))->name('komite.dashboard');
-    Route::get('/direktur/dasbor',       fn () => view('dashboard'))->name('direktur.dashboard');
+    // ----- Dasbor per peran (Morning Briefing / Action Center) -----
+    Route::get('/nakes/dasbor',          [DashboardController::class, 'index'])->name('nakes.dashboard');
+    Route::get('/kepala-ruangan/dasbor', [DashboardController::class, 'index'])->name('kepala-ruangan.dashboard');
+    Route::get('/komite/dasbor',         [DashboardController::class, 'index'])->name('komite.dashboard');
+    Route::get('/direktur/dasbor',       [DashboardController::class, 'index'])->name('direktur.dashboard');
 
     // ----- Admin: Dasbor & Manajemen Pengguna -----
     Route::prefix('admin')->group(function (): void {
