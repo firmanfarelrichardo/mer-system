@@ -247,6 +247,37 @@ class Insiden extends Model
     }
 
     /**
+     * Status tindak lanjut terakhir yang dibuat oleh pengguna dengan peran tertentu.
+     *
+     * Digunakan untuk memastikan Karu dan Komite memiliki alur status
+     * yang INDEPENDEN — status salah satu tidak memblokir yang lain.
+     *
+     * Jika relasi `tindakLanjut` sudah di-eager-load (beserta
+     * `pengguna.peran`), method ini menggunakan collection tersebut
+     * tanpa menembak query tambahan ke DB.
+     *
+     * @param  string  $namaPeran  Konstanta Peran::KEPALA_RUANGAN atau Peran::KOMITE
+     */
+    public function statusTerakhirOlehPeran(string $namaPeran): ?string
+    {
+        // Gunakan collection yang sudah eager-load jika tersedia.
+        if ($this->relationLoaded('tindakLanjut')) {
+            return $this->tindakLanjut
+                ->filter(fn (TindakLanjut $tl) => $tl->pengguna?->memilikiPeran($namaPeran))
+                ->sortByDesc('created_at')
+                ->first()?->status_baru;
+        }
+
+        // Fallback: query langsung ke DB (misal dari Policy).
+        return TindakLanjut::where('insiden_id', $this->id)
+            ->whereHas('pengguna', fn ($q) =>
+                $q->whereHas('peran', fn ($q2) => $q2->where('nama_peran', $namaPeran))
+            )
+            ->latest()
+            ->value('status_baru');
+    }
+
+    /**
      * Cek apakah insiden berstatus draf.
      */
     public function isDraf(): bool

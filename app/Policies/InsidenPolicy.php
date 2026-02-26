@@ -57,6 +57,11 @@ class InsidenPolicy
 
     /**
      * Apakah pengguna boleh melakukan tindak lanjut (ubah status + catatan)?
+     *
+     * Karu dan Komite memiliki alur status yang INDEPENDEN satu sama lain.
+     * Pemblokiran 'selesai' hanya berlaku per peran:
+     *   - Karu diblokir hanya jika KARU sendiri sudah menandai selesai.
+     *   - Komite diblokir hanya jika KOMITE sendiri sudah menandai selesai.
      */
     public function tindakLanjut(Pengguna $pengguna, Insiden $insiden): bool
     {
@@ -65,14 +70,20 @@ class InsidenPolicy
             return false;
         }
 
-        // Insiden yang sudah selesai tidak bisa ditindaklanjuti lagi.
-        if ($insiden->status_saat_ini === 'selesai') {
+        // Hanya Kepala Ruangan atau Komite yang diizinkan.
+        $isKaru   = $pengguna->memilikiPeran(Peran::KEPALA_RUANGAN);
+        $isKomite = $pengguna->memilikiPeran(Peran::KOMITE);
+
+        if (! $isKaru && ! $isKomite) {
             return false;
         }
 
-        // Hanya Kepala Ruangan atau Komite yang diizinkan.
-        return $pengguna->memilikiPeran(Peran::KEPALA_RUANGAN)
-            || $pengguna->memilikiPeran(Peran::KOMITE);
+        // Tentukan peran aktif pengguna (Karu mendapat prioritas jika memegang keduanya).
+        $namaPeran = $isKaru ? Peran::KEPALA_RUANGAN : Peran::KOMITE;
+
+        // Blokir hanya jika PERAN INI sudah menandai insiden sebagai selesai.
+        // Status peran lain tidak memengaruhi.
+        return $insiden->statusTerakhirOlehPeran($namaPeran) !== 'selesai';
     }
 
     /* ------------------------------------------------------------------
