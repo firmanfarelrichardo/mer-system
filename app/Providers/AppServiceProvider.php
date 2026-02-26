@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Events\InsidenStatusBerubah;
-use App\Listeners\KirimNotifikasiInsiden;
 use App\Models\Insiden;
 use App\Models\KategoriKesalahan;
 use App\Models\Peran;
@@ -14,7 +12,6 @@ use App\Observers\UnitKerjaObserver;
 use App\Policies\InsidenPolicy;
 use App\Repositories\InsidenRepository;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -55,12 +52,6 @@ class AppServiceProvider extends ServiceProvider
         UnitKerja::observe(UnitKerjaObserver::class);
         KategoriKesalahan::observe(KategoriKesalahanObserver::class);
         Insiden::observe(InsidenObserver::class);
-
-        // ----------------------------------------------------------------
-        // Event → Listener: Notifikasi Insiden
-        // Setiap perubahan status insiden memicu notifikasi ke peran terkait.
-        // ----------------------------------------------------------------
-        Event::listen(InsidenStatusBerubah::class, KirimNotifikasiInsiden::class);
 
         // ----------------------------------------------------------------
         // Gate: Peran Manajemen
