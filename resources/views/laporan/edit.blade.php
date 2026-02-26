@@ -1,29 +1,31 @@
 {{--
 |--------------------------------------------------------------------------
-| Formulir Buat Laporan Insiden — Multi-Step Wizard
+| Formulir Lanjutkan Draf Laporan — Multi-Step Wizard
 |--------------------------------------------------------------------------
-| Halaman formulir 4 tahap untuk membuat laporan insiden medication error:
+| Halaman formulir 4 tahap untuk melanjutkan draf laporan insiden:
 |   1. Data Demografis   — data pasien, lokasi, waktu, jenis insiden
 |   2. Detail Insiden     — klasifikasi kesalahan, cedera, faktor, intervensi
 |   3. Kronologi Kejadian — narasi kronologi, disclaimer non-hukum
 |   4. Konfirmasi         — ringkasan & persetujuan sebelum kirim
 |
-| Navigasi antar tahap menggunakan vanilla JavaScript (tanpa library).
-| Data form dipertahankan di DOM — tidak ada request HTTP antar langkah.
+| Variabel dari controller:
+|   $insiden  — Insiden (model draf dengan relasi detailPasien)
+|   $pengguna — Pengguna (auth user)
 |--------------------------------------------------------------------------
 --}}
 
 @extends('layouts.app')
 
-@section('judul', 'Buat Laporan — Sistem MER')
+@section('judul', 'Lanjutkan Draf — Sistem MER')
 
 @section('konten')
 
     @php
         $pengguna = Auth::user();
         $namaUnit = $pengguna->unitKerja?->nama_unit ?? '—';
+        $detail   = $insiden->detailPasien;
 
-        // Opsi jenis insiden sesuai standar keselamatan pasien RS.
+        // ── Opsi-opsi form (sama dengan buat.blade.php) ──────────────
         $jenisInsiden = [
             'KPC'      => ['label' => 'Kondisi Potensial Cedera (KPC)',   'deskripsi' => 'Situasi yang berpotensi menimbulkan cedera, tetapi belum terjadi insiden.'],
             'KNC'      => ['label' => 'Kejadian Nyaris Cedera (KNC)',     'deskripsi' => 'Insiden yang belum sampai terpapar ke pasien karena terhentikan atau disadari sebelum tindakan.'],
@@ -32,7 +34,6 @@
             'SENTINEL' => ['label' => 'Kejadian Sentinel',                'deskripsi' => 'KTD yang mengakibatkan kematian, cedera permanen, atau cedera berat sementara.'],
         ];
 
-        // Fase kesalahan obat (medication error phase).
         $faseKesalahan = [
             'prescribing'    => 'Tahap Peresepan (Prescribing Error)',
             'transcribing'   => 'Tahap Penerjemahan Resep (Transcribing Error)',
@@ -40,14 +41,12 @@
             'administration' => 'Tahap Penyerahan Obat kepada Pasien (Administration Error)',
         ];
 
-        // Jenis kesalahan (detail).
         $jenisKesalahan = [
             'salah_pasien', 'salah_obat', 'salah_dosis_frekuensi', 'salah_formula',
             'salah_rute', 'salah_nomor', 'salah_label', 'kontraindikasi',
             'salah_penyimpanan', 'obat_terlewat_tidak_diberikan', 'obat_kadaluarsa', 'reaksi_obat_merugikan',
         ];
 
-        // Cedera yang terjadi (injuries).
         $cederaOptions = [
             'tidak_ada_cedera', 'blister', 'kehilangan_darah', 'luka_bakar',
             'perubahan_kesadaran', 'meninggal', 'edema', 'hematologi',
@@ -55,7 +54,6 @@
             'kegagalan_jalur_iv', 'mual', 'perubahan_nilai_lab_signifikan', 'perubahan_tanda_vital',
         ];
 
-        // Faktor penyebab (contributing factors).
         $faktorPenyebab = [
             'kesalahan_charting', 'kesalahan_kalkulasi_dosis', 'distraksi_manusia', 'masalah_peralatan_mekanik',
             'gagal_mengikuti_kebijakan_prosedur', 'gagal_membaca_label', 'order_tidak_terbaca', 'monitoring_tidak_adekuat',
@@ -63,21 +61,77 @@
             'tidak_ditranskripsi', 'masalah_stocking_delivery', 'salah_transkrip_perawat', 'salah_transkrip_farmasi',
         ];
 
-        // Intervensi pasien (patient interventions).
         $intervensiPasien = [
             'transfusi_darah_diperintahkan', 'lab_tambahan_diperintahkan', 'prosedur_tambahan_dilakukan', 'konsultasi_layanan_tambahan',
             'kunjungan_tambahan_dilakukan', 'dirawat_di_rs', 'konsultasi_layanan_pelanggan', 'monitoring_ditingkatkan',
             'dilusi', 'dibawa_ke_ugd', 'dibawa_ke_ok', 'transfer_ke_icu_ruang_monitor',
             'lama_rawat_bertambah', 'memerlukan_pengobatan',
         ];
+
+        // ── Fungsi helper untuk memisahkan nilai "lainnya" dari array DB ──
+        // Array dari DB bisa berisi opsi standar + teks bebas "lainnya".
+        $pisahkanLainnya = function (?array $dari, array $opsiStandar): array {
+            if (! $dari) return ['standar' => [], 'lainnya' => null];
+            $standar = [];
+            $lainnya = [];
+            foreach ($dari as $item) {
+                if (in_array($item, $opsiStandar, true)) {
+                    $standar[] = $item;
+                } else {
+                    $lainnya[] = $item;
+                }
+            }
+            return [
+                'standar' => $standar,
+                'lainnya' => ! empty($lainnya) ? implode(', ', $lainnya) : null,
+            ];
+        };
+
+        // ── Pre-populated values dari draf yang ada ──────────────────
+        $valNamaPasien       = old('nama_pasien',       $detail?->nama_pasien);
+        $valNomorRM          = old('nomor_rekam_medis',  $detail?->nomor_rekam_medis);
+        $valUnitKerja        = old('unit_kerja',         $insiden->nama_unit_kerja);
+        $valTanggalKejadian  = old('tanggal_kejadian',   $insiden->tgl_kejadian?->format('Y-m-d'));
+        $valWaktuKejadian    = old('waktu_kejadian',     $insiden->tgl_kejadian?->format('H:i'));
+        $valJenisInsiden     = old('jenis_insiden',      $insiden->tipe_insiden);
+        $valFaseKesalahan    = old('fase_kesalahan',     $insiden->fase_kesalahan);
+        $valNamaPelapor      = old('nama_pelapor',       $insiden->nama_pelapor);
+        $valKontakPelapor    = old('kontak_pelapor',     $insiden->kontak_pelapor);
+        $valNamaObat         = old('nama_obat',          $detail?->obat_terkait);
+        $valKronologi        = old('kronologi_kejadian', $detail?->kronologi);
+        $valPernyataan       = old('pernyataan_kronologi', $detail?->pernyataan_kronologi);
+
+        // Pisahkan array checkbox standar vs "lainnya"
+        $parsedJenisKesalahan  = $pisahkanLainnya(old('jenis_kesalahan', $detail?->jenis_kesalahan), $jenisKesalahan);
+        $parsedCedera          = $pisahkanLainnya(old('cedera', $detail?->cedera), $cederaOptions);
+        $parsedFaktorPenyebab  = $pisahkanLainnya(old('faktor_penyebab', $detail?->faktor_penyebab), $faktorPenyebab);
+        $parsedIntervensi      = $pisahkanLainnya(old('intervensi_pasien', $detail?->intervensi_pasien), $intervensiPasien);
+
+        $valJKLainnya = old('jenis_kesalahan_lainnya', $parsedJenisKesalahan['lainnya']);
+        $valCLainnya  = old('cedera_lainnya',          $parsedCedera['lainnya']);
+        $valFPLainnya = old('faktor_penyebab_lainnya', $parsedFaktorPenyebab['lainnya']);
+        $valIPLainnya = old('intervensi_pasien_lainnya', $parsedIntervensi['lainnya']);
     @endphp
 
     {{-- ================================================================
          HEADER HALAMAN
          ================================================================ --}}
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-800">Formulir Pelaporan Insiden</h1>
-        <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Insiden Obat</p>
+        <div class="flex items-center gap-3">
+            <a href="{{ route('laporan.draf') }}"
+               class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white p-2 text-slate-500 shadow-sm transition-colors hover:bg-slate-50">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">Lanjutkan Draf Laporan</h1>
+                <p class="mt-1 text-sm text-slate-400">
+                    Melanjutkan pengisian draf — ID:
+                    <span class="font-mono text-xs font-semibold text-slate-500">{{ $insiden->nomor_laporan }}</span>
+                </p>
+            </div>
+        </div>
     </div>
 
     {{-- ================================================================
@@ -136,6 +190,8 @@
 
     <form id="form-laporan" method="POST" action="{{ route('laporan.simpan') }}" novalidate>
         @csrf
+        {{-- Hidden field: ID draf yang sedang di-edit --}}
+        <input type="hidden" name="insiden_id" value="{{ $insiden->id }}">
 
         {{-- ============================================================
              TAHAP 1: DATA DEMOGRAFIS
@@ -153,7 +209,7 @@
                         </label>
                         <input type="text" name="nama_pasien" id="nama_pasien" required
                                placeholder="Masukkan nama lengkap pasien"
-                               value="{{ old('nama_pasien') }}"
+                               value="{{ $valNamaPasien }}"
                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
                                       placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                         @error('nama_pasien')
@@ -168,7 +224,7 @@
                         </label>
                         <input type="text" name="nomor_rekam_medis" id="nomor_rekam_medis" required
                                placeholder="Contoh: RM-20260001"
-                               value="{{ old('nomor_rekam_medis') }}"
+                               value="{{ $valNomorRM }}"
                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
                                       placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                         @error('nomor_rekam_medis')
@@ -198,7 +254,7 @@
                                        focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                             <option value="">Pilih unit kerja</option>
                             @foreach ($daftarUnitKerja as $unit)
-                                <option value="{{ $unit }}" {{ old('unit_kerja') === $unit ? 'selected' : '' }}>
+                                <option value="{{ $unit }}" {{ $valUnitKerja === $unit ? 'selected' : '' }}>
                                     {{ $unit }}
                                 </option>
                             @endforeach
@@ -214,7 +270,7 @@
                             Tanggal Kejadian <span class="text-red-500">*</span>
                         </label>
                         <input type="date" name="tanggal_kejadian" id="tanggal_kejadian" required
-                               value="{{ old('tanggal_kejadian') }}"
+                               value="{{ $valTanggalKejadian }}"
                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
                                       focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                         @error('tanggal_kejadian')
@@ -228,7 +284,7 @@
                             Waktu Kejadian <span class="text-red-500">*</span>
                         </label>
                         <input type="time" name="waktu_kejadian" id="waktu_kejadian" required
-                               value="{{ old('waktu_kejadian') }}"
+                               value="{{ $valWaktuKejadian }}"
                                class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
                                       focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                         @error('waktu_kejadian')
@@ -247,7 +303,7 @@
                             <label class="group relative flex cursor-pointer items-start gap-3 rounded-lg border border-slate-200 p-4 transition-all
                                           hover:border-brand/40 hover:bg-brand/5 has-[:checked]:border-brand has-[:checked]:bg-brand/5 has-[:checked]:ring-1 has-[:checked]:ring-brand/30">
                                 <input type="radio" name="jenis_insiden" value="{{ $kode }}"
-                                       {{ old('jenis_insiden') === $kode ? 'checked' : '' }}
+                                       {{ $valJenisInsiden === $kode ? 'checked' : '' }}
                                        class="mt-0.5 h-4 w-4 border-slate-300 text-brand focus:ring-brand/30">
                                 <div>
                                     <span class="text-sm font-semibold text-slate-700">{{ $info['label'] }}</span>
@@ -272,7 +328,7 @@
                             <label for="nama_pelapor" class="mb-1 block text-xs font-medium text-slate-500">Nama Pelapor</label>
                             <input type="text" name="nama_pelapor" id="nama_pelapor"
                                    placeholder="Nama lengkap (opsional)"
-                                   value="{{ old('nama_pelapor') }}"
+                                   value="{{ $valNamaPelapor }}"
                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
                                           placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                         </div>
@@ -280,7 +336,7 @@
                             <label for="kontak_pelapor" class="mb-1 block text-xs font-medium text-slate-500">Kontak Pelapor</label>
                             <input type="text" name="kontak_pelapor" id="kontak_pelapor"
                                    placeholder="Email atau No. HP (opsional)"
-                                   value="{{ old('kontak_pelapor') }}"
+                                   value="{{ $valKontakPelapor }}"
                                    class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
                                           placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                         </div>
@@ -297,7 +353,7 @@
                 <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian B — Karakteristik Insiden</h2>
                 <p class="mb-6 text-sm text-slate-400">Detail Tahapan, jenis kesalahan, cedera, faktor penyebab, dan intervensi pasien</p>
 
-                {{-- 1. Fase Kesalahan Obat (dipindahkan ke posisi pertama) --}}
+                {{-- 1. Fase Kesalahan Obat --}}
                 <fieldset class="mb-6">
                     <legend class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">1</span>
@@ -309,7 +365,7 @@
                             <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-4 transition-all
                                           hover:border-brand/40 hover:bg-brand/5 has-[:checked]:border-brand has-[:checked]:bg-brand/5 has-[:checked]:ring-1 has-[:checked]:ring-brand/30">
                                 <input type="radio" name="fase_kesalahan" value="{{ $kode }}"
-                                       {{ old('fase_kesalahan') === $kode ? 'checked' : '' }}
+                                       {{ $valFaseKesalahan === $kode ? 'checked' : '' }}
                                        class="h-4 w-4 border-slate-300 text-brand focus:ring-brand/30">
                                 <span class="text-sm font-medium text-slate-600">{{ $label }}</span>
                             </label>
@@ -332,7 +388,7 @@
                             <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-all
                                           hover:border-brand/40 hover:bg-brand/5 has-[:checked]:border-brand has-[:checked]:bg-brand/5">
                                 <input type="checkbox" name="jenis_kesalahan[]" value="{{ $item }}"
-                                       {{ is_array(old('jenis_kesalahan')) && in_array($item, old('jenis_kesalahan')) ? 'checked' : '' }}
+                                       {{ in_array($item, $parsedJenisKesalahan['standar']) ? 'checked' : '' }}
                                        class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/30">
                                 <span class="text-slate-600">{{ Str::headline(str_replace('_', ' ', $item)) }}</span>
                             </label>
@@ -340,7 +396,7 @@
                     </div>
                     <div class="mt-2">
                         <input type="text" name="jenis_kesalahan_lainnya" placeholder="Lainnya, sebutkan..."
-                               value="{{ old('jenis_kesalahan_lainnya') }}"
+                               value="{{ $valJKLainnya }}"
                                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
                                       placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                     </div>
@@ -362,7 +418,7 @@
                                           hover:border-brand/40 hover:bg-brand/5 has-[:checked]:border-brand has-[:checked]:bg-brand/5
                                           {{ $item === 'meninggal' ? 'has-[:checked]:border-red-400 has-[:checked]:bg-red-50' : '' }}">
                                 <input type="checkbox" name="cedera[]" value="{{ $item }}"
-                                       {{ is_array(old('cedera')) && in_array($item, old('cedera')) ? 'checked' : '' }}
+                                       {{ in_array($item, $parsedCedera['standar']) ? 'checked' : '' }}
                                        class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/30">
                                 <span class="{{ $item === 'meninggal' ? 'font-medium text-red-600' : 'text-slate-600' }}">
                                     {{ Str::headline(str_replace('_', ' ', $item)) }}
@@ -372,7 +428,7 @@
                     </div>
                     <div class="mt-2">
                         <input type="text" name="cedera_lainnya" placeholder="Lainnya, sebutkan..."
-                               value="{{ old('cedera_lainnya') }}"
+                               value="{{ $valCLainnya }}"
                                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
                                       placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                     </div>
@@ -393,7 +449,7 @@
                             <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-all
                                           hover:border-brand/40 hover:bg-brand/5 has-[:checked]:border-brand has-[:checked]:bg-brand/5">
                                 <input type="checkbox" name="faktor_penyebab[]" value="{{ $item }}"
-                                       {{ is_array(old('faktor_penyebab')) && in_array($item, old('faktor_penyebab')) ? 'checked' : '' }}
+                                       {{ in_array($item, $parsedFaktorPenyebab['standar']) ? 'checked' : '' }}
                                        class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/30">
                                 <span class="text-slate-600">{{ Str::headline(str_replace('_', ' ', $item)) }}</span>
                             </label>
@@ -401,7 +457,7 @@
                     </div>
                     <div class="mt-2">
                         <input type="text" name="faktor_penyebab_lainnya" placeholder="Lainnya, sebutkan..."
-                               value="{{ old('faktor_penyebab_lainnya') }}"
+                               value="{{ $valFPLainnya }}"
                                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
                                       placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                     </div>
@@ -422,7 +478,7 @@
                             <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-all
                                           hover:border-brand/40 hover:bg-brand/5 has-[:checked]:border-brand has-[:checked]:bg-brand/5">
                                 <input type="checkbox" name="intervensi_pasien[]" value="{{ $item }}"
-                                       {{ is_array(old('intervensi_pasien')) && in_array($item, old('intervensi_pasien')) ? 'checked' : '' }}
+                                       {{ in_array($item, $parsedIntervensi['standar']) ? 'checked' : '' }}
                                        class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/30">
                                 <span class="text-slate-600">{{ Str::headline(str_replace('_', ' ', $item)) }}</span>
                             </label>
@@ -430,7 +486,7 @@
                     </div>
                     <div class="mt-2">
                         <input type="text" name="intervensi_pasien_lainnya" placeholder="Lainnya, sebutkan..."
-                               value="{{ old('intervensi_pasien_lainnya') }}"
+                               value="{{ $valIPLainnya }}"
                                class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700
                                       placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                     </div>
@@ -446,7 +502,7 @@
                     </label>
                     <input type="text" name="nama_obat" id="nama_obat" required
                            placeholder="Contoh: Amoxicillin 500mg"
-                           value="{{ old('nama_obat') }}"
+                           value="{{ $valNamaObat }}"
                            class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
                                   placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                     @error('nama_obat')
@@ -472,9 +528,9 @@
                               placeholder="Jelaskan secara detail kronologi kejadian insiden, termasuk waktu, situasi, pihak yang terlibat, dan tindakan yang sudah dilakukan..."
                               class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
                                      placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                              oninput="document.getElementById('char-count').textContent=this.value.length">{{ old('kronologi_kejadian') }}</textarea>
+                              oninput="document.getElementById('char-count').textContent=this.value.length">{{ $valKronologi }}</textarea>
                     <p class="mt-1 text-right text-xs text-slate-400">
-                        <span id="char-count">{{ Str::length(old('kronologi_kejadian', '')) }}</span> / 2000 karakter
+                        <span id="char-count">{{ Str::length($valKronologi ?? '') }}</span> / 2000 karakter
                     </p>
                     @error('kronologi_kejadian')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
@@ -501,7 +557,7 @@
                 <div class="mt-4">
                     <label class="flex cursor-pointer items-start gap-3">
                         <input type="checkbox" name="pernyataan_kronologi" id="pernyataan_kronologi" value="1"
-                               {{ old('pernyataan_kronologi') ? 'checked' : '' }}
+                               {{ $valPernyataan ? 'checked' : '' }}
                                class="mt-0.5 h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/30">
                         <span class="text-sm leading-relaxed text-slate-600">
                             Saya menyatakan bahwa informasi yang saya berikan adalah benar dan akurat sesuai dengan kejadian
@@ -634,6 +690,7 @@
             </button>
 
             <div class="ml-auto flex items-center gap-3">
+                {{-- Simpan sebagai Draf — submit form dengan action=simpan_draf --}}
                 <button type="submit" name="action" value="simpan_draf" id="btn-draf"
                         class="inline-flex items-center gap-1.5 rounded-lg border border-brand bg-white px-5 py-2.5
                                text-sm font-medium text-brand shadow-sm transition-colors hover:bg-brand/5">
@@ -654,6 +711,7 @@
                     </svg>
                 </button>
 
+                {{-- Kirim Laporan — submit form dengan action=kirim_laporan --}}
                 <button type="submit" name="action" value="kirim_laporan" id="btn-kirim"
                         class="hidden items-center gap-1.5 rounded-lg bg-brand px-5 py-2.5 text-sm font-medium
                                text-white shadow-sm transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2
@@ -674,33 +732,24 @@
         (() => {
             'use strict';
 
-            /** Tahap aktif saat ini (1-based). */
             let tahapAktif = 1;
             const TOTAL_TAHAP = 4;
 
-            /** Label referensi untuk ringkasan. */
             const labelJenisInsiden  = @json(collect($jenisInsiden)->mapWithKeys(fn($v, $k) => [$k => $v['label']]));
             const labelFaseKesalahan = @json($faseKesalahan);
 
-            /**
-             * Mengubah tahap aktif wizard.
-             * @param {number} arah — +1 (maju) atau -1 (mundur)
-             */
             window.ubahTahap = function(arah) {
                 const tahapBaru = tahapAktif + arah;
                 if (tahapBaru < 1 || tahapBaru > TOTAL_TAHAP) return;
 
-                // Isi ringkasan saat masuk ke step konfirmasi.
                 if (tahapBaru === TOTAL_TAHAP) isiRingkasan();
 
-                // Sembunyikan panel lama, tampilkan panel baru.
                 document.getElementById('step-' + tahapAktif).classList.add('hidden');
                 document.getElementById('step-' + tahapBaru).classList.remove('hidden');
 
                 perbaruiIndikator(tahapBaru);
                 tahapAktif = tahapBaru;
 
-                // Atur visibilitas tombol.
                 document.getElementById('btn-kembali').style.display     = tahapAktif > 1 ? 'inline-flex' : 'none';
                 document.getElementById('btn-selanjutnya').style.display  = tahapAktif < TOTAL_TAHAP ? 'inline-flex' : 'none';
                 document.getElementById('btn-kirim').style.display        = tahapAktif === TOTAL_TAHAP ? 'inline-flex' : 'none';
@@ -708,7 +757,6 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
 
-            /** Perbarui tampilan step indicator. */
             function perbaruiIndikator(tahapBaru) {
                 for (let i = 1; i <= TOTAL_TAHAP; i++) {
                     const lingkaran = document.getElementById('step-circle-' + i);
@@ -719,21 +767,17 @@
                     const selesai = i < tahapBaru;
                     const aktif   = i === tahapBaru;
 
-                    // Lingkaran.
                     lingkaran.className = 'flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300 '
                         + (selesai || aktif
                             ? 'border-brand bg-brand text-white'
                             : 'border-slate-300 bg-white text-slate-400');
 
-                    // Label.
                     label.className = 'mt-2 text-xs font-medium transition-colors duration-300 '
                         + (selesai || aktif ? 'text-brand' : 'text-slate-400');
 
-                    // Nomor vs centang.
                     nomor.classList.toggle('hidden', selesai);
                     centang.classList.toggle('hidden', !selesai);
 
-                    // Garis penghubung.
                     if (i < TOTAL_TAHAP) {
                         document.getElementById('step-line-' + i).className =
                             'mx-2 h-0.5 w-16 rounded-full transition-colors duration-300 sm:w-24 '
@@ -742,7 +786,6 @@
                 }
             }
 
-            /** Isi seluruh ringkasan (step 4) dari data form. */
             function isiRingkasan() {
                 const form = document.getElementById('form-laporan');
 
@@ -764,7 +807,6 @@
 
                 const nilaiRadio = (nama) => form.querySelector('[name="' + nama + '"]:checked')?.value || null;
 
-                // Data Demografis.
                 setText('ringkasan-nama_pasien',       nilaiInput('nama_pasien'));
                 setText('ringkasan-nomor_rekam_medis',  nilaiInput('nomor_rekam_medis'));
                 setText('ringkasan-unit_kerja',        teksDropdown('unit_kerja'));
@@ -782,7 +824,6 @@
                 const jenisVal = nilaiRadio('jenis_insiden');
                 setText('ringkasan-jenis_insiden', jenisVal ? (labelJenisInsiden[jenisVal] || jenisVal) : '—');
 
-                // Detail Insiden.
                 setText('ringkasan-jenis_kesalahan',   kumpulkanCheckbox('jenis_kesalahan[]'));
                 setText('ringkasan-cedera',            kumpulkanCheckbox('cedera[]'));
                 setText('ringkasan-faktor_penyebab',   kumpulkanCheckbox('faktor_penyebab[]'));
@@ -792,10 +833,8 @@
                 const faseVal = nilaiRadio('fase_kesalahan');
                 setText('ringkasan-fase_kesalahan', faseVal ? (labelFaseKesalahan[faseVal] || faseVal) : '—');
 
-                // Kronologi.
                 setText('ringkasan-kronologi_kejadian', nilaiInput('kronologi_kejadian'));
 
-                // Status anonim.
                 const namaPelapor = nilaiInput('nama_pelapor');
                 if (namaPelapor !== '—' && namaPelapor !== '') {
                     setText('ringkasan-status-anonim', 'Pelaporan Teridentifikasi');
@@ -806,7 +845,6 @@
                 }
             }
 
-            /** Helper pendek untuk set textContent. */
             function setText(id, teks) {
                 const el = document.getElementById(id);
                 if (el) el.textContent = teks;

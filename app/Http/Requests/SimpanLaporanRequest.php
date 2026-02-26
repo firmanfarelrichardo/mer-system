@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Requests;
 
+use App\Models\Insiden;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * SimpanLaporanRequest — validasi formulir buat laporan insiden.
+ * SimpanLaporanRequest — validasi formulir buat/edit laporan insiden.
+ *
+ * Mendukung DUA mode pengiriman via parameter `action`:
+ *   - `simpan_draf`   → Validasi longgar (hanya unit_kerja & tanggal_kejadian required).
+ *   - `kirim_laporan`  → Validasi ketat (semua field pasien, kronologi, kategori wajib).
  *
  * Memvalidasi seluruh data dari 4 tahap wizard:
- *   1. Data Demografis (pasien, unit, tanggal, jenis insiden)
- *   2. Detail Insiden (kesalahan, cedera, faktor, intervensi, fase, obat)
- *   3. Kronologi Kejadian (narasi + pernyataan)
- *   4. Konfirmasi (checkbox pengiriman)
+ *   1. Data Demografis   — data pasien, unit, tanggal, jenis insiden
+ *   2. Detail Insiden     — klasifikasi kesalahan, cedera, faktor, intervensi, fase, obat
+ *   3. Kronologi Kejadian — narasi kronologi, disclaimer non-hukum
+ *   4. Konfirmasi         — checkbox pengiriman
  */
 class SimpanLaporanRequest extends FormRequest
 {
@@ -26,7 +31,15 @@ class SimpanLaporanRequest extends FormRequest
     }
 
     /**
-     * Aturan validasi.
+     * Apakah request ini adalah aksi simpan draf?
+     */
+    public function isDraf(): bool
+    {
+        return $this->input('action') === 'simpan_draf';
+    }
+
+    /**
+     * Aturan validasi — kondisional berdasarkan action.
      *
      * @return array<string, mixed>
      */
@@ -35,7 +48,59 @@ class SimpanLaporanRequest extends FormRequest
         $faseValid  = ['prescribing', 'transcribing', 'dispensing', 'administration'];
         $jenisValid = ['KPC', 'KNC', 'KTC', 'KTD', 'SENTINEL'];
 
+        // Validasi insiden_id: gunakan closure agar tidak bergantung
+        // pada string 'exists:pelaporan.insiden,id' yang membuat Laravel
+        // salah menginterpretasikan 'pelaporan' sebagai nama DB connection.
+        $validasiInsidenId = [
+            'nullable',
+            'integer',
+            function (string $attr, mixed $nilai, \Closure $gagal): void {
+                if ($nilai !== null && ! Insiden::where('id', $nilai)->exists()) {
+                    $gagal('Draf laporan tidak ditemukan.');
+                }
+            },
+        ];
+
+        // ── Simpan Draf: validasi sangat longgar ──
+        if ($this->isDraf()) {
+            return [
+                'action'             => ['required', 'in:simpan_draf,kirim_laporan'],
+                'insiden_id'         => $validasiInsidenId,
+                'unit_kerja'         => ['required', 'string', 'max:255'],
+                'tanggal_kejadian'   => ['required', 'date', 'before_or_equal:today'],
+
+                // Semua field lain opsional saat simpan draf.
+                'nama_pasien'        => ['nullable', 'string', 'max:255'],
+                'nomor_rekam_medis'  => ['nullable', 'string', 'max:100'],
+                'waktu_kejadian'     => ['nullable', 'date_format:H:i'],
+                'jenis_insiden'      => ['nullable', 'string', 'in:' . implode(',', $jenisValid)],
+                'nama_pelapor'       => ['nullable', 'string', 'max:255'],
+                'kontak_pelapor'     => ['nullable', 'string', 'max:255'],
+                'fase_kesalahan'     => ['nullable', 'string', 'in:' . implode(',', $faseValid)],
+                'jenis_kesalahan'    => ['nullable', 'array'],
+                'jenis_kesalahan.*'  => ['string', 'max:100'],
+                'jenis_kesalahan_lainnya'   => ['nullable', 'string', 'max:255'],
+                'cedera'             => ['nullable', 'array'],
+                'cedera.*'           => ['string', 'max:100'],
+                'cedera_lainnya'     => ['nullable', 'string', 'max:255'],
+                'faktor_penyebab'    => ['nullable', 'array'],
+                'faktor_penyebab.*'  => ['string', 'max:100'],
+                'faktor_penyebab_lainnya'   => ['nullable', 'string', 'max:255'],
+                'intervensi_pasien'  => ['nullable', 'array'],
+                'intervensi_pasien.*' => ['string', 'max:100'],
+                'intervensi_pasien_lainnya' => ['nullable', 'string', 'max:255'],
+                'nama_obat'          => ['nullable', 'string', 'max:255'],
+                'kronologi_kejadian' => ['nullable', 'string', 'max:2000'],
+                'pernyataan_kronologi' => ['nullable'],
+                'konfirmasi_kirim'   => ['nullable'],
+            ];
+        }
+
+        // ── Kirim Laporan: validasi ketat (strict) ──
         return [
+            'action'             => ['required', 'in:simpan_draf,kirim_laporan'],
+            'insiden_id'         => $validasiInsidenId,
+
             // ── Tahap 1: Data Demografis ──
             'nama_pasien'        => ['required', 'string', 'max:255'],
             'nomor_rekam_medis'  => ['required', 'string', 'max:100'],
@@ -79,11 +144,11 @@ class SimpanLaporanRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nama_pasien.required'         => 'Nama pasien wajib diisi.',
-            'nomor_rekam_medis.required'   => 'Nomor rekam medis wajib diisi.',
             'unit_kerja.required'          => 'Unit kerja wajib dipilih.',
             'tanggal_kejadian.required'    => 'Tanggal kejadian wajib diisi.',
             'tanggal_kejadian.before_or_equal' => 'Tanggal kejadian tidak boleh di masa depan.',
+            'nama_pasien.required'         => 'Nama pasien wajib diisi.',
+            'nomor_rekam_medis.required'   => 'Nomor rekam medis wajib diisi.',
             'waktu_kejadian.required'      => 'Waktu kejadian wajib diisi.',
             'jenis_insiden.required'       => 'Jenis insiden wajib dipilih.',
             'jenis_insiden.in'             => 'Jenis insiden tidak valid.',
