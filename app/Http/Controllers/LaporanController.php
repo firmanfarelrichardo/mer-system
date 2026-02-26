@@ -16,6 +16,7 @@ use App\Services\LaporanService;
 use App\Support\Paginasi;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -293,5 +294,25 @@ class LaporanController extends Controller
         $insiden->update(['sudah_dibaca' => true]);
 
         return back()->with('sukses', 'Laporan ditandai sudah dibaca.');
+    }
+
+    /* ==================================================================
+     | CETAK PDF — Stream PDF Laporan ke Browser
+     | =================================================================*/
+
+    /**
+     * Generate dan stream PDF laporan insiden ke browser (tab baru).
+     *
+     * Hanya dapat diakses untuk laporan yang bukan DRAF.
+     */
+    public function cetakPdf(string $laporan): Response
+    {
+        $pdf = $this->laporanService->generatePdfReport((int) $laporan);
+
+        $insiden = $this->insidenRepository->getInsidenForPdf((int) $laporan);
+
+        $namaFile = 'Laporan-Insiden-' . str_replace('/', '-', $insiden->nomor_laporan) . '.pdf';
+
+        return $pdf->stream($namaFile);
     }
 }

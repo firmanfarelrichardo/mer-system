@@ -10,6 +10,7 @@ use App\Models\DetailPasien;
 use App\Models\Insiden;
 use App\Models\Pengguna;
 use App\Repositories\InsidenRepository;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -137,5 +138,25 @@ class LaporanService
         }
 
         return $insiden;
+    }
+
+    /**
+     * Generate PDF laporan insiden untuk dicetak / diunduh.
+     *
+     * @param  int  $id  ID insiden.
+     * @return \Barryvdh\DomPDF\PDF
+     */
+    public function generatePdfReport(int $id): \Barryvdh\DomPDF\PDF
+    {
+        $insiden = $this->repository->getInsidenForPdf($id);
+
+        if (! $insiden) {
+            abort(404, 'Laporan insiden tidak ditemukan atau masih berstatus draf.');
+        }
+
+        $pdf = Pdf::loadView('laporan.pdf', compact('insiden'))
+            ->setPaper('a4', 'portrait');
+
+        return $pdf;
     }
 }
