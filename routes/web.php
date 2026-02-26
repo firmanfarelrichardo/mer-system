@@ -3,9 +3,13 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\FaktorPenyebabController;
+use App\Http\Controllers\Admin\IntervensiController;
+use App\Http\Controllers\Admin\JenisKesalahanController;
 use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\LogAktivitasController;
 use App\Http\Controllers\Admin\PenggunaController;
+use App\Http\Controllers\Admin\TipeCederaController;
 use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\LaporanController;
@@ -138,6 +142,70 @@ Route::middleware(['auth', 'sesi.maks'])->group(function (): void {
 
         Route::delete('/kategori/{kategori}', [KategoriController::class, 'hapus'])
             ->name('admin.kategori.hapus');
+
+        // ----- Master Jenis Kesalahan -----
+        Route::get('/jenis-kesalahan', [JenisKesalahanController::class, 'index'])
+            ->name('admin.jenis-kesalahan.index');
+
+        Route::post('/jenis-kesalahan', [JenisKesalahanController::class, 'simpan'])
+            ->name('admin.jenis-kesalahan.simpan');
+
+        Route::put('/jenis-kesalahan/{id}', [JenisKesalahanController::class, 'perbarui'])
+            ->name('admin.jenis-kesalahan.perbarui');
+
+        Route::patch('/jenis-kesalahan/{id}/toggle-aktif', [JenisKesalahanController::class, 'toggleAktif'])
+            ->name('admin.jenis-kesalahan.toggle-aktif');
+
+        Route::delete('/jenis-kesalahan/{id}', [JenisKesalahanController::class, 'hapus'])
+            ->name('admin.jenis-kesalahan.hapus');
+
+        // ----- Master Tipe Cedera -----
+        Route::get('/tipe-cedera', [TipeCederaController::class, 'index'])
+            ->name('admin.tipe-cedera.index');
+
+        Route::post('/tipe-cedera', [TipeCederaController::class, 'simpan'])
+            ->name('admin.tipe-cedera.simpan');
+
+        Route::put('/tipe-cedera/{id}', [TipeCederaController::class, 'perbarui'])
+            ->name('admin.tipe-cedera.perbarui');
+
+        Route::patch('/tipe-cedera/{id}/toggle-aktif', [TipeCederaController::class, 'toggleAktif'])
+            ->name('admin.tipe-cedera.toggle-aktif');
+
+        Route::delete('/tipe-cedera/{id}', [TipeCederaController::class, 'hapus'])
+            ->name('admin.tipe-cedera.hapus');
+
+        // ----- Master Faktor Penyebab -----
+        Route::get('/faktor-penyebab', [FaktorPenyebabController::class, 'index'])
+            ->name('admin.faktor-penyebab.index');
+
+        Route::post('/faktor-penyebab', [FaktorPenyebabController::class, 'simpan'])
+            ->name('admin.faktor-penyebab.simpan');
+
+        Route::put('/faktor-penyebab/{id}', [FaktorPenyebabController::class, 'perbarui'])
+            ->name('admin.faktor-penyebab.perbarui');
+
+        Route::patch('/faktor-penyebab/{id}/toggle-aktif', [FaktorPenyebabController::class, 'toggleAktif'])
+            ->name('admin.faktor-penyebab.toggle-aktif');
+
+        Route::delete('/faktor-penyebab/{id}', [FaktorPenyebabController::class, 'hapus'])
+            ->name('admin.faktor-penyebab.hapus');
+
+        // ----- Master Tindakan Intervensi -----
+        Route::get('/intervensi', [IntervensiController::class, 'index'])
+            ->name('admin.intervensi.index');
+
+        Route::post('/intervensi', [IntervensiController::class, 'simpan'])
+            ->name('admin.intervensi.simpan');
+
+        Route::put('/intervensi/{id}', [IntervensiController::class, 'perbarui'])
+            ->name('admin.intervensi.perbarui');
+
+        Route::patch('/intervensi/{id}/toggle-aktif', [IntervensiController::class, 'toggleAktif'])
+            ->name('admin.intervensi.toggle-aktif');
+
+        Route::delete('/intervensi/{id}', [IntervensiController::class, 'hapus'])
+            ->name('admin.intervensi.hapus');
 
         // ----- Log Aktivitas (dipisah: Pengguna & Admin) -----
         Route::get('/log-aktivitas/pengguna', [LogAktivitasController::class, 'indexPengguna'])

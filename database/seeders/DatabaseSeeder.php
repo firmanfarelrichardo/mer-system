@@ -25,8 +25,9 @@ class DatabaseSeeder extends Seeder
             PeranSeeder::class,          // 2. Roles  (required FK for user-role pivot)
             UnitKerjaSeeder::class,      // 3. Unit kerja (required FK for pengguna.unit_id)
             PenggunaSeeder::class,       // 4. Users + pivot assignments
-            InsidenSeeder::class,        // 5. 500 sample incident reports (2024-2026)
-            LogAktivitasSeeder::class,   // 6. Audit log entries (2024-2026)
+            MasterFormSeeder::class,     // 5. Master data formulir (cedera, faktor, intervensi)
+            InsidenSeeder::class,        // 6. 500 sample incident reports (2024-2026)
+            LogAktivitasSeeder::class,   // 7. Audit log entries (2024-2026)
         ]);
     }
 }

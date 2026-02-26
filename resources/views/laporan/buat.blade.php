@@ -40,36 +40,9 @@
             'administration' => 'Tahap Penyerahan Obat kepada Pasien (Administration Error)',
         ];
 
-        // Jenis kesalahan (detail).
-        $jenisKesalahan = [
-            'salah_pasien', 'salah_obat', 'salah_dosis_frekuensi', 'salah_formula',
-            'salah_rute', 'salah_nomor', 'salah_label', 'kontraindikasi',
-            'salah_penyimpanan', 'obat_terlewat_tidak_diberikan', 'obat_kadaluarsa', 'reaksi_obat_merugikan',
-        ];
-
-        // Cedera yang terjadi (injuries).
-        $cederaOptions = [
-            'tidak_ada_cedera', 'blister', 'kehilangan_darah', 'luka_bakar',
-            'perubahan_kesadaran', 'meninggal', 'edema', 'hematologi',
-            'gatal_gatal', 'hipoksia', 'nyeri', 'infiltrasi_ekstravasasi',
-            'kegagalan_jalur_iv', 'mual', 'perubahan_nilai_lab_signifikan', 'perubahan_tanda_vital',
-        ];
-
-        // Faktor penyebab (contributing factors).
-        $faktorPenyebab = [
-            'kesalahan_charting', 'kesalahan_kalkulasi_dosis', 'distraksi_manusia', 'masalah_peralatan_mekanik',
-            'gagal_mengikuti_kebijakan_prosedur', 'gagal_membaca_label', 'order_tidak_terbaca', 'monitoring_tidak_adekuat',
-            'defisit_pengetahuan', 'masalah_labeling', 'masalah_order_dokter', 'order_perawat',
-            'tidak_ditranskripsi', 'masalah_stocking_delivery', 'salah_transkrip_perawat', 'salah_transkrip_farmasi',
-        ];
-
-        // Intervensi pasien (patient interventions).
-        $intervensiPasien = [
-            'transfusi_darah_diperintahkan', 'lab_tambahan_diperintahkan', 'prosedur_tambahan_dilakukan', 'konsultasi_layanan_tambahan',
-            'kunjungan_tambahan_dilakukan', 'dirawat_di_rs', 'konsultasi_layanan_pelanggan', 'monitoring_ditingkatkan',
-            'dilusi', 'dibawa_ke_ugd', 'dibawa_ke_ok', 'transfer_ke_icu_ruang_monitor',
-            'lama_rawat_bertambah', 'memerlukan_pengobatan',
-        ];
+        // ---------- Master data checkbox dikirim dari Controller ----------
+        // $masterJenisKesalahan, $masterTipeCedera, $masterFaktorPenyebab, $masterIntervensi
+        // masing-masing berisi Collection of Eloquent model (kolom: id, nama, is_aktif).
     @endphp
 
     {{-- ================================================================
@@ -328,13 +301,13 @@
                     </legend>
                     <p class="mb-3 text-xs text-slate-400">Pilih semua jenis kesalahan yang terjadi</p>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                        @foreach ($jenisKesalahan as $item)
+                        @foreach ($masterJenisKesalahan as $item)
                             <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-all
                                           hover:border-brand/40 hover:bg-brand/5 has-[:checked]:border-brand has-[:checked]:bg-brand/5">
-                                <input type="checkbox" name="jenis_kesalahan[]" value="{{ $item }}"
-                                       {{ is_array(old('jenis_kesalahan')) && in_array($item, old('jenis_kesalahan')) ? 'checked' : '' }}
+                                <input type="checkbox" name="jenis_kesalahan[]" value="{{ $item->nama }}"
+                                       {{ is_array(old('jenis_kesalahan')) && in_array($item->nama, old('jenis_kesalahan')) ? 'checked' : '' }}
                                        class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/30">
-                                <span class="text-slate-600">{{ Str::headline(str_replace('_', ' ', $item)) }}</span>
+                                <span class="text-slate-600">{{ $item->nama }}</span>
                             </label>
                         @endforeach
                     </div>
@@ -357,15 +330,15 @@
                     </legend>
                     <p class="mb-3 text-xs text-slate-400">Pilih semua dampak cedera yang dialami pasien</p>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                        @foreach ($cederaOptions as $item)
+                        @foreach ($masterTipeCedera as $item)
                             <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-all
                                           hover:border-brand/40 hover:bg-brand/5 has-[:checked]:border-brand has-[:checked]:bg-brand/5
-                                          {{ $item === 'meninggal' ? 'has-[:checked]:border-red-400 has-[:checked]:bg-red-50' : '' }}">
-                                <input type="checkbox" name="cedera[]" value="{{ $item }}"
-                                       {{ is_array(old('cedera')) && in_array($item, old('cedera')) ? 'checked' : '' }}
+                                          {{ $item->nama === 'Meninggal' ? 'has-[:checked]:border-red-400 has-[:checked]:bg-red-50' : '' }}">
+                                <input type="checkbox" name="cedera[]" value="{{ $item->nama }}"
+                                       {{ is_array(old('cedera')) && in_array($item->nama, old('cedera')) ? 'checked' : '' }}
                                        class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/30">
-                                <span class="{{ $item === 'meninggal' ? 'font-medium text-red-600' : 'text-slate-600' }}">
-                                    {{ Str::headline(str_replace('_', ' ', $item)) }}
+                                <span class="{{ $item->nama === 'Meninggal' ? 'font-medium text-red-600' : 'text-slate-600' }}">
+                                    {{ $item->nama }}
                                 </span>
                             </label>
                         @endforeach
@@ -389,13 +362,13 @@
                     </legend>
                     <p class="mb-3 text-xs text-slate-400">Pilih faktor-faktor yang berkontribusi terhadap insiden</p>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                        @foreach ($faktorPenyebab as $item)
+                        @foreach ($masterFaktorPenyebab as $item)
                             <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-all
                                           hover:border-brand/40 hover:bg-brand/5 has-[:checked]:border-brand has-[:checked]:bg-brand/5">
-                                <input type="checkbox" name="faktor_penyebab[]" value="{{ $item }}"
-                                       {{ is_array(old('faktor_penyebab')) && in_array($item, old('faktor_penyebab')) ? 'checked' : '' }}
+                                <input type="checkbox" name="faktor_penyebab[]" value="{{ $item->nama }}"
+                                       {{ is_array(old('faktor_penyebab')) && in_array($item->nama, old('faktor_penyebab')) ? 'checked' : '' }}
                                        class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/30">
-                                <span class="text-slate-600">{{ Str::headline(str_replace('_', ' ', $item)) }}</span>
+                                <span class="text-slate-600">{{ $item->nama }}</span>
                             </label>
                         @endforeach
                     </div>
@@ -418,13 +391,13 @@
                     </legend>
                     <p class="mb-3 text-xs text-slate-400">Pilih tindakan yang dilakukan terhadap pasien</p>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                        @foreach ($intervensiPasien as $item)
+                        @foreach ($masterIntervensi as $item)
                             <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5 text-sm transition-all
                                           hover:border-brand/40 hover:bg-brand/5 has-[:checked]:border-brand has-[:checked]:bg-brand/5">
-                                <input type="checkbox" name="intervensi_pasien[]" value="{{ $item }}"
-                                       {{ is_array(old('intervensi_pasien')) && in_array($item, old('intervensi_pasien')) ? 'checked' : '' }}
+                                <input type="checkbox" name="intervensi_pasien[]" value="{{ $item->nama }}"
+                                       {{ is_array(old('intervensi_pasien')) && in_array($item->nama, old('intervensi_pasien')) ? 'checked' : '' }}
                                        class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/30">
-                                <span class="text-slate-600">{{ Str::headline(str_replace('_', ' ', $item)) }}</span>
+                                <span class="text-slate-600">{{ $item->nama }}</span>
                             </label>
                         @endforeach
                     </div>
