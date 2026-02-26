@@ -147,4 +147,25 @@ class InsidenRepository
             ->where('status_saat_ini', 'DRAF')
             ->first();
     }
+
+    /**
+     * Ambil satu insiden lengkap untuk cetak PDF.
+     *
+     * Eager-load semua relasi yang dibutuhkan view PDF:
+     *   - detailPasien  → data pasien & kronologi.
+     *   - pelapor        → nama & kontak pelapor.
+     *   - unitKerja      → nama unit kerja.
+     *   - tindakLanjut   → histori tindak lanjut beserta pelaku.
+     */
+    public function getInsidenForPdf(int $id): ?Insiden
+    {
+        return Insiden::with([
+                'detailPasien',
+                'pelapor',
+                'unitKerja',
+                'tindakLanjut.pengguna',
+            ])
+            ->where('status_saat_ini', '!=', 'DRAF')
+            ->find($id);
+    }
 }
