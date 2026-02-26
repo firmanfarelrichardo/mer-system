@@ -171,10 +171,11 @@
         </div>
     @endif
 
-    <form id="form-laporan" method="POST" action="{{ route('laporan.simpan') }}" novalidate>
+    <form id="form-laporan" method="POST" action="{{ route('laporan.simpan') }}" novalidate
+          x-data="autoSaveForm()" @input.debounce.2000ms="simpanBackground" @change.debounce.2000ms="simpanBackground">
         @csrf
-        {{-- Hidden field: ID draf yang sedang di-edit --}}
-        <input type="hidden" name="insiden_id" value="{{ $insiden->id }}">
+        {{-- Hidden field: ID draf yang sedang di-edit (di-bind oleh Alpine.js) --}}
+        <input type="hidden" name="insiden_id" :value="insidenId">
 
         {{-- ============================================================
              TAHAP 1: DATA DEMOGRAFIS
@@ -662,15 +663,49 @@
              TOMBOL NAVIGASI
              ============================================================ --}}
         <div class="mt-6 flex items-center justify-between">
-            <button type="button" id="btn-kembali"
-                    class="hidden items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5
-                           text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                    onclick="ubahTahap(-1)">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
-                </svg>
-                Kembali
-            </button>
+            <div class="flex items-center gap-3">
+                <button type="button" id="btn-kembali"
+                        class="hidden items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5
+                               text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                        onclick="ubahTahap(-1)">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
+                    </svg>
+                    Kembali
+                </button>
+
+                {{-- Indikator Status Auto-Save --}}
+                <div class="flex items-center gap-1.5 text-xs transition-all duration-300">
+                    {{-- Saving --}}
+                    <template x-if="statusAutoSave === 'saving'">
+                        <span class="inline-flex items-center gap-1 text-amber-600">
+                            <svg class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                            Menyimpan...
+                        </span>
+                    </template>
+                    {{-- Saved --}}
+                    <template x-if="statusAutoSave === 'saved'">
+                        <span class="inline-flex items-center gap-1 text-emerald-600">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                            </svg>
+                            Draf tersimpan <span x-text="waktuTerakhir"></span>
+                        </span>
+                    </template>
+                    {{-- Error --}}
+                    <template x-if="statusAutoSave === 'error'">
+                        <span class="inline-flex items-center gap-1 text-red-500">
+                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+                            </svg>
+                            Gagal menyimpan
+                        </span>
+                    </template>
+                </div>
+            </div>
 
             <div class="ml-auto flex items-center gap-3">
                 {{-- Simpan sebagai Draf — submit form dengan action=simpan_draf --}}
@@ -711,6 +746,10 @@
     {{-- ================================================================
          JAVASCRIPT — Navigasi Multi-Step Wizard
          ================================================================ --}}
+    {{-- Auto-save Alpine.js component --}}
+    @php $autoSaveInsidenId = $insiden->id; @endphp
+    @include('laporan._auto-save')
+
     <script>
         (() => {
             'use strict';
