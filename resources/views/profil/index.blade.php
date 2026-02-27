@@ -19,13 +19,15 @@
 @section('konten')
 
     @php
-        $pengguna      = Auth::user();
+        // $pengguna dikirim dari ProfilController
         $namaLengkap   = $pengguna->nama_lengkap;
-        $daftarPeran    = $pengguna->daftarPeran();
-        $peranUtama     = $daftarPeran[0] ?? '—';
-        $namaUnit       = $pengguna->unitKerja?->nama_unit ?? '—';
-        $loginTerakhir  = $pengguna->terakhir_login_pada?->translatedFormat('d F Y, H:i') ?? '—';
-        $terdaftarPada  = $pengguna->created_at?->translatedFormat('d F Y') ?? '—';
+        $daftarPeran   = $pengguna->daftarPeran();
+        $peranUtama    = $daftarPeran[0] ?? '—';
+        $namaUnit      = $pengguna->unitKerja?->nama_unit ?? '—';
+        $loginTerakhir = $pengguna->terakhir_login_pada?->translatedFormat('d F Y, H:i') ?? '—';
+        $terdaftarPada = $pengguna->created_at?->translatedFormat('d F Y') ?? '—';
+        $jabatan       = $pengguna->jabatan ?? '—';
+        $tglBergabung  = $pengguna->tanggal_bergabung_unit?->translatedFormat('d F Y') ?? '—';
 
         // Inisial untuk avatar besar
         $inisial = collect(explode(' ', $namaLengkap))
@@ -34,12 +36,34 @@
             ->implode('');
     @endphp
 
+    {{-- Flash sukses --}}
+    @if (session('sukses'))
+        <div class="mb-4 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+            {{ session('sukses') }}
+        </div>
+    @endif
+
     {{-- ================================================================
          HEADER HALAMAN
          ================================================================ --}}
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-800">Profil Saya</h1>
-        <p class="mt-1 text-sm text-slate-400">Informasi akun dan data pribadi Anda.</p>
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-800">Profil Saya</h1>
+            <p class="mt-1 text-sm text-slate-400">Informasi akun dan data pribadi Anda.</p>
+        </div>
+        <a href="{{ route('profil.edit') }}"
+           class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white
+                  hover:bg-brand/90 focus:outline-none focus:ring-2 focus:ring-brand/30 transition-colors">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                      d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582
+                         16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+            </svg>
+            Edit Profil
+        </a>
     </div>
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -55,7 +79,7 @@
                         {{ $inisial }}
                     </div>
                     <h2 class="mt-4 text-lg font-semibold text-slate-800">{{ $namaLengkap }}</h2>
-                    <p class="mt-0.5 text-sm text-slate-400">{{ $peranUtama }}</p>
+                    <p class="mt-0.5 text-sm text-slate-400">{{ $jabatan !== '—' ? $jabatan : $peranUtama }}</p>
 
                     {{-- Badge peran --}}
                     <div class="mt-3 flex flex-wrap justify-center gap-1.5">
@@ -127,7 +151,7 @@
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-400">Nomor Telepon</label>
-                        <p class="text-sm font-medium text-slate-800">{{ $pengguna->nomor_telepon ?? '—' }}</p>
+                        <p class="text-sm font-medium text-slate-800">{{ $pengguna->nomor_hp ?? '—' }}</p>
                     </div>
                 </div>
             </div>
@@ -137,19 +161,16 @@
                 <h3 class="mb-4 text-base font-semibold text-slate-800">Informasi Pekerjaan</h3>
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-400">Unit Kerja</label>
+                        <label class="mb-1 block text-xs font-medium text-slate-400">Unit / Departemen</label>
                         <p class="text-sm font-medium text-slate-800">{{ $namaUnit }}</p>
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-400">Peran dalam Sistem</label>
-                        <div class="flex flex-wrap gap-1.5">
-                            @foreach ($daftarPeran as $peran)
-                                <span class="inline-flex items-center rounded-full bg-brand/10 px-2.5 py-0.5
-                                             text-xs font-semibold text-brand">
-                                    {{ $peran }}
-                                </span>
-                            @endforeach
-                        </div>
+                        <label class="mb-1 block text-xs font-medium text-slate-400">Jabatan</label>
+                        <p class="text-sm font-medium text-slate-800">{{ $jabatan }}</p>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-slate-400">Tanggal Bergabung Unit</label>
+                        <p class="text-sm font-medium text-slate-800">{{ $tglBergabung }}</p>
                     </div>
                 </div>
             </div>

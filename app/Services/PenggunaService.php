@@ -133,6 +133,44 @@ class PenggunaService
     }
 
     /* ------------------------------------------------------------------
+     | Command — Perbarui Profil Mandiri (self-service)
+     | ----------------------------------------------------------------*/
+
+    /**
+     * Perbarui data profil oleh pengguna sendiri.
+     *
+     * Hanya field yang diizinkan untuk self-service yang diperbarui:
+     * nomor_hp, jabatan, dan tanggal_bergabung_unit.
+     * Field sensitif (nomor_induk, unit_id, peran) hanya bisa diubah Admin.
+     *
+     * @param  array{nama_lengkap?: string, email?: string, nomor_hp?: string|null, jabatan?: string|null, tanggal_bergabung_unit?: string|null}  $data
+     */
+    public function perbaruiProfil(Pengguna $pengguna, array $data): Pengguna
+    {
+        $dataLama = $pengguna->only(['nama_lengkap', 'email', 'nomor_hp', 'jabatan', 'tanggal_bergabung_unit']);
+
+        $atribut = [
+            'nama_lengkap'           => $data['nama_lengkap'] ?? $pengguna->nama_lengkap,
+            'email'                  => $data['email'] ?? $pengguna->email,
+            'nomor_hp'               => $data['nomor_hp'] ?? null,
+            'jabatan'                => $data['jabatan'] ?? null,
+            'tanggal_bergabung_unit' => $data['tanggal_bergabung_unit'] ?? null,
+        ];
+
+        $pengguna = $this->repository->perbarui($pengguna, $atribut);
+
+        $this->auditLog->catat(
+            namaTabel: 'akun.pengguna',
+            aksi:      'UPDATE_PROFIL',
+            idData:    $pengguna->id,
+            dataLama:  $dataLama,
+            dataBaru:  $pengguna->fresh()->only(['nama_lengkap', 'email', 'nomor_hp', 'jabatan', 'tanggal_bergabung_unit']),
+        );
+
+        return $pengguna->load('peran', 'unitKerja');
+    }
+
+    /* ------------------------------------------------------------------
      | Command — Ubah Status Aktif (Soft-toggle)
      | ----------------------------------------------------------------*/
 

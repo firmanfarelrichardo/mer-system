@@ -50,6 +50,8 @@ class Pengguna extends Authenticatable
         'kata_sandi',
         'is_aktif',
         'terakhir_login_pada',
+        'jabatan',
+        'tanggal_bergabung_unit',
     ];
 
     protected $hidden = [
@@ -63,12 +65,13 @@ class Pengguna extends Authenticatable
     protected function casts(): array
     {
         return [
-            'is_aktif'            => 'boolean',
-            'terakhir_login_pada' => 'datetime',
-            'kata_sandi'          => 'hashed',   // Hash otomatis saat di-set (Laravel 10+)
-            'created_at'          => 'datetime',
-            'updated_at'          => 'datetime',
-            'deleted_at'          => 'datetime',
+            'is_aktif'               => 'boolean',
+            'terakhir_login_pada'    => 'datetime',
+            'kata_sandi'             => 'hashed',   // Hash otomatis saat di-set (Laravel 10+)
+            'tanggal_bergabung_unit' => 'date',
+            'created_at'             => 'datetime',
+            'updated_at'             => 'datetime',
+            'deleted_at'             => 'datetime',
         ];
     }
 
