@@ -250,6 +250,12 @@ Route::middleware(['auth', 'sesi.maks'])->group(function (): void {
     Route::get('/profil', [ProfilController::class, 'index'])
         ->name('profil.index');
 
+    Route::get('/profil/edit', [ProfilController::class, 'edit'])
+        ->name('profil.edit');
+
+    Route::put('/profil', [ProfilController::class, 'perbarui'])
+        ->name('profil.perbarui');
+
     Route::get('/pengaturan', [PengaturanController::class, 'index'])
         ->name('pengaturan.index');
 
