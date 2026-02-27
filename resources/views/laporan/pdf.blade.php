@@ -3,7 +3,11 @@
 | Cetak Laporan Insiden — PDF (laporan/pdf.blade.php)
 |--------------------------------------------------------------------------
 | Halaman PDF laporan insiden dengan kop surat resmi RSUD HM Ryacudu.
+<<<<<<< HEAD
 | Format disesuaikan dengan referensi dokumen resmi surat dinas
+=======
+| Format disesuaikan 100% dengan referensi dokumen resmi surat dinas
+>>>>>>> feat_nakes/cetak-pdf
 | UPTD. RSUD HM. Ryacudu, Pemerintah Kabupaten Lampung Utara.
 |
 | Variabel dari service:
@@ -17,7 +21,11 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Laporan Insiden — {{ $insiden->nomor_laporan }}</title>
     <style>
+<<<<<<< HEAD
         /* ── Reset & Base ─────────────────────────────────────── */
+=======
+        /* ── Reset & Base ─────────────────────────────────────────── */
+>>>>>>> feat_nakes/cetak-pdf
         * {
             margin: 0;
             padding: 0;
@@ -33,8 +41,13 @@
             padding: 25px 50px 30px 50px;
         }
 
+<<<<<<< HEAD
         /* ── KOP SURAT ────────────────────────────────────────── */
         /* Layout 3-kolom: [logo kiri] | [teks tengah] | [logo kanan] */
+=======
+        /* ── KOP SURAT ────────────────────────────────────────────── */
+        /* Layout 3-kolom: [logo kiri] | [teks tengah] | [logo kanan]  */
+>>>>>>> feat_nakes/cetak-pdf
         .kop-table {
             width: 100%;
             border-collapse: collapse;
@@ -57,7 +70,11 @@
             text-align: center;
             padding: 0 8px;
         }
+<<<<<<< HEAD
         /* Baris 1: Pemerintah Kabupaten */
+=======
+        /* Baris 1: Pemerintah Kabupaten — normal, uppercase */
+>>>>>>> feat_nakes/cetak-pdf
         .kop-baris-pemkab {
             font-size: 11pt;
             font-weight: normal;
@@ -65,7 +82,11 @@
             letter-spacing: 0.5px;
             margin-bottom: 1px;
         }
+<<<<<<< HEAD
         /* Baris 2: Dinas Kesehatan — letter-spaced */
+=======
+        /* Baris 2: Dinas Kesehatan — letter-spaced, normal weight */
+>>>>>>> feat_nakes/cetak-pdf
         .kop-baris-dinas {
             font-size: 11pt;
             font-weight: normal;
@@ -73,7 +94,11 @@
             letter-spacing: 8px;
             margin-bottom: 1px;
         }
+<<<<<<< HEAD
         /* Baris 3: RSUD — identitas utama, terbesar & bold */
+=======
+        /* Baris 3: RSUD — PALING BESAR, BOLD, ini adalah identitas utama */
+>>>>>>> feat_nakes/cetak-pdf
         .kop-baris-rsud {
             font-size: 15pt;
             font-weight: bold;
@@ -89,7 +114,11 @@
             line-height: 1.4;
         }
 
+<<<<<<< HEAD
         /* ── GARIS PEMBATAS KOP (tebal + tipis) ──────────────── */
+=======
+        /* ── GARIS PEMBATAS KOP (double-line: tebal di atas, tipis di bawah) */
+>>>>>>> feat_nakes/cetak-pdf
         .garis-kop-wrapper {
             margin-top: 6px;
             margin-bottom: 14px;
@@ -105,7 +134,11 @@
             margin: 3px 0 0 0;
         }
 
+<<<<<<< HEAD
         /* ── JUDUL LAPORAN ───────────────────────────────────── */
+=======
+        /* ── JUDUL LAPORAN ────────────────────────────────────────── */
+>>>>>>> feat_nakes/cetak-pdf
         .judul-wrapper {
             text-align: center;
             margin-bottom: 3px;
@@ -123,7 +156,11 @@
             margin-bottom: 16px;
         }
 
+<<<<<<< HEAD
         /* ── SECTION HEADING ─────────────────────────────────── */
+=======
+        /* ── SECTION HEADING ─────────────────────────────────────── */
+>>>>>>> feat_nakes/cetak-pdf
         .section-title {
             font-size: 11pt;
             font-weight: bold;
@@ -135,7 +172,11 @@
             border-bottom: none;
         }
 
+<<<<<<< HEAD
         /* ── TABEL DATA (label : value) ──────────────────────── */
+=======
+        /* ── TABEL DATA (field : value) ──────────────────────────── */
+>>>>>>> feat_nakes/cetak-pdf
         .data-table {
             width: 100%;
             border-collapse: collapse;
@@ -164,7 +205,11 @@
             background-color: #fff;
         }
 
+<<<<<<< HEAD
         /* ── TAG LIST (array fields) ─────────────────────────── */
+=======
+        /* ── TAG LIST (array fields) ──────────────────────────────── */
+>>>>>>> feat_nakes/cetak-pdf
         .tag-list {
             list-style: none;
             padding: 0;
@@ -179,14 +224,22 @@
             margin: 1px 2px 1px 0;
         }
 
+<<<<<<< HEAD
         /* ── TEKS PANJANG (kronologi, tindakan) ──────────────── */
+=======
+        /* ── TEKS PANJANG (kronologi, tindakan) ───────────────────── */
+>>>>>>> feat_nakes/cetak-pdf
         .teks-panjang {
             white-space: pre-line;
             line-height: 1.6;
             text-align: justify;
         }
 
+<<<<<<< HEAD
         /* ── TABEL HISTORI TINDAK LANJUT ─────────────────────── */
+=======
+        /* ── TABEL HISTORI TINDAK LANJUT ──────────────────────────── */
+>>>>>>> feat_nakes/cetak-pdf
         .tl-table {
             width: 100%;
             border-collapse: collapse;
@@ -209,7 +262,11 @@
             text-align: center;
         }
 
+<<<<<<< HEAD
         /* ── TANDA TANGAN ────────────────────────────────────── */
+=======
+        /* ── TANDA TANGAN ─────────────────────────────────────────── */
+>>>>>>> feat_nakes/cetak-pdf
         .ttd-wrapper {
             margin-top: 30px;
             width: 100%;
@@ -241,7 +298,11 @@
             font-size: 10pt;
         }
 
+<<<<<<< HEAD
         /* ── FOOTER CETAK ────────────────────────────────────── */
+=======
+        /* ── FOOTER CETAK ─────────────────────────────────────────── */
+>>>>>>> feat_nakes/cetak-pdf
         .footer-cetak {
             margin-top: 18px;
             padding-top: 5px;
@@ -257,7 +318,11 @@
 
         {{-- ================================================================
              KOP SURAT RESMI
+<<<<<<< HEAD
              Hierarki sesuai referensi dokumen resmi:
+=======
+             Hierarki (sesuai referensi dokumen):
+>>>>>>> feat_nakes/cetak-pdf
                1. PEMERINTAH KABUPATEN LAMPUNG UTARA  (normal, kecil)
                2. D I N A S  K E S E H A T A N        (letter-spaced)
                3. UPTD. RUMAH SAKIT UMUM DAERAH HM. RYACUDU  (bold, besar)
@@ -289,7 +354,11 @@
             </tr>
         </table>
 
+<<<<<<< HEAD
         {{-- Garis pembatas kop: garis tebal di atas + garis tipis di bawah --}}
+=======
+        {{-- Garis pembatas kop: satu garis tebal di atas, satu tipis di bawah --}}
+>>>>>>> feat_nakes/cetak-pdf
         <div class="garis-kop-wrapper">
             <hr class="garis-kop-tebal">
             <hr class="garis-kop-tipis">
@@ -390,7 +459,11 @@
             <tr>
                 <td class="label">Fase / Jenis Kesalahan</td>
                 <td class="colon">:</td>
+<<<<<<< HEAD
                 <td class="value">{{ Str::headline(str_replace('_', ' ', $insiden->fase_kesalahan ?? '')) ?: '—' }}</td>
+=======
+                <td class="value">{{ $insiden->fase_kesalahan ?? '—' }}</td>
+>>>>>>> feat_nakes/cetak-pdf
             </tr>
             <tr>
                 <td class="label">Tipe Insiden</td>
@@ -417,7 +490,11 @@
                         <td class="value">
                             <ul class="tag-list">
                                 @foreach ((array) $insiden->detailPasien->jenis_kesalahan as $item)
+<<<<<<< HEAD
                                     <li>{{ Str::headline(str_replace('_', ' ', $item)) }}</li>
+=======
+                                    <li>{{ $item }}</li>
+>>>>>>> feat_nakes/cetak-pdf
                                 @endforeach
                             </ul>
                         </td>
@@ -430,7 +507,11 @@
                         <td class="value">
                             <ul class="tag-list">
                                 @foreach ((array) $insiden->detailPasien->cedera as $item)
+<<<<<<< HEAD
                                     <li>{{ Str::headline(str_replace('_', ' ', $item)) }}</li>
+=======
+                                    <li>{{ $item }}</li>
+>>>>>>> feat_nakes/cetak-pdf
                                 @endforeach
                             </ul>
                         </td>
@@ -443,7 +524,11 @@
                         <td class="value">
                             <ul class="tag-list">
                                 @foreach ((array) $insiden->detailPasien->faktor_penyebab as $item)
+<<<<<<< HEAD
                                     <li>{{ Str::headline(str_replace('_', ' ', $item)) }}</li>
+=======
+                                    <li>{{ $item }}</li>
+>>>>>>> feat_nakes/cetak-pdf
                                 @endforeach
                             </ul>
                         </td>
@@ -456,7 +541,11 @@
                         <td class="value">
                             <ul class="tag-list">
                                 @foreach ((array) $insiden->detailPasien->intervensi_pasien as $item)
+<<<<<<< HEAD
                                     <li>{{ Str::headline(str_replace('_', ' ', $item)) }}</li>
+=======
+                                    <li>{{ $item }}</li>
+>>>>>>> feat_nakes/cetak-pdf
                                 @endforeach
                             </ul>
                         </td>
