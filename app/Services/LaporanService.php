@@ -235,7 +235,7 @@ class LaporanService
      * @param  int  $id  ID insiden.
      * @return \Barryvdh\DomPDF\PDF
      */
-    public function generatePdfReport(int $id): \Barryvdh\DomPDF\PDF
+    public function generatePdfReport(int $id, array $margin = [], int $scale = 100): \Barryvdh\DomPDF\PDF
     {
         $insiden = $this->repository->getInsidenForPdf($id);
 
@@ -243,8 +243,12 @@ class LaporanService
             abort(404, 'Laporan insiden tidak ditemukan atau masih berstatus draf.');
         }
 
-        $pdf = Pdf::loadView('laporan.pdf', compact('insiden'))
-            ->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadView('laporan.pdf', compact('insiden', 'margin', 'scale'))
+            ->setPaper('a4', 'portrait')
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('defaultFont', 'Times New Roman')
+            ->setOption('dpi', 150)
+            ->setOption('isPhpEnabled', true);
 
         return $pdf;
     }

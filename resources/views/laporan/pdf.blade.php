@@ -1,664 +1,428 @@
-{{--
-|--------------------------------------------------------------------------
-| Cetak Laporan Insiden — PDF (laporan/pdf.blade.php)
-|--------------------------------------------------------------------------
-| Halaman PDF laporan insiden dengan kop surat resmi RSUD HM Ryacudu.
-<<<<<<< HEAD
-| Format disesuaikan dengan referensi dokumen resmi surat dinas
-=======
-| Format disesuaikan 100% dengan referensi dokumen resmi surat dinas
->>>>>>> feat_nakes/cetak-pdf
-| UPTD. RSUD HM. Ryacudu, Pemerintah Kabupaten Lampung Utara.
-|
-| Variabel dari service:
-|   $insiden — App\Models\Insiden (eager-loaded relations)
-|--------------------------------------------------------------------------
---}}
+@php
+    /*
+    |---------------------------------------------------------------
+    | Konfigurasi Cetak:
+    | margin → cm (top, right, bottom, left)
+    | scale  → persentase (100 = normal, 90 = lebih kecil, dsb.)
+    |
+    | Dikirim dari controller via compact('margin','scale').
+    | Margin dihitung simetris — konten selalu di tengah kertas.
+    |---------------------------------------------------------------
+    */
+    $mt = $margin['top']    ?? 2.5;
+    $mr = $margin['right']  ?? 2.5;
+    $mb = $margin['bottom'] ?? 2.5;
+    $ml = $margin['left']   ?? 2.5;
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Laporan Insiden — {{ $insiden->nomor_laporan }}</title>
+    <title>Laporan Insiden — {{ $insiden->nomor_laporan ?? 'Draft' }}</title>
     <style>
-<<<<<<< HEAD
-        /* ── Reset & Base ─────────────────────────────────────── */
-=======
-        /* ── Reset & Base ─────────────────────────────────────────── */
->>>>>>> feat_nakes/cetak-pdf
+        /* ── Margin: DOMPDF selalu menghormati padding elemen, bukan @page ── */
+        @page {
+            margin: 0;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        body {
+
+        html, body {
+            margin: 0;
+            padding: 0;
             font-family: 'Times New Roman', Times, serif;
             font-size: 12pt;
-            color: #000000;
-            line-height: 1.5;
-        }
-        .page-wrapper {
-            padding: 25px 50px 30px 50px;
+            color: #000;
+            line-height: 1.35;
         }
 
-<<<<<<< HEAD
-        /* ── KOP SURAT ────────────────────────────────────────── */
-        /* Layout 3-kolom: [logo kiri] | [teks tengah] | [logo kanan] */
-=======
-        /* ── KOP SURAT ────────────────────────────────────────────── */
-        /* Layout 3-kolom: [logo kiri] | [teks tengah] | [logo kanan]  */
->>>>>>> feat_nakes/cetak-pdf
-        .kop-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 0;
+        /* Wrapper dengan padding eksplisit — ini yang benar-benar berlaku di DOMPDF */
+        #content {
+            padding-top:    {{ $mt }}cm;
+            padding-right:  {{ $mr }}cm;
+            padding-bottom: {{ $mb }}cm;
+            padding-left:   {{ $ml }}cm;
         }
-        .kop-table td {
-            padding: 0;
+
+        table {
+            border-collapse: collapse;
+        }
+
+        /* ── Section Header ──────────────────────────────────────── */
+        .section-header {
+            font-size: 12pt;
+            font-weight: bold;
+            padding: 8px 0 3px 0;
+        }
+
+        /* ── Data Row — tanpa border ─────────────────────────────── */
+        .row-label {
+            font-size: 11pt;
+            vertical-align: top;
+            padding: 2px 0;
+        }
+
+        .row-colon {
+            font-size: 11pt;
+            vertical-align: top;
+            padding: 2px 4px;
+            width: 10px;
+            text-align: center;
+        }
+
+        .row-value {
+            font-size: 11pt;
+            vertical-align: top;
+            padding: 2px 0;
+        }
+
+        /* ── Checkbox (DejaVu Sans agar ☐/☑ render di DOMPDF) ──── */
+        .cb {
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 14pt;
+            line-height: 1;
             vertical-align: middle;
         }
-        .kop-col-logo {
-            width: 80px;
-            text-align: center;
-        }
-        .kop-col-logo img {
-            width: 72px;
-            height: 72px;
-            object-fit: contain;
-        }
-        .kop-col-tengah {
-            text-align: center;
-            padding: 0 8px;
-        }
-<<<<<<< HEAD
-        /* Baris 1: Pemerintah Kabupaten */
-=======
-        /* Baris 1: Pemerintah Kabupaten — normal, uppercase */
->>>>>>> feat_nakes/cetak-pdf
-        .kop-baris-pemkab {
-            font-size: 11pt;
-            font-weight: normal;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 1px;
-        }
-<<<<<<< HEAD
-        /* Baris 2: Dinas Kesehatan — letter-spaced */
-=======
-        /* Baris 2: Dinas Kesehatan — letter-spaced, normal weight */
->>>>>>> feat_nakes/cetak-pdf
-        .kop-baris-dinas {
-            font-size: 11pt;
-            font-weight: normal;
-            text-transform: uppercase;
-            letter-spacing: 8px;
-            margin-bottom: 1px;
-        }
-<<<<<<< HEAD
-        /* Baris 3: RSUD — identitas utama, terbesar & bold */
-=======
-        /* Baris 3: RSUD — PALING BESAR, BOLD, ini adalah identitas utama */
->>>>>>> feat_nakes/cetak-pdf
-        .kop-baris-rsud {
-            font-size: 15pt;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 2px 0;
-        }
-        /* Baris 4–6: Alamat & kontak */
-        .kop-baris-alamat {
-            font-size: 9.5pt;
-            font-weight: normal;
-            margin-top: 2px;
-            line-height: 1.4;
-        }
 
-<<<<<<< HEAD
-        /* ── GARIS PEMBATAS KOP (tebal + tipis) ──────────────── */
-=======
-        /* ── GARIS PEMBATAS KOP (double-line: tebal di atas, tipis di bawah) */
->>>>>>> feat_nakes/cetak-pdf
-        .garis-kop-wrapper {
-            margin-top: 6px;
-            margin-bottom: 14px;
+        /* ── Histori Tabel (tetap pakai border) ──────────────────── */
+        .tbl-bordered {
+            border: 1px solid #000;
         }
-        .garis-kop-tebal {
-            border: none;
-            border-top: 3px solid #000;
-            margin: 0;
-        }
-        .garis-kop-tipis {
-            border: none;
-            border-top: 1px solid #000;
-            margin: 3px 0 0 0;
-        }
-
-<<<<<<< HEAD
-        /* ── JUDUL LAPORAN ───────────────────────────────────── */
-=======
-        /* ── JUDUL LAPORAN ────────────────────────────────────────── */
->>>>>>> feat_nakes/cetak-pdf
-        .judul-wrapper {
-            text-align: center;
-            margin-bottom: 3px;
-        }
-        .judul-utama {
-            font-size: 13pt;
-            font-weight: bold;
-            text-transform: uppercase;
-            text-decoration: underline;
-            letter-spacing: 0.5px;
-        }
-        .judul-nomor {
-            text-align: center;
-            font-size: 11pt;
-            margin-bottom: 16px;
-        }
-
-<<<<<<< HEAD
-        /* ── SECTION HEADING ─────────────────────────────────── */
-=======
-        /* ── SECTION HEADING ─────────────────────────────────────── */
->>>>>>> feat_nakes/cetak-pdf
-        .section-title {
-            font-size: 11pt;
-            font-weight: bold;
-            background-color: #d9d9d9;
-            padding: 4px 8px;
-            margin-top: 14px;
-            margin-bottom: 0;
-            border: 1px solid #555;
-            border-bottom: none;
-        }
-
-<<<<<<< HEAD
-        /* ── TABEL DATA (label : value) ──────────────────────── */
-=======
-        /* ── TABEL DATA (field : value) ──────────────────────────── */
->>>>>>> feat_nakes/cetak-pdf
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .data-table td {
-            border: 1px solid #555;
-            padding: 4px 8px;
-            font-size: 11pt;
+        .tbl-bordered td,
+        .tbl-bordered th {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            font-size: 10pt;
             vertical-align: top;
         }
-        .data-table .label {
-            width: 195px;
+
+        .tbl-bordered th {
             font-weight: bold;
-            background-color: #f0f0f0;
-            white-space: nowrap;
-        }
-        .data-table .colon {
-            width: 14px;
-            font-weight: bold;
-            background-color: #f0f0f0;
-            text-align: center;
-            padding-left: 2px;
-            padding-right: 2px;
-        }
-        .data-table .value {
             background-color: #fff;
-        }
-
-<<<<<<< HEAD
-        /* ── TAG LIST (array fields) ─────────────────────────── */
-=======
-        /* ── TAG LIST (array fields) ──────────────────────────────── */
->>>>>>> feat_nakes/cetak-pdf
-        .tag-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-        .tag-list li {
-            display: inline-block;
-            background-color: #eeeeee;
-            border: 1px solid #aaaaaa;
-            padding: 1px 7px;
-            font-size: 10pt;
-            margin: 1px 2px 1px 0;
-        }
-
-<<<<<<< HEAD
-        /* ── TEKS PANJANG (kronologi, tindakan) ──────────────── */
-=======
-        /* ── TEKS PANJANG (kronologi, tindakan) ───────────────────── */
->>>>>>> feat_nakes/cetak-pdf
-        .teks-panjang {
-            white-space: pre-line;
-            line-height: 1.6;
-            text-align: justify;
-        }
-
-<<<<<<< HEAD
-        /* ── TABEL HISTORI TINDAK LANJUT ─────────────────────── */
-=======
-        /* ── TABEL HISTORI TINDAK LANJUT ──────────────────────────── */
->>>>>>> feat_nakes/cetak-pdf
-        .tl-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .tl-table th {
-            border: 1px solid #555;
-            padding: 4px 8px;
-            font-size: 10pt;
-            font-weight: bold;
-            background-color: #d9d9d9;
-            text-align: center;
-        }
-        .tl-table td {
-            border: 1px solid #555;
-            padding: 4px 8px;
-            font-size: 10.5pt;
-            vertical-align: top;
-        }
-        .tl-table td.center {
             text-align: center;
         }
 
-<<<<<<< HEAD
-        /* ── TANDA TANGAN ────────────────────────────────────── */
-=======
-        /* ── TANDA TANGAN ─────────────────────────────────────────── */
->>>>>>> feat_nakes/cetak-pdf
-        .ttd-wrapper {
-            margin-top: 30px;
-            width: 100%;
-        }
-        .ttd-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .ttd-table td {
-            width: 50%;
-            vertical-align: top;
-            font-size: 11pt;
-            padding: 0 10px;
-        }
-        .ttd-col-kiri {
-            text-align: left;
-        }
-        .ttd-col-kanan {
-            text-align: center;
-        }
-        .ttd-gap {
-            height: 65px;
-        }
-        .ttd-nama {
-            font-weight: bold;
-            text-decoration: underline;
-        }
-        .ttd-nip {
-            font-size: 10pt;
-        }
-
-<<<<<<< HEAD
-        /* ── FOOTER CETAK ────────────────────────────────────── */
-=======
-        /* ── FOOTER CETAK ─────────────────────────────────────────── */
->>>>>>> feat_nakes/cetak-pdf
-        .footer-cetak {
-            margin-top: 18px;
-            padding-top: 5px;
-            border-top: 1px solid #aaa;
-            font-size: 8.5pt;
-            color: #555;
-            text-align: right;
-        }
+        /* ── Helper ──────────────────────────────────────────────── */
+        .text-center { text-align: center; }
+        .text-right  { text-align: right; }
+        .text-justify { text-align: justify; }
     </style>
 </head>
 <body>
-    <div class="page-wrapper">
+<div id="content">
 
-        {{-- ================================================================
-             KOP SURAT RESMI
-<<<<<<< HEAD
-             Hierarki sesuai referensi dokumen resmi:
-=======
-             Hierarki (sesuai referensi dokumen):
->>>>>>> feat_nakes/cetak-pdf
-               1. PEMERINTAH KABUPATEN LAMPUNG UTARA  (normal, kecil)
-               2. D I N A S  K E S E H A T A N        (letter-spaced)
-               3. UPTD. RUMAH SAKIT UMUM DAERAH HM. RYACUDU  (bold, besar)
-               4. Alamat & kontak                      (kecil)
-             ================================================================ --}}
-        <table class="kop-table">
-            <tr>
-                {{-- Logo Kiri: Pemkab Lampung Utara --}}
-                <td class="kop-col-logo">
-                    <img src="{{ public_path('images/logo-pemkab.png') }}" alt="Logo Pemkab Lampung Utara">
-                </td>
+    {{-- ================================================================
+         KOP SURAT RESMI (3-Kolom Table — auto-centered)
+         ================================================================ --}}
+    <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td width="15%" style="text-align: center; vertical-align: middle;">
+                <img src="{{ public_path('images/logo-pemkab.png') }}"
+                     alt="Logo Pemkab"
+                     style="width: 100px; height: auto;">
+            </td>
+            <td width="70%" style="text-align: center; vertical-align: middle; padding: 0 6px;">
+                <div style="font-size: 12pt; text-transform: uppercase; letter-spacing: 0.5pt; line-height: 1.2;">
+                    PEMERINTAH KABUPATEN LAMPUNG UTARA
+                </div>
+                <div style="font-size: 12pt; text-transform: uppercase; letter-spacing: 0.5pt; line-height: 1.2;">
+                    DINAS KESEHATAN
+                </div>
+                <div style="font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5pt; line-height: 1.3;">
+                    UPTD. RUMAH SAKIT UMUM DAERAH HM. RYACUDU
+                </div>
+                <div style="font-size: 9pt; line-height: 1.3;">
+                    Jl. Jenderal Sudirman No.02 Telp/Fax. (0724) 22095 KOTABUMI-34511
+                </div>
+                <div style="font-size: 9pt; line-height: 1.3;">
+                    Email: rumahsakit_ryacudu@yahoo.com
+                </div>
+            </td>
+            <td width="15%" style="text-align: center; vertical-align: middle;">
+                <img src="{{ public_path('images/icon-rmh_sakit.jpg') }}"
+                     alt="Logo RSUD"
+                     style="width: 100px; height: auto;">
+            </td>
+        </tr>
+    </table>
 
-                {{-- Teks Kop Tengah --}}
-                <td class="kop-col-tengah">
-                    <div class="kop-baris-pemkab">Pemerintah Kabupaten Lampung Utara</div>
-                    <div class="kop-baris-dinas">Dinas Kesehatan</div>
-                    <div class="kop-baris-rsud">UPTD. Rumah Sakit Umum Daerah HM. Ryacudu</div>
-                    <div class="kop-baris-alamat">
-                        Jl. Jenderal Sudirman No.02 &nbsp;Telp/Fax. (0724) 22095<br>
-                        KOTABUMI &ndash; 34511<br>
-                        Email : rumahsakit_ryacudu@yahoo.com
-                    </div>
-                </td>
+    {{-- Garis pembatas kop (double-line) --}}
+    <div style="margin-top: 4px; border-bottom: 3px solid #000;"></div>
+    <div style="border-bottom: 1px solid #000; margin-top: 2px;"></div>
 
-                {{-- Logo Kanan: RSUD --}}
-                <td class="kop-col-logo">
-                    <img src="{{ public_path('images/logo-rsud.jpg') }}" alt="Logo RSUD HM Ryacudu">
-                </td>
-            </tr>
-        </table>
+    {{-- ================================================================
+         JUDUL DOKUMEN (center)
+         ================================================================ --}}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 12px;">
+        <tr>
+            <td class="text-center" style="padding-bottom: 2px;">
+                <span style="font-size: 13pt; font-weight: bold; text-transform: uppercase; text-decoration: underline; letter-spacing: 0.5pt;">
+                    LAPORAN INSIDEN KESALAHAN PENGOBATAN
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td class="text-center" style="font-size: 11pt; padding-bottom: 10px;">
+                Nomor: {{ $insiden->nomor_laporan ?? '....................' }}
+            </td>
+        </tr>
+    </table>
 
-<<<<<<< HEAD
-        {{-- Garis pembatas kop: garis tebal di atas + garis tipis di bawah --}}
-=======
-        {{-- Garis pembatas kop: satu garis tebal di atas, satu tipis di bawah --}}
->>>>>>> feat_nakes/cetak-pdf
-        <div class="garis-kop-wrapper">
-            <hr class="garis-kop-tebal">
-            <hr class="garis-kop-tipis">
-        </div>
+    {{-- ================================================================
+         I. DATA PASIEN
+         ================================================================ --}}
+    <div class="section-header">I. DATA PASIEN</div>
+    <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td width="170" class="row-label">Nama Pasien</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">{{ $insiden->detailPasien?->nama_pasien ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td class="row-label">No. Rekam Medis</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">{{ $insiden->detailPasien?->nomor_rekam_medis ?? '-' }}</td>
+        </tr>
+        <tr>
+            <td class="row-label">Ruangan</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">{{ $insiden->nama_unit_kerja ?? $insiden->unitKerja?->nama_unit ?? '-' }}</td>
+        </tr>
+    </table>
 
-        {{-- ================================================================
-             JUDUL LAPORAN
-             ================================================================ --}}
-        <div class="judul-wrapper">
-            <span class="judul-utama">Laporan Insiden Keselamatan Pasien</span>
-        </div>
-        <div class="judul-nomor">
-            Nomor : {{ $insiden->nomor_laporan }}
-        </div>
+    {{-- ================================================================
+         II. RINCIAN KEJADIAN
+         ================================================================ --}}
+    <div class="section-header" style="margin-top: 6px;">II. RINCIAN KEJADIAN</div>
+    <table width="100%" cellpadding="0" cellspacing="0">
+        {{-- 1. Tanggal & Waktu Kejadian --}}
+        <tr>
+            <td width="170" class="row-label">1. Tanggal &amp; Waktu Kejadian</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">
+                @if($insiden->tgl_kejadian)
+                    {{ $insiden->tgl_kejadian->translatedFormat('d F Y / H:i') }} WIB
+                @else
+                    -
+                @endif
+            </td>
+        </tr>
 
-        {{-- ================================================================
-             BAGIAN A — INFORMASI PELAPOR
-             ================================================================ --}}
-        <div class="section-title">A. &nbsp;Informasi Pelapor</div>
-        <table class="data-table">
-            @if ($insiden->is_anonim)
-                <tr>
-                    <td class="label">Status Pelapor</td>
-                    <td class="colon">:</td>
-                    <td class="value"><em>Anonim (identitas dirahasiakan)</em></td>
-                </tr>
-            @else
-                <tr>
-                    <td class="label">Nama Pelapor</td>
-                    <td class="colon">:</td>
-                    <td class="value">{{ $insiden->nama_pelapor ?? $insiden->pelapor?->nama_lengkap ?? '—' }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Nomor Induk</td>
-                    <td class="colon">:</td>
-                    <td class="value">{{ $insiden->pelapor?->nomor_induk ?? '—' }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Kontak Pelapor</td>
-                    <td class="colon">:</td>
-                    <td class="value">{{ $insiden->kontak_pelapor ?? '—' }}</td>
-                </tr>
-            @endif
-            <tr>
-                <td class="label">Unit Kerja</td>
-                <td class="colon">:</td>
-                <td class="value">{{ $insiden->nama_unit_kerja ?? $insiden->unitKerja?->nama_unit ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td class="label">Tanggal Lapor</td>
-                <td class="colon">:</td>
-                <td class="value">{{ $insiden->tgl_lapor?->translatedFormat('d F Y') ?? '—' }}</td>
-            </tr>
-        </table>
-
-        {{-- ================================================================
-             BAGIAN B — DATA PASIEN
-             ================================================================ --}}
-        <div class="section-title">B. &nbsp;Data Pasien</div>
-        <table class="data-table">
-            <tr>
-                <td class="label">Nama Pasien</td>
-                <td class="colon">:</td>
-                <td class="value">{{ $insiden->detailPasien?->nama_pasien ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td class="label">No. Rekam Medis</td>
-                <td class="colon">:</td>
-                <td class="value">{{ $insiden->detailPasien?->nomor_rekam_medis ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td class="label">Obat Terkait</td>
-                <td class="colon">:</td>
-                <td class="value">{{ $insiden->detailPasien?->obat_terkait ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td class="label">Dokter Penulis Resep</td>
-                <td class="colon">:</td>
-                <td class="value">{{ $insiden->detailPasien?->dokter_penulis_resep ?? '—' }}</td>
-            </tr>
-        </table>
-
-        {{-- ================================================================
-             BAGIAN C — RINCIAN KEJADIAN
-             ================================================================ --}}
-        <div class="section-title">C. &nbsp;Rincian Kejadian</div>
-        <table class="data-table">
-            <tr>
-                <td class="label">Tanggal Kejadian</td>
-                <td class="colon">:</td>
-                <td class="value">{{ $insiden->tgl_kejadian?->translatedFormat('d F Y') ?? '—' }}</td>
-            </tr>
-            <tr>
-                <td class="label">Waktu Kejadian</td>
-                <td class="colon">:</td>
-                <td class="value">{{ $insiden->tgl_kejadian?->format('H:i') ?? '—' }} WIB</td>
-            </tr>
-            <tr>
-                <td class="label">Fase / Jenis Kesalahan</td>
-                <td class="colon">:</td>
-<<<<<<< HEAD
-                <td class="value">{{ Str::headline(str_replace('_', ' ', $insiden->fase_kesalahan ?? '')) ?: '—' }}</td>
-=======
-                <td class="value">{{ $insiden->fase_kesalahan ?? '—' }}</td>
->>>>>>> feat_nakes/cetak-pdf
-            </tr>
-            <tr>
-                <td class="label">Tipe Insiden</td>
-                <td class="colon">:</td>
-                <td class="value">{{ $insiden->labelTipeInsiden() }}</td>
-            </tr>
-            <tr>
-                <td class="label">Status Laporan</td>
-                <td class="colon">:</td>
-                <td class="value">{{ $insiden->labelStatus() }}</td>
-            </tr>
-        </table>
-
-        {{-- ================================================================
-             BAGIAN D — KLASIFIKASI INSIDEN
-             ================================================================ --}}
-        @if ($insiden->detailPasien)
-            <div class="section-title">D. &nbsp;Klasifikasi Insiden</div>
-            <table class="data-table">
-                @if ($insiden->detailPasien->jenis_kesalahan)
+        {{-- 2. Jenis Insiden --}}
+        <tr>
+            <td width="170" class="row-label">2. Jenis Insiden</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">
+                @php $tipe = $insiden->tipe_insiden; @endphp
+                <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
-                        <td class="label">Jenis Kesalahan</td>
-                        <td class="colon">:</td>
-                        <td class="value">
-                            <ul class="tag-list">
-                                @foreach ((array) $insiden->detailPasien->jenis_kesalahan as $item)
-<<<<<<< HEAD
-                                    <li>{{ Str::headline(str_replace('_', ' ', $item)) }}</li>
-=======
-                                    <li>{{ $item }}</li>
->>>>>>> feat_nakes/cetak-pdf
-                                @endforeach
-                            </ul>
+                        <td width="50%" style="font-size: 11pt; padding: 1px 0;">
+                            <span class="cb">{!! $tipe === 'KPC' ? '&#9745;' : '&#9744;' !!}</span> Kondisi Potensial Cedera (KPC)
+                        </td>
+                        <td width="50%" style="font-size: 11pt; padding: 1px 0;">
+                            <span class="cb">{!! $tipe === 'KTC' ? '&#9745;' : '&#9744;' !!}</span> Kejadian Tidak Cedera (KTC)
                         </td>
                     </tr>
-                @endif
-                @if ($insiden->detailPasien->cedera)
                     <tr>
-                        <td class="label">Cedera yang Terjadi</td>
-                        <td class="colon">:</td>
-                        <td class="value">
-                            <ul class="tag-list">
-                                @foreach ((array) $insiden->detailPasien->cedera as $item)
-<<<<<<< HEAD
-                                    <li>{{ Str::headline(str_replace('_', ' ', $item)) }}</li>
-=======
-                                    <li>{{ $item }}</li>
->>>>>>> feat_nakes/cetak-pdf
-                                @endforeach
-                            </ul>
+                        <td style="font-size: 11pt; padding: 1px 0;">
+                            <span class="cb">{!! $tipe === 'KNC' ? '&#9745;' : '&#9744;' !!}</span> Kejadian Nyaris Cedera (KNC)
+                        </td>
+                        <td style="font-size: 11pt; padding: 1px 0;">
+                            <span class="cb">{!! $tipe === 'KTD' ? '&#9745;' : '&#9744;' !!}</span> Kejadian Tidak Diharapkan (KTD)
                         </td>
                     </tr>
-                @endif
-                @if ($insiden->detailPasien->faktor_penyebab)
                     <tr>
-                        <td class="label">Faktor Penyebab</td>
-                        <td class="colon">:</td>
-                        <td class="value">
-                            <ul class="tag-list">
-                                @foreach ((array) $insiden->detailPasien->faktor_penyebab as $item)
-<<<<<<< HEAD
-                                    <li>{{ Str::headline(str_replace('_', ' ', $item)) }}</li>
-=======
-                                    <li>{{ $item }}</li>
->>>>>>> feat_nakes/cetak-pdf
-                                @endforeach
-                            </ul>
+                        <td colspan="2" style="font-size: 11pt; padding: 1px 0;">
+                            <span class="cb">{!! $tipe === 'SENTINEL' ? '&#9745;' : '&#9744;' !!}</span> Kejadian Sentinel
                         </td>
                     </tr>
-                @endif
-                @if ($insiden->detailPasien->intervensi_pasien)
+                </table>
+            </td>
+        </tr>
+
+        {{-- 3. Tahap Kesalahan Pengobatan --}}
+        <tr>
+            <td width="170" class="row-label">3. Tahap Kesalahan Pengobatan</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">
+                @php
+                    $fase = strtolower($insiden->fase_kesalahan ?? '');
+                @endphp
+                <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
-                        <td class="label">Intervensi pada Pasien</td>
-                        <td class="colon">:</td>
-                        <td class="value">
-                            <ul class="tag-list">
-                                @foreach ((array) $insiden->detailPasien->intervensi_pasien as $item)
-<<<<<<< HEAD
-                                    <li>{{ Str::headline(str_replace('_', ' ', $item)) }}</li>
-=======
-                                    <li>{{ $item }}</li>
->>>>>>> feat_nakes/cetak-pdf
-                                @endforeach
-                            </ul>
+                        <td style="font-size: 11pt; padding: 1px 0;">
+                            <span class="cb">{!! str_contains($fase, 'peresepan') || str_contains($fase, 'prescribing') ? '&#9745;' : '&#9744;' !!}</span>
+                            Tahap Peresepan (<i>Prescribing Error</i>)
                         </td>
                     </tr>
-                @endif
-            </table>
-        @endif
-
-        {{-- ================================================================
-             BAGIAN E — KRONOLOGI KEJADIAN
-             ================================================================ --}}
-        @if ($insiden->detailPasien?->kronologi)
-            <div class="section-title">E. &nbsp;Kronologi Kejadian</div>
-            <table class="data-table">
-                <tr>
-                    <td class="value teks-panjang">{{ $insiden->detailPasien->kronologi }}</td>
-                </tr>
-            </table>
-        @endif
-
-        {{-- ================================================================
-             BAGIAN F — TINDAKAN AWAL
-             ================================================================ --}}
-        @if ($insiden->detailPasien?->tindakan_awal)
-            <div class="section-title">F. &nbsp;Tindakan Awal yang Dilakukan</div>
-            <table class="data-table">
-                <tr>
-                    <td class="value teks-panjang">{{ $insiden->detailPasien->tindakan_awal }}</td>
-                </tr>
-            </table>
-        @endif
-
-        {{-- ================================================================
-             BAGIAN G — HISTORI TINDAK LANJUT
-             ================================================================ --}}
-        @if ($insiden->tindakLanjut->isNotEmpty())
-            <div class="section-title">G. &nbsp;Histori Tindak Lanjut</div>
-            <table class="tl-table">
-                <thead>
                     <tr>
-                        <th style="width: 28px;">No.</th>
-                        <th style="width: 115px;">Tanggal</th>
-                        <th style="width: 110px;">Status Baru</th>
-                        <th style="width: 130px;">Petugas</th>
-                        <th>Catatan Tindak Lanjut</th>
+                        <td style="font-size: 11pt; padding: 1px 0;">
+                            <span class="cb">{!! str_contains($fase, 'penerjemahan') || str_contains($fase, 'transcribing') ? '&#9745;' : '&#9744;' !!}</span>
+                            Tahap Penerjemahan Resep (<i>Transcribing Error</i>)
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach ($insiden->tindakLanjut->sortBy('created_at')->values() as $idx => $tl)
-                        <tr>
-                            <td class="center">{{ $idx + 1 }}.</td>
-                            <td class="center">{{ $tl->created_at?->translatedFormat('d M Y, H:i') }}</td>
-                            <td class="center">{{ $tl->labelStatus() }}</td>
-                            <td>{{ $tl->pengguna?->nama_lengkap ?? '—' }}</td>
-                            <td>{{ $tl->catatan }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    <tr>
+                        <td style="font-size: 11pt; padding: 1px 0;">
+                            <span class="cb">{!! str_contains($fase, 'menyiapkan') || str_contains($fase, 'dispensing') || str_contains($fase, 'penyiapan') || str_contains($fase, 'peracikan') ? '&#9745;' : '&#9744;' !!}</span>
+                            Tahap Menyiapkan/Peracikan Obat (<i>Dispensing Error</i>)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-size: 11pt; padding: 1px 0;">
+                            <span class="cb">{!! str_contains($fase, 'penyerahan') || str_contains($fase, 'administration') || str_contains($fase, 'pemberian') ? '&#9745;' : '&#9744;' !!}</span>
+                            Tahap Penyerahan Obat kepada Pasien (<i>Administration Error</i>)
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+
+        {{-- 4. Status Laporan --}}
+        <tr>
+            <td width="170" class="row-label">4. Status Laporan</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">{{ $insiden->labelStatus() }}</td>
+        </tr>
+    </table>
+
+    {{-- ================================================================
+         III. KLASIFIKASI INSIDEN
+         ================================================================ --}}
+    <div class="section-header" style="margin-top: 6px;">III. KLASIFIKASI INSIDEN</div>
+    <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+            <td width="170" class="row-label">1. Jenis Kesalahan</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">
+                @if(!empty($insiden->detailPasien?->jenis_kesalahan))
+                    {{ implode(', ', (array) $insiden->detailPasien->jenis_kesalahan) }}
+                @else
+                    -
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="row-label">2. Cedera yang Terjadi</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">
+                @if(!empty($insiden->detailPasien?->cedera))
+                    {{ implode(', ', (array) $insiden->detailPasien->cedera) }}
+                @else
+                    -
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="row-label">3. Faktor Penyebab</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">
+                @if(!empty($insiden->detailPasien?->faktor_penyebab))
+                    {{ implode(', ', (array) $insiden->detailPasien->faktor_penyebab) }}
+                @else
+                    -
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="row-label">4. Intervensi pada Pasien</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">
+                @if(!empty($insiden->detailPasien?->intervensi_pasien))
+                    {{ implode(', ', (array) $insiden->detailPasien->intervensi_pasien) }}
+                @else
+                    -
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td class="row-label">5. Nama Obat Terkait</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">{{ $insiden->detailPasien?->obat_terkait ?? '-' }}</td>
+        </tr>
+    </table>
+
+    {{-- ================================================================
+         IV. KRONOLOGI KEJADIAN
+         ================================================================ --}}
+    <div class="section-header" style="margin-top: 6px;">IV. KRONOLOGI KEJADIAN</div>
+    <p style="font-size: 11pt; text-align: justify; line-height: 1.45; margin-top: 2px;">
+        @if($insiden->detailPasien?->kronologi)
+            {!! nl2br(e($insiden->detailPasien->kronologi)) !!}
+        @else
+            -
         @endif
+    </p>
 
-        {{-- ================================================================
-             TANDA TANGAN
-             Format mengikuti referensi: kiri = pelapor, kanan = tgl + pejabat
-             ================================================================ --}}
-        <div class="ttd-wrapper">
-            <table class="ttd-table">
-                <tr>
-                    <td class="ttd-col-kiri">
-                        Pelapor,
-                    </td>
-                    <td class="ttd-col-kanan">
-                        Kotabumi, {{ $insiden->tgl_lapor?->translatedFormat('d F Y') ?? now()->translatedFormat('d F Y') }}<br>
-                        Kepala Ruangan,
-                    </td>
-                </tr>
-                <tr>
-                    <td class="ttd-col-kiri">
-                        <div class="ttd-gap"></div>
-                    </td>
-                    <td class="ttd-col-kanan">
-                        <div class="ttd-gap"></div>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="ttd-col-kiri">
-                        <span class="ttd-nama">
-                            @if ($insiden->is_anonim)
-                                ( Anonim )
-                            @else
-                                {{ $insiden->nama_pelapor ?? $insiden->pelapor?->nama_lengkap ?? '..................................' }}
-                            @endif
-                        </span>
-                        @if (! $insiden->is_anonim && $insiden->pelapor?->nomor_induk)
-                            <div class="ttd-nip">NIP {{ $insiden->pelapor->nomor_induk }}</div>
-                        @endif
-                    </td>
-                    <td class="ttd-col-kanan">
-                        <span class="ttd-nama">..................................</span>
-                        <div class="ttd-nip">NIP ..........................</div>
-                    </td>
-                </tr>
-            </table>
-        </div>
+    {{-- ================================================================
+         V. TINDAKAN AWAL YANG DILAKUKAN
+         ================================================================ --}}
+    @if($insiden->detailPasien?->tindakan_awal)
+    <div class="section-header" style="margin-top: 6px;">V. TINDAKAN AWAL YANG DILAKUKAN</div>
+    <p style="font-size: 11pt; text-align: justify; line-height: 1.45; margin-top: 2px;">
+        {!! nl2br(e($insiden->detailPasien->tindakan_awal)) !!}
+    </p>
+    @endif
 
-        {{-- ================================================================
-             FOOTER CETAK
-             ================================================================ --}}
-        <div class="footer-cetak">
-            Dicetak pada {{ now()->translatedFormat('d F Y, H:i:s') }} WIB &nbsp;&bull;&nbsp;
-            Sistem Pelaporan Insiden Keselamatan Pasien &mdash; UPTD. RSUD HM. Ryacudu
-        </div>
+    {{-- ================================================================
+         VI. HISTORI TINDAK LANJUT (jika ada)
+         ================================================================ --}}
+    @if($insiden->tindakLanjut->isNotEmpty())
+    <div class="section-header" style="margin-top: 6px;">VI. HISTORI TINDAK LANJUT</div>
+    <table width="100%" cellpadding="0" cellspacing="0" class="tbl-bordered" style="margin-top: 4px;">
+        <thead>
+            <tr>
+                <th style="width: 26px;">No.</th>
+                <th style="width: 105px;">Tanggal</th>
+                <th style="width: 95px;">Status Baru</th>
+                <th style="width: 110px;">Petugas</th>
+                <th>Catatan</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($insiden->tindakLanjut->sortBy('created_at')->values() as $idx => $tl)
+            <tr>
+                <td class="text-center">{{ $idx + 1 }}.</td>
+                <td class="text-center">{{ $tl->created_at?->translatedFormat('d M Y, H:i') }}</td>
+                <td class="text-center">{{ $tl->labelStatus() }}</td>
+                <td>{{ $tl->pengguna?->nama_lengkap ?? '-' }}</td>
+                <td>{{ $tl->catatan ?? '-' }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
 
-    </div>
+    {{-- ================================================================
+         FOOTER — TANDA TANGAN PELAPOR (rata kanan)
+         ================================================================ --}}
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
+        <tr>
+            <td width="55%">&nbsp;</td>
+            <td width="45%" class="text-center" style="font-size: 11pt;">
+                <div>Kotabumi, {{ $insiden->tgl_lapor?->translatedFormat('d F Y') ?? now()->translatedFormat('d F Y') }}</div>
+                <div style="margin-top: 3px;">Pelapor,</div>
+
+                <br><br><br>
+
+                <div style="font-weight: bold; text-decoration: underline;">
+                    @if($insiden->is_anonim)
+                        ( Anonim )
+                    @else
+                        ( {{ $insiden->nama_pelapor ?? $insiden->pelapor?->nama_lengkap ?? '............................' }} )
+                    @endif
+                </div>
+                @if(!$insiden->is_anonim && $insiden->pelapor?->nomor_induk)
+                    <div style="font-size: 10pt;">NIP. {{ $insiden->pelapor->nomor_induk }}</div>
+                @endif
+            </td>
+        </tr>
+    </table>
+
+</div>{{-- /#content --}}
 </body>
 </html>
