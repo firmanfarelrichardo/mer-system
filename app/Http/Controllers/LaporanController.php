@@ -385,9 +385,20 @@ class LaporanController extends Controller
      *
      * Hanya dapat diakses untuk laporan yang bukan DRAF.
      */
-    public function cetakPdf(string $laporan): Response
+    public function cetakPdf(Request $request, string $laporan): Response
     {
-        $pdf = $this->laporanService->generatePdfReport((int) $laporan);
+        $margin = [
+            'top'    => (float) $request->query('mt', 0.5),
+            'right'  => (float) $request->query('mr', 1.0),
+            'bottom' => (float) $request->query('mb', 0.5),
+            'left'   => (float) $request->query('ml', 1.0),
+        ];
+
+        // Skala cetak (%) — opsional via query string: ?s=90  (default 100)
+        $scale = (int) $request->query('s', 100);
+        $scale = max(50, min(150, $scale)); // clamp 50–150 %
+
+        $pdf = $this->laporanService->generatePdfReport((int) $laporan, $margin, $scale);
 
         $insiden = $this->insidenRepository->getInsidenForPdf((int) $laporan);
 
