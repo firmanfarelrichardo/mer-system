@@ -28,7 +28,7 @@
          ================================================================ --}}
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-slate-800">Riwayat Laporan</h1>
-        <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Insiden Obat</p>
+        <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Insiden Kesalahan Pengobatan</p>
     </div>
 
     {{-- Flash Messages --}}

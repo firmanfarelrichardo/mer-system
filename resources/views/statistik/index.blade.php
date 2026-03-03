@@ -45,7 +45,7 @@
     <div>
         <h1 class="text-2xl font-bold text-slate-800">Statistik & Analisis</h1>
         <p class="mt-0.5 text-sm text-slate-400">
-            {{ $pengguna->tenant?->nama ?? 'Sistem Pelaporan Insiden Obat' }}
+            {{ $pengguna->tenant?->nama ?? 'Sistem Pelaporan Insiden Kesalahan Pengobatan' }}
             @if (!$bisaLihatSemua)
                 &nbsp;·&nbsp;Unit: <span class="font-medium text-slate-600">{{ $pengguna->unitKerja?->nama_unit ?? '—' }}</span>
             @endif
