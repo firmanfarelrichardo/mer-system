@@ -41,6 +41,7 @@ class DetailPasien extends Model
         'nama_pasien',
         'nomor_rekam_medis',
         'obat_terkait',
+        'dosis_obat',
         'dokter_penulis_resep',
         'kronologi',
         'tindakan_awal',

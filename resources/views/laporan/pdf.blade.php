@@ -344,6 +344,11 @@
             <td class="row-colon">:</td>
             <td class="row-value">{{ $insiden->detailPasien?->obat_terkait ?? '-' }}</td>
         </tr>
+        <tr>
+            <td class="row-label">6. Dosis Obat</td>
+            <td class="row-colon">:</td>
+            <td class="row-value">{{ $insiden->detailPasien?->dosis_obat ?? '-' }}</td>
+        </tr>
     </table>
 
     {{-- ================================================================

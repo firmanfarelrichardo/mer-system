@@ -90,6 +90,7 @@ class SimpanLaporanRequest extends FormRequest
                 'intervensi_pasien.*' => ['string', 'max:100'],
                 'intervensi_pasien_lainnya' => ['nullable', 'string', 'max:255'],
                 'nama_obat'          => ['nullable', 'string', 'max:255'],
+                'dosis_obat'         => ['nullable', 'string', 'max:255'],
                 'kronologi_kejadian' => ['nullable', 'string', 'max:2000'],
                 'pernyataan_kronologi' => ['nullable'],
                 'konfirmasi_kirim'   => ['nullable'],
@@ -126,6 +127,7 @@ class SimpanLaporanRequest extends FormRequest
             'intervensi_pasien.*'      => ['string', 'max:100'],
             'intervensi_pasien_lainnya' => ['nullable', 'string', 'max:255'],
             'nama_obat'               => ['required', 'string', 'max:255'],
+            'dosis_obat'              => ['nullable', 'string', 'max:255'],
 
             // ── Tahap 3: Kronologi ──
             'kronologi_kejadian'    => ['required', 'string', 'max:2000'],

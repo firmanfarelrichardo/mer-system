@@ -429,6 +429,21 @@
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
+
+                {{-- 7. Dosis Obat --}}
+                <div>
+                    <label for="dosis_obat" class="mb-1 block text-xs font-medium text-slate-500">
+                        Dosis Obat
+                    </label>
+                    <input type="text" name="dosis_obat" id="dosis_obat"
+                           placeholder="Contoh: 500mg, 2x sehari"
+                           value="{{ old('dosis_obat') }}"
+                           class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
+                                  placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
+                    @error('dosis_obat')
+                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
         </div>
 
@@ -538,6 +553,8 @@
                             <dd id="ringkasan-fase_kesalahan" class="font-medium text-slate-700">—</dd>
                             <dt class="mt-1 text-slate-400">Obat Terlibat:</dt>
                             <dd id="ringkasan-nama_obat" class="font-medium text-slate-700">—</dd>
+                            <dt class="mt-1 text-slate-400">Dosis Obat:</dt>
+                            <dd id="ringkasan-dosis_obat" class="font-medium text-slate-700">—</dd>
                         </dl>
                     </div>
                 </div>
@@ -802,6 +819,7 @@
                 setText('ringkasan-faktor_penyebab',   kumpulkanCheckbox('faktor_penyebab[]'));
                 setText('ringkasan-intervensi_pasien',  kumpulkanCheckbox('intervensi_pasien[]'));
                 setText('ringkasan-nama_obat',          nilaiInput('nama_obat'));
+                setText('ringkasan-dosis_obat',         nilaiInput('dosis_obat'));
 
                 const faseVal = nilaiRadio('fase_kesalahan');
                 setText('ringkasan-fase_kesalahan', faseVal ? (labelFaseKesalahan[faseVal] || faseVal) : '—');

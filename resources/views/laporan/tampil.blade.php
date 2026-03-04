@@ -153,6 +153,10 @@
                         <p class="text-xs font-medium text-slate-400">Obat Terkait</p>
                         <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->detailPasien->obat_terkait ?? '—' }}</p>
                     </div>
+                    <div>
+                        <p class="text-xs font-medium text-slate-400">Dosis Obat</p>
+                        <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->detailPasien->dosis_obat ?? '—' }}</p>
+                    </div>
                 </div>
             </div>
         @endif
