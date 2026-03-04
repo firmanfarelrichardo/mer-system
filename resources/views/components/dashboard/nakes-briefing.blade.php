@@ -93,7 +93,7 @@
             'Setiap laporan insiden yang Anda kirim membantu membangun budaya keselamatan pasien di rumah sakit ini.',
             'Kesalahan adalah manusiawi, tetapi menyembunyikannya adalah pilihan. Terima kasih sudah berani melapor.',
             'Satu laporan kecil hari ini bisa mencegah satu insiden besar di masa depan.',
-            'Pelaporan insiden adalah bentuk kepedulian tertinggi seorang tenaga kesehatan terhadap keselamatan pasien.',
+            'Pelaporan insiden adalah bentuk kepedulian tertinggi seorang tenaga medis/tenaga kesehatan terhadap keselamatan pasien.',
             'Budaya keselamatan dimulai dari transparansi. Anda adalah bagian penting dari perubahan ini.',
             'Setiap laporan yang Anda buat adalah investasi untuk sistem kesehatan yang lebih aman.',
         ];

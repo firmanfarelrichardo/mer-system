@@ -23,7 +23,7 @@
     // Ambil nama unit kerja jika ada relasi, fallback ke strip
     $namaUnit = $pengguna->unitKerja?->nama_unit ?? null;
 
-    // Gabungkan peran + unit untuk tampilan ringkas, mis. "Tenaga Kesehatan - ICU"
+    // Gabungkan peran + unit untuk tampilan ringkas, mis. "Tenaga Medis/Tenaga Kesehatan - ICU"
     $labelPeran = $namaUnit ? "{$peranUtama} - {$namaUnit}" : $peranUtama;
 
     // Inisial untuk avatar lingkaran (ambil huruf pertama tiap kata, maks 2)

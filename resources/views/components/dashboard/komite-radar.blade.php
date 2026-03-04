@@ -97,7 +97,7 @@
     </div>
 
     {{-- ================================================================
-         BOTTLENECK DETECTOR — unit dengan kasus_baru terbanyak
+         UNIT PENUMPUKAN — unit dengan kasus_baru terbanyak
          ================================================================ --}}
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="mb-4 flex items-center gap-2">
@@ -106,7 +106,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
             </div>
-            <p class="text-sm font-semibold text-slate-700">Bottleneck — Unit Menunggu Paling Lama</p>
+            <p class="text-sm font-semibold text-slate-700">Unit dengan Laporan Paling Lama Menunggu</p>
         </div>
 
         @forelse ($data['bottleneck'] as $unit)
@@ -126,7 +126,7 @@
                 </span>
             </div>
         @empty
-            <p class="text-sm text-slate-400">Semua unit sudah merespons. Tidak ada bottleneck.</p>
+            <p class="text-sm text-slate-400">Semua unit sudah merespons. Tidak ada laporan yang tertunda.</p>
         @endforelse
     </div>
 
