@@ -71,12 +71,6 @@
         </div>
     </div>
 
-    {{-- Flash Messages --}}
-    @if (session('sukses'))
-        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-            {{ session('sukses') }}
-        </div>
-    @endif
     @if ($errors->any())
         <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
             <ul class="list-inside list-disc space-y-1">
@@ -317,7 +311,8 @@
                     Feedback Laporan 
                 </h2>
 
-                <form method="POST" action="{{ route('laporan.tindak-lanjut', $insiden->id) }}">
+                <form method="POST" action="{{ route('laporan.tindak-lanjut', $insiden->id) }}"
+                      data-confirm="Apakah Anda yakin ingin menyimpan tindak lanjut ini?">
                     @csrf
                     @method('PATCH')
 
@@ -362,8 +357,7 @@
                     {{-- Submit --}}
                     <button type="submit"
                             class="inline-flex items-center gap-2 rounded-lg bg-brand px-5 py-2.5 text-sm
-                                   font-medium text-white shadow-sm transition-colors hover:bg-brand-hover"
-                            onclick="return confirm('Apakah Anda yakin ingin menyimpan tindak lanjut ini?')">
+                                   font-medium text-white shadow-sm transition-colors hover:bg-brand-hover">
                         <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                              viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"

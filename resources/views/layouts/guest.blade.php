@@ -20,7 +20,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Sistem Pelaporan Insiden Medication Errors')</title>
+    <title>@yield('title', 'Sistem Pelaporan Medication Errors')</title>
 
     {{-- SEO: cegah indexing --}}
     <meta name="robots" content="noindex, nofollow">
@@ -71,7 +71,7 @@
                         class="mx-auto mb-4 h-24 w-auto rounded-xl shadow-lg ring-2 ring-white/25"
                     >
                     <h1 class="text-[17px] font-bold leading-tight text-white">
-                        Sistem Pelaporan Insiden Kesalahan Pengobatan
+                        Sistem Pelaporan Kesalahan Pengobatan
                     </h1>
                     <p class="mt-1 text-[13px] text-primary-200">
                         Medication Errors Report

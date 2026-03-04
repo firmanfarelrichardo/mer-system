@@ -49,8 +49,8 @@
          HEADER HALAMAN
          ================================================================ --}}
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-800">Formulir Pelaporan Insiden</h1>
-        <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Insiden Kesalahan Pengobatan</p>
+        <h1 class="text-2xl font-bold text-slate-800">Formulir Pelaporan Kesalahan Pengobatan</h1>
+        <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Kesalahan Pengobatan</p>
     </div>
 
     {{-- ================================================================
@@ -89,13 +89,6 @@
     {{-- ================================================================
          FORMULIR UTAMA
          ================================================================ --}}
-    {{-- Flash success/error messages --}}
-    @if (session('sukses'))
-        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-            {{ session('sukses') }}
-        </div>
-    @endif
-
     @if ($errors->any())
         <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4">
             <p class="mb-2 text-sm font-semibold text-red-700">Terdapat kesalahan pada formulir:</p>
@@ -329,7 +322,7 @@
                 <fieldset class="mb-6">
                     <legend class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">3</span>
-                        Injuries — Cedera yang Terjadi <span class="text-red-500">*</span>
+                        Injuries — Cedera yang Terjadi/Efek Kesalahan Pengobatan <span class="text-red-500">*</span>
                     </legend>
                     <p class="mb-3 text-xs text-slate-400">Pilih semua dampak cedera yang dialami pasien</p>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">

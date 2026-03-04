@@ -26,7 +26,7 @@
             Selamat datang, {{ $namaLengkap }} 👋
         </h1>
         <p class="mt-1 text-sm text-slate-400">
-            Panel Administrasi — Sistem Pelaporan Insiden Medication Errors
+            Administrasi - Sistem Pelaporan Kesalahan Pengobatan
         </p>
     </div>
 

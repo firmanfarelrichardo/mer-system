@@ -89,8 +89,14 @@
                         this.statusAutoSave = 'error';
                         this._sedangSimpan = false;
 
-                        alert('Sesi Anda telah berakhir. Halaman akan dimuat ulang untuk login kembali.');
-                        window.location.reload();
+                        window.dispatchEvent(new CustomEvent('toast', {
+                            detail: {
+                                type: 'warning',
+                                message: 'Sesi Anda telah berakhir. Halaman akan dimuat ulang untuk login kembali.',
+                                duration: 3000,
+                            },
+                        }));
+                        setTimeout(() => window.location.reload(), 3000);
                         return;
                     }
 

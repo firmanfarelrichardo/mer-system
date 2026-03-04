@@ -36,16 +36,6 @@
             ->implode('');
     @endphp
 
-    {{-- Flash sukses --}}
-    @if (session('sukses'))
-        <div class="mb-4 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-            </svg>
-            {{ session('sukses') }}
-        </div>
-    @endif
-
     {{-- ================================================================
          HEADER HALAMAN
          ================================================================ --}}
