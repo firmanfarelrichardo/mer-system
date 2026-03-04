@@ -73,7 +73,9 @@ class LaporanService
             $dataDetail = [
                 'nama_pasien'          => $dto->namaPasien,
                 'nomor_rekam_medis'    => $dto->nomorRekamMedis,
-                'obat_terkait'         => $dto->namaObat,                'dosis_obat'           => $dto->dosisObat,                'kronologi'            => $dto->kronologiKejadian,
+                'obat_terkait'         => $dto->namaObat,                
+                'dosis_obat'           => $dto->dosisObat,                
+                'kronologi'            => $dto->kronologiKejadian,
                 'jenis_kesalahan'      => $dto->jenisKesalahanGabungan() ?: null,
                 'cedera'               => $dto->cederaGabungan() ?: null,
                 'faktor_penyebab'      => $dto->faktorPenyebabGabungan() ?: null,
