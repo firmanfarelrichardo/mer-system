@@ -143,6 +143,35 @@ class Pengguna extends Authenticatable
         return $this->peran->map(fn (Peran $p) => $p->nama_display)->all();
     }
 
+    /**
+     * Label ringkas untuk histori tindak lanjut (Karu / Komite).
+     * Format: "[Peran] [NamaUnit]"
+     * Contoh: "Kepala Ruangan ICU", "Komite"
+     *
+     * Nama pemilik akun sengaja tidak ditampilkan untuk menjaga
+     * netralitas posisi jabatan dalam alur tindak lanjut.
+     */
+    public function labelPeranDanUnit(): string
+    {
+        $peran = $this->daftarPeran()[0] ?? null;
+        $unit  = $this->unitKerja?->nama_unit;
+
+        return collect([$peran, $unit])->filter()->implode(' ') ?: '—';
+    }
+
+    /**
+     * Label untuk entri unggah laporan (Nakes).
+     * Format: "[Jabatan] - [NamaLengkap]"
+     * Contoh: "Perawat - Budi Santoso"
+     */
+    public function labelPelapor(): string
+    {
+        $jabatan = $this->jabatan ?? null;
+        $nama    = $this->nama_lengkap ?? '—';
+
+        return $jabatan ? "{$jabatan} - {$nama}" : $nama;
+    }
+
     /* ------------------------------------------------------------------
      | Override Notifiable: Custom Notification Table
      | -----------------------------------------------------------------

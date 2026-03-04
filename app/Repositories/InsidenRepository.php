@@ -164,6 +164,7 @@ class InsidenRepository
                 'pelapor',
                 'unitKerja',
                 'tindakLanjut.pengguna.peran',
+                'tindakLanjut.pengguna.unitKerja',
             ])
             ->where('status_saat_ini', '!=', 'DRAF')
             ->find($id);

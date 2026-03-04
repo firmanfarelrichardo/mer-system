@@ -268,40 +268,56 @@
         {{-- ============================================================
              HISTORI TINDAK LANJUT (timeline)
              ============================================================ --}}
-        @if ($insiden->tindakLanjut->isNotEmpty())
-            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-slate-800">
-                    <svg class="h-5 w-5 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none"
-                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                    </svg>
-                    Histori Tindak Lanjut
-                </h2>
+        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-slate-800">
+                <svg class="h-5 w-5 text-brand" xmlns="http://www.w3.org/2000/svg" fill="none"
+                     viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                          d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                Histori Tindak Lanjut
+            </h2>
 
-                <div class="relative ml-3 border-l-2 border-slate-200 pl-6">
-                    @foreach ($insiden->tindakLanjut->sortByDesc('created_at') as $tl)
-                        <div class="relative mb-6 last:mb-0">
-                            {{-- Dot on timeline --}}
-                            <div class="absolute -left-[1.9rem] top-1 h-3 w-3 rounded-full border-2 border-white {{ $tl->warnaStatus() ? 'bg-brand' : 'bg-slate-300' }}"></div>
-
-                            <div class="rounded-lg border border-slate-100 bg-slate-50/60 p-4">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $tl->warnaStatus() }}">
-                                        {{ $tl->labelStatus() }}
-                                    </span>
-                                    <span class="text-xs text-slate-400">
-                                        oleh <span class="font-medium text-slate-600">{{ $tl->pengguna?->nama_lengkap ?? '—' }}</span>
-                                        &middot; {{ $tl->created_at?->translatedFormat('d M Y, H:i') }}
-                                    </span>
-                                </div>
-                                <p class="mt-2 text-sm leading-relaxed text-slate-700">{{ $tl->catatan }}</p>
+            <div class="relative ml-3 border-l-2 border-slate-200 pl-6">
+                {{-- Entri tindak lanjut (Karu / Komite), diurutkan terbaru di atas --}}
+                @foreach ($insiden->tindakLanjut->sortByDesc('created_at') as $tl)
+                    <div class="relative mb-6 last:mb-0">
+                        <div class="absolute -left-[1.9rem] top-1 h-3 w-3 rounded-full border-2 border-white {{ $tl->warnaStatus() ? 'bg-brand' : 'bg-slate-300' }}"></div>
+                        <div class="rounded-lg border border-slate-100 bg-slate-50/60 p-4">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $tl->warnaStatus() }}">
+                                    {{ $tl->labelStatus() }}
+                                </span>
+                                <span class="text-xs text-slate-400">
+                                    oleh <span class="font-medium text-slate-600">{{ $tl->pengguna?->labelPeranDanUnit() ?? '—' }}</span>
+                                    &middot; {{ $tl->created_at?->translatedFormat('d M Y, H:i') }}
+                                </span>
                             </div>
+                            <p class="mt-2 text-sm leading-relaxed text-slate-700">{{ $tl->catatan }}</p>
                         </div>
-                    @endforeach
+                    </div>
+                @endforeach
+
+                {{-- Entri paling bawah: unggah laporan oleh Nakes (selalu tampil) --}}
+                <div class="relative mb-0">
+                    <div class="absolute -left-[1.9rem] top-1 h-3 w-3 rounded-full border-2 border-white bg-slate-300"></div>
+                    <div class="rounded-lg border border-slate-100 bg-slate-50/60 p-4">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-600">
+                                Unggah Laporan
+                            </span>
+                            <span class="text-xs text-slate-400">
+                                oleh <span class="font-medium text-slate-600">
+                                    {{ $insiden->is_anonim ? 'Anonim' : ($insiden->pelapor?->labelPelapor() ?? '—') }}
+                                </span>
+                                &middot; {{ $insiden->created_at?->translatedFormat('d M Y, H:i') }}
+                            </span>
+                        </div>
+                        <p class="mt-2 text-sm leading-relaxed text-slate-700">Laporan insiden diunggah ke sistem.</p>
+                    </div>
                 </div>
             </div>
-        @endif
+        </div>
 
         {{-- ============================================================
              FORMULIR TINDAK LANJUT (Karu & Komite only)

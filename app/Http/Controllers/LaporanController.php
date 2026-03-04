@@ -285,9 +285,10 @@ class LaporanController extends Controller
                 'detailPasien',
                 'pelapor',
                 'unitKerja',
-                // Muat pengguna beserta perannya agar statusTerakhirOlehPeran()
+                // Muat pengguna beserta peran & unit kerjanya agar labelPeranDanUnit()
                 // dapat menggunakan collection tanpa query N+1.
                 'tindakLanjut.pengguna.peran',
+                'tindakLanjut.pengguna.unitKerja',
             ])
             ->untukPeran($pengguna)
             ->findOrFail($laporan);
