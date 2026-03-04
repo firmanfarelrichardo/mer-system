@@ -117,7 +117,7 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('idleTimer', () => ({
                 lastActivity  : Date.now(),
-                idleLimit     : 5 * 60 * 1000, // 300.000 ms = 5 menit
+                idleLimit     : 10 * 60 * 1000, // 600.000 ms = 5 menit
                 _lastThrottle : 0,
                 _intervalId   : null,
 
