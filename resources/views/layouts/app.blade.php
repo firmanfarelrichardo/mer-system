@@ -36,7 +36,15 @@
 </head>
 
 {{-- Latar belakang halaman: abu-abu sangat terang agar mata nyaman --}}
-<body class="h-full bg-slate-50 font-sans text-slate-700 antialiased">
+{{-- x-data="idleTimer()" : Komponen Alpine untuk auto-logout idle (5 menit tanpa aktivitas). --}}
+{{-- Event listener dipasang di sini agar menangkap aktivitas dari seluruh halaman.         --}}
+<body
+    x-data="idleTimer()"
+    @mousemove="updateActivity"
+    @keydown="updateActivity"
+    @scroll.window="updateActivity"
+    @click="updateActivity"
+    class="h-full bg-slate-50 font-sans text-slate-700 antialiased">
 
     {{-- Wrapper utama: sidebar + area konten --}}
     <div class="flex h-full min-h-screen">
@@ -69,81 +77,6 @@
         </div>
     </div>
 
-    {{-- ================================================================
-         Auto-Logout Countdown (SesiMaksimalMasuk — 10 menit)
-         Menampilkan peringatan 60 detik sebelum sesi habis dan
-         otomatis submit form logout saat waktu habis.
-         ================================================================ --}}
-    @auth
-    @php
-        $loginPada   = session(\App\Http\Middleware\SesiMaksimalMasuk::KUNCI_LOGIN_PADA, 0);
-        $durasiMaks  = \App\Http\Middleware\SesiMaksimalMasuk::durasiMaksDet();
-        $sisaDetik   = max(0, ($loginPada + $durasiMaks) - now()->timestamp);
-    @endphp
-
-    {{-- Form tersembunyi untuk auto-logout (tidak bergantung fetch/XHR) --}}
-    <form id="form-keluar-otomatis" method="POST" action="{{ route('logout') }}" class="hidden">
-        @csrf
-    </form>
-
-    {{-- Banner peringatan — tersembunyi sampai sisa ≤ 60 detik --}}
-    <div id="sesi-peringatan"
-         class="hidden fixed bottom-4 right-4 z-50 flex max-w-sm items-start gap-3
-                rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-lg">
-        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" xmlns="http://www.w3.org/2000/svg"
-             fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71
-                     c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898
-                     0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-        </svg>
-        <div>
-            <p class="text-sm font-semibold text-amber-800">Sesi hampir berakhir</p>
-            <p class="mt-0.5 text-xs text-amber-700">
-                Anda akan otomatis keluar dalam
-                <span id="sesi-waktu-sisa" class="font-bold"></span>.
-            </p>
-        </div>
-    </div>
-
-    <script>
-        (function () {
-            var sisaDetik   = {{ $sisaDetik }};
-            var peringatan  = document.getElementById('sesi-peringatan');
-            var waktuSisa   = document.getElementById('sesi-waktu-sisa');
-            var formKeluar  = document.getElementById('form-keluar-otomatis');
-
-            function formatDetik(dtk) {
-                var m = Math.floor(dtk / 60);
-                var s = dtk % 60;
-                return m > 0
-                    ? m + ' mnt ' + String(s).padStart(2, '0') + ' dtk'
-                    : s + ' detik';
-            }
-
-            function tick() {
-                if (sisaDetik <= 0) {
-                    formKeluar.submit();
-                    return;
-                }
-
-                if (sisaDetik <= 60) {
-                    peringatan.classList.remove('hidden');
-                    waktuSisa.textContent = formatDetik(sisaDetik);
-                }
-
-                sisaDetik--;
-            }
-
-            tick();
-            var timer = setInterval(function () {
-                tick();
-                if (sisaDetik < 0) clearInterval(timer);
-            }, 1000);
-        })();
-    </script>
-    @endauth
-
     {{-- Script toggle sidebar untuk mobile --}}
     <script>
         function toggleSidebar() {
@@ -162,6 +95,79 @@
             }
         }
     </script>
+
+    {{-- ================================================================
+         Auto-Logout on Idle (Alpine.js — 5 menit tanpa aktivitas)
+
+         ARSITEKTUR:
+           - updateActivity() hanya meng-update variabel lastActivity.
+             Throttle manual (500 ms) mencegah eksekusi ribuan kali/detik
+             akibat mousemove, sehingga 0% lag pada UI.
+           - checkIdle() berjalan via setInterval setiap 10 detik.
+             Metode ini jauh lebih efisien daripada mengevaluasi kondisi
+             pada setiap event aktivitas.
+           - Saat idle terdeteksi: POST /logout-idle (+ CSRF token) dikirim
+             via Fetch, lalu window.location.href diarahkan ke login.
+
+         ISOLASI: Script ini hanya ada di app.blade.php (layout
+         terautentikasi). guest.blade.php tidak terpengaruh.
+         ================================================================ --}}
+    @auth
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('idleTimer', () => ({
+                lastActivity  : Date.now(),
+                idleLimit     : 5 * 60 * 1000, // 300.000 ms = 5 menit
+                _lastThrottle : 0,
+                _intervalId   : null,
+
+                init() {
+                    // Pengecekan setiap 10 detik — jauh lebih hemat daripada setiap event.
+                    this._intervalId = setInterval(() => this.checkIdle(), 10_000);
+                },
+
+                destroy() {
+                    // Bersihkan interval saat komponen dihancurkan (SPA navigation, dll.)
+                    if (this._intervalId) clearInterval(this._intervalId);
+                },
+
+                updateActivity() {
+                    // Throttle manual: perbarui lastActivity maks. 1x per 500ms.
+                    // Mencegah eksekusi berat akibat event mousemove yang sangat sering.
+                    const now = Date.now();
+                    if (now - this._lastThrottle < 500) return;
+                    this._lastThrottle = now;
+                    this.lastActivity  = now;
+                },
+
+                checkIdle() {
+                    if ((Date.now() - this.lastActivity) < this.idleLimit) return;
+
+                    // Hentikan interval agar checkIdle tidak terpanggil dua kali.
+                    clearInterval(this._intervalId);
+
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+                    fetch('{{ route("logout.idle") }}', {
+                        method  : 'POST',
+                        headers : {
+                            'Content-Type' : 'application/json',
+                            'Accept'       : 'application/json',
+                            'X-CSRF-TOKEN' : csrfToken,
+                        },
+                    })
+                    .catch(() => {
+                        // Abaikan error jaringan — logout tetap dilakukan di sisi klien.
+                    })
+                    .finally(() => {
+                        // Paksa redirect ke halaman login tanpa menunggu respons server.
+                        window.location.href = '{{ route("login") }}';
+                    });
+                },
+            }));
+        });
+    </script>
+    @endauth
 
     {{-- Script yang di-push oleh halaman/komponen individual (mis. Chart.js) --}}
     @stack('scripts')

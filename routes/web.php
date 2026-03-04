@@ -48,10 +48,15 @@ Route::middleware('guest')->group(function (): void {
 // -----------------------------------------------------------------------
 // Rute Terautentikasi (harus sudah masuk)
 // -----------------------------------------------------------------------
-Route::middleware(['auth', 'sesi.maks'])->group(function (): void {
+Route::middleware(['auth'])->group(function (): void {
 
     Route::post('keluar', [AuthController::class, 'keluar'])
         ->name('logout');
+
+    // Logout khusus karena idle (tidak ada aktivitas) — dipanggil via Fetch dari Alpine.js.
+    // Dipisahkan dari POST /keluar agar audit log mencatat konteks yang berbeda.
+    Route::post('logout-idle', [AuthController::class, 'logoutIdle'])
+        ->name('logout.idle');
 
     // ----- Hub Dasbor -----
     // Route 'dashboard' wajib ada: digunakan oleh Laravel's RedirectIfAuthenticated
