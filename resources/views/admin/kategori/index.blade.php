@@ -75,25 +75,6 @@
     </div>
 
     {{-- ================================================================
-         NOTIFIKASI SUKSES
-         ================================================================ --}}
-    @if (session('sukses'))
-        <div class="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
-             x-data="{ tampil: true }" x-show="tampil" x-transition>
-            <svg class="h-5 w-5 shrink-0 text-green-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-            </svg>
-            <span>{{ session('sukses') }}</span>
-            <button @click="tampil = false" class="ml-auto text-green-400 hover:text-green-600">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-    @endif
-
-    {{-- ================================================================
          FILTER & PENCARIAN
          ================================================================ --}}
     <form method="GET" action="{{ route('admin.kategori.index') }}"
@@ -202,7 +183,9 @@
 
                                         {{-- Hapus --}}
                                         <form method="POST" action="{{ route('admin.kategori.hapus', $kategori->id) }}"
-                                              onsubmit="return confirm('Hapus kategori {{ $kategori->nama_kategori }}? Aksi ini tidak dapat dibatalkan.')">
+                                              data-confirm="Hapus kategori {{ $kategori->nama_kategori }}? Aksi ini tidak dapat dibatalkan."
+                                              data-confirm-destructive="true"
+                                              data-confirm-label="Hapus">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"

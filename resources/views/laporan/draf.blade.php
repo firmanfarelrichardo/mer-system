@@ -28,13 +28,6 @@
         <p class="mt-1 text-sm text-slate-400">Laporan yang belum selesai dan belum dikirim</p>
     </div>
 
-    {{-- Flash Messages --}}
-    @if (session('sukses'))
-        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-            {{ session('sukses') }}
-        </div>
-    @endif
-
     {{-- ================================================================
          PENCARIAN
          ================================================================ --}}

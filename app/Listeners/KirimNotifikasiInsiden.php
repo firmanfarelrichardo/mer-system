@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Notification;
  * State-based routing — menentukan SIAPA yang menerima notifikasi
  * berdasarkan status baru insiden:
  *
- *   kasus_baru     → Kepala Ruangan (unit kerja yang sama)
+ *   kasus_baru     → Kepala Ruangan (unit kerja yang sama) + Komite
  *   investigasi    → Komite (eskalasi high-risk)
  *   tindak_lanjut  → Pelapor (Nakes) — ada tindak lanjut untuk laporannya
  *   selesai        → Pelapor (Nakes) — laporannya telah selesai
@@ -53,31 +53,52 @@ class KirimNotifikasiInsiden
      | ----------------------------------------------------------------*/
 
     /**
-     * Kasus Baru: notifikasi ke Kepala Ruangan di unit kerja yang sama.
+     * Kasus Baru: notifikasi ke Kepala Ruangan di unit kerja yang sama
+     * dan ke semua anggota Komite di tenant yang sama.
      */
     private function notifikasiKasusBaru(
         \App\Models\Insiden $insiden,
         Pengguna $pelaku,
         int $tenantId,
     ): void {
-        $penerima = $this->penggunaPeran(Peran::KEPALA_RUANGAN, $tenantId)
-            ->when($insiden->unit_id, fn ($q) => $q->where('unit_id', $insiden->unit_id))
+        $nomor = $insiden->nomor_laporan;
+
+        // ── Kepala Ruangan (unit yang sama) ───────────────────────────
+        // unit_id pada insiden selalu null; gunakan nama_unit_kerja sebagai
+        // acuan pencocokan ke tabel unit_kerja milik pengguna.
+        // Jika Nakes tidak mengisi unit, tidak ada Karu yang diberitahu.
+        $penerima = filled($insiden->nama_unit_kerja)
+            ? $this->penggunaPeran(Peran::KEPALA_RUANGAN, $tenantId)
+                ->whereHas('unitKerja', fn ($q) => $q->where('nama_unit', $insiden->nama_unit_kerja))
+                ->where('id', '!=', $pelaku->id)
+                ->get()
+            : collect();
+
+        if ($penerima->isNotEmpty()) {
+            Notification::send($penerima, new InsidenNotifikasi(
+                insiden:   $insiden,
+                judul:     "Laporan baru {$nomor} diterima",
+                pesan:     "Laporan insiden baru ({$insiden->labelTipeInsiden()}) telah dilaporkan di unit kerja Anda oleh {$pelaku->nama_lengkap}. Silakan tinjau dan lakukan verifikasi.",
+                tipe:      'laporan',
+                ikonWarna: 'bg-brand/10 text-brand',
+            ));
+        }
+
+        // ── Komite (semua anggota aktif di tenant) ────────────────────
+        $komite = $this->penggunaPeran(Peran::KOMITE, $tenantId)
             ->where('id', '!=', $pelaku->id)
             ->get();
 
-        if ($penerima->isEmpty()) {
-            return;
+        if ($komite->isNotEmpty()) {
+            $namaUnit = $insiden->nama_unit_kerja ?? '—';
+            Notification::send($komite, new InsidenNotifikasi(
+                insiden:   $insiden,
+                judul:     "Laporan baru masuk — {$nomor}",
+                pesan:     "Laporan insiden {$nomor} ({$insiden->labelTipeInsiden()}) dari unit {$namaUnit} telah masuk dan sedang menunggu verifikasi.",
+                tipe:      'laporan',
+                ikonWarna: 'bg-brand/10 text-brand',
+            ));
         }
-
-        $nomor = $insiden->nomor_laporan;
-
-        Notification::send($penerima, new InsidenNotifikasi(
-            insiden:   $insiden,
-            judul:     "Laporan baru {$nomor} diterima",
-            pesan:     "Laporan insiden baru ({$insiden->labelTipeInsiden()}) telah dilaporkan di unit kerja Anda oleh {$pelaku->nama_lengkap}. Silakan tinjau dan lakukan verifikasi.",
-            tipe:      'laporan',
-            ikonWarna: 'bg-brand/10 text-brand',
-        ));
     }
 
     /**
@@ -178,10 +199,12 @@ class KirimNotifikasiInsiden
         }
 
         // Juga beritahu Kepala Ruangan unit terkait.
-        $karu = $this->penggunaPeran(Peran::KEPALA_RUANGAN, $tenantId)
-            ->when($insiden->unit_id, fn ($q) => $q->where('unit_id', $insiden->unit_id))
-            ->where('id', '!=', $pelaku->id)
-            ->get();
+        $karu = filled($insiden->nama_unit_kerja)
+            ? $this->penggunaPeran(Peran::KEPALA_RUANGAN, $tenantId)
+                ->whereHas('unitKerja', fn ($q) => $q->where('nama_unit', $insiden->nama_unit_kerja))
+                ->where('id', '!=', $pelaku->id)
+                ->get()
+            : collect();
 
         if ($karu->isNotEmpty()) {
             Notification::send($karu, new InsidenNotifikasi(

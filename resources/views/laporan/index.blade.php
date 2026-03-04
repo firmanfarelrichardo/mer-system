@@ -28,15 +28,8 @@
          ================================================================ --}}
     <div class="mb-6">
         <h1 class="text-2xl font-bold text-slate-800">Riwayat Laporan</h1>
-        <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Insiden Kesalahan Pengobatan</p>
+        <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Kesalahan Pengobatan</p>
     </div>
-
-    {{-- Flash Messages --}}
-    @if (session('sukses'))
-        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700">
-            {{ session('sukses') }}
-        </div>
-    @endif
 
     {{-- ================================================================
          KARTU RINGKASAN (4 kolom)
@@ -308,7 +301,9 @@
                                     @if ($laporan->status_saat_ini === 'kasus_baru'
                                          && ($pengguna->memilikiPeran('Kepala Ruangan') || $pengguna->memilikiPeran('Komite') || $pengguna->memilikiPeran('Admin')))
                                         <form method="POST" action="#" class="inline"
-                                              onsubmit="return confirm('Apakah Anda yakin ingin menghapus laporan ini?')">
+                                              data-confirm="Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan."
+                                              data-confirm-destructive="true"
+                                              data-confirm-label="Hapus">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit"

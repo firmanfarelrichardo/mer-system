@@ -20,7 +20,7 @@
         <div>
             <h1 class="text-2xl font-bold text-slate-800">Manajemen Pengguna</h1>
             <p class="mt-1 text-sm text-slate-400">
-                Kelola daftar akun pengguna sistem pelaporan insiden.
+                Kelola daftar akun pengguna sistem pelaporan kesalahan pengobatan.
             </p>
         </div>
         <a href="{{ route('admin.pengguna.buat') }}"
@@ -32,25 +32,6 @@
             Tambah Pengguna
         </a>
     </div>
-
-    {{-- ================================================================
-         NOTIFIKASI SUKSES
-         ================================================================ --}}
-    @if (session('sukses'))
-        <div class="mb-4 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800"
-             x-data="{ tampil: true }" x-show="tampil" x-transition>
-            <svg class="h-5 w-5 shrink-0 text-green-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-            </svg>
-            <span>{{ session('sukses') }}</span>
-            <button @click="tampil = false" class="ml-auto text-green-400 hover:text-green-600">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-    @endif
 
     {{-- ================================================================
          FILTER & PENCARIAN
@@ -260,7 +241,8 @@
 
                                         {{-- Toggle Status --}}
                                         <form method="POST" action="{{ route('admin.pengguna.toggle-status', $akun->id) }}"
-                                              onsubmit="return confirm('{{ $akun->is_aktif ? 'Nonaktifkan' : 'Aktifkan' }} akun {{ $akun->nama_lengkap }}?')">
+                                              data-confirm="{{ $akun->is_aktif ? 'Nonaktifkan' : 'Aktifkan' }} akun {{ $akun->nama_lengkap }}?"
+                                              data-confirm-label="{{ $akun->is_aktif ? 'Nonaktifkan' : 'Aktifkan' }}">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit"
@@ -283,7 +265,8 @@
 
                                         {{-- Reset Kata Sandi --}}
                                         <form method="POST" action="{{ route('admin.pengguna.reset-sandi', $akun->id) }}"
-                                              onsubmit="return confirm('Reset kata sandi {{ $akun->nama_lengkap }} ke nilai default?')">
+                                              data-confirm="Reset kata sandi {{ $akun->nama_lengkap }} ke nilai default?"
+                                              data-confirm-label="Ya, Reset">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit"

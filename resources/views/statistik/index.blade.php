@@ -7,8 +7,7 @@
 | Akses: Kepala Ruangan, Komite, Direktur
 |
 | RBAC — Visibilitas:
-|   - Kepala Ruangan  → data unit kerjanya saja; filter unit & grafik
-|                       distribusi ruangan TIDAK ditampilkan.
+|   - Kepala Ruangan  → data unit kerjanya saja; filter unit tidak ditampilkan.
 |   - Komite/Direktur → semua data; seluruh filter & grafik aktif.
 |
 | Variabel dari StatistikController::index():
@@ -18,7 +17,6 @@
 |   (array)  $distribusiStatus [labels, data, colors]
 |   (array)  $distribusiTipe   [labels, data, colors]
 |   (array)  $distribusiTahapan[labels, data, colors, persen]
-|   (array|null) $distribusiRuangan [labels, data, colors] — null jika karu
 |   (array)  $ringkasanPerUnit
 |   (Collection) $daftarUnit   — kosong jika karu
 |   (bool)   $filterAktif
@@ -45,7 +43,7 @@
     <div>
         <h1 class="text-2xl font-bold text-slate-800">Statistik & Analisis</h1>
         <p class="mt-0.5 text-sm text-slate-400">
-            {{ $pengguna->tenant?->nama ?? 'Sistem Pelaporan Insiden Kesalahan Pengobatan' }}
+            {{ $pengguna->tenant?->nama ?? 'Sistem Pelaporan Kesalahan Pengobatan' }}
             @if (!$bisaLihatSemua)
                 &nbsp;·&nbsp;Unit: <span class="font-medium text-slate-600">{{ $pengguna->unitKerja?->nama_unit ?? '—' }}</span>
             @endif
@@ -220,19 +218,8 @@
 </div>
 
 {{-- ================================================================
-     DISTRIBUSI INSIDEN PER RUANGAN
-     RBAC: HANYA direktur & komite
-     ================================================================ --}}
-@if ($bisaLihatSemua && $distribusiRuangan)
-    <div class="mb-8">
-        <x-charts.distribusi-ruangan :distribusiRuangan="$distribusiRuangan" />
-    </div>
-@endif
-
-{{-- ================================================================
      TABEL RINGKASAN PER UNIT KERJA
-     RBAC: HANYA direktur & komite (kepala ruangan tidak perlu,
-     karena grafik lainnya sudah mewakili data unit kerjanya)
+     RBAC: HANYA direktur & komite
      ================================================================ --}}
 @if ($bisaLihatSemua)
 <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

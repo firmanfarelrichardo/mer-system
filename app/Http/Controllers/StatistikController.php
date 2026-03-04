@@ -89,27 +89,6 @@ class StatistikController extends Controller
     ];
 
     /**
-     * Warna monokromatik biru→cyan untuk grafik distribusi ruangan.
-     * Gradasi gelap-ke-terang agar bar mudah dibedakan tanpa ramai warna.
-     *
-     * @var list<string>
-     */
-    private const WARNA_RUANGAN = [
-        'rgba(30,   64, 175, 0.9)',   // blue-800
-        'rgba(29,   78, 216, 0.9)',   // blue-700
-        'rgba(37,   99, 235, 0.9)',   // blue-600
-        'rgba(59,  130, 246, 0.9)',   // blue-500
-        'rgba(96,  165, 250, 0.9)',   // blue-400
-        'rgba(147, 197, 253, 0.9)',   // blue-300
-        'rgba(14,  116, 144, 0.9)',   // cyan-700
-        'rgba(8,   145, 178, 0.9)',   // cyan-600
-        'rgba(6,   182, 212, 0.9)',   // cyan-500
-        'rgba(34,  211, 238, 0.9)',   // cyan-400
-        'rgba(15,  118, 110, 0.9)',   // teal-700
-        'rgba(20,  184, 166, 0.9)',   // teal-500
-    ];
-
-    /**
      * Warna monokromatik biru untuk grafik tahapan kesalahan.
      * Gradasi gelap-ke-terang: prescribing (paling awal) → administration.
      *
@@ -124,10 +103,10 @@ class StatistikController extends Controller
 
     /** @var array<string, string>  Label tampilan tiap fase. */
     private const LABEL_TAHAPAN = [
-        'prescribing'    => 'Peresepan',
-        'transcribing'   => 'Penerjemahan',
-        'dispensing'     => 'Peracikan',
-        'administration' => 'Penyerahan',
+        'prescribing'    => 'Tahap Peresepan (Prescribing Error)',
+        'transcribing'   => 'Tahap Penerjemahan (Transcribing Error)',
+        'dispensing'     => 'Tahap Menyiapkan/Peracikan Obat (Dispensing Error)',
+        'administration' => 'Tahap Penyerahan Obat Kepada Pasien (Administration Error)',
     ];
 
     // ----------------------------------------------------------------
@@ -169,15 +148,10 @@ class StatistikController extends Controller
         $distribusiTipe    = $this->hitungDistribusiTipe(clone $baseQuery);
         $distribusiTahapan = $this->hitungDistribusiPerTahapan(clone $baseQuery, $totalInsiden);
 
-        // Ringkasan per unit & distribusi ruangan hanya untuk direktur & komite.
+        // Ringkasan per unit hanya untuk direktur & komite.
         $ringkasanPerUnit  = $bisaLihatSemua
             ? $this->hitungRingkasanPerUnit(clone $baseQuery, $pengguna)
             : [];
-
-        // Distribusi per ruangan hanya untuk direktur & komite.
-        $distribusiRuangan = $bisaLihatSemua
-            ? $this->hitungDistribusiRuangan(clone $baseQuery)
-            : null;
 
         // Daftar unit untuk dropdown filter (hanya direktur & komite).
         $daftarUnit = $bisaLihatSemua
@@ -192,7 +166,6 @@ class StatistikController extends Controller
             'distribusiStatus',
             'distribusiTipe',
             'distribusiTahapan',
-            'distribusiRuangan',
             'ringkasanPerUnit',
             'daftarUnit',
             'filterAktif',
@@ -376,35 +349,6 @@ class StatistikController extends Controller
         }
 
         return ['labels' => $labels, 'data' => $data, 'colors' => $colors, 'persen' => $persen];
-    }
-
-    /**
-     * Hitung distribusi per unit kerja untuk Horizontal Bar Chart.
-     * Hanya untuk direktur & komite.
-     *
-     * @return array{labels: list<string>, data: list<int>, colors: list<string>}
-     */
-    private function hitungDistribusiRuangan($query): array
-    {
-        $rows = (clone $query)
-            ->select('nama_unit_kerja', DB::raw('COUNT(*) as jumlah'))
-            ->whereNotNull('nama_unit_kerja')
-            ->groupBy('nama_unit_kerja')
-            ->orderByDesc('jumlah')
-            ->limit(12)
-            ->get();
-
-        $labels = [];
-        $data   = [];
-        $colors = [];
-
-        foreach ($rows as $i => $row) {
-            $labels[] = $row->nama_unit_kerja;
-            $data[]   = (int) $row->jumlah;
-            $colors[] = self::WARNA_RUANGAN[$i % count(self::WARNA_RUANGAN)];
-        }
-
-        return ['labels' => $labels, 'data' => $data, 'colors' => $colors];
     }
 
     /**

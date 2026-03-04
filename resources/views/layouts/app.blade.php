@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('judul', 'Sistem Pelaporan Insiden Medication Errors')</title>
+    <title>@yield('judul', 'Sistem Pelaporan Kesalahan Pengobatan')</title>
 
     {{-- Cegah mesin pencari mengindeks halaman internal --}}
     <meta name="robots" content="noindex, nofollow">
@@ -168,6 +168,151 @@
         });
     </script>
     @endauth
+
+    {{-- ================================================================
+         Komponen UI Global: Toast & Confirm Modal
+         Dipasang di sini agar tersedia di semua halaman terautentikasi.
+         ================================================================ --}}
+    <x-toast />
+    <x-confirm-modal />
+
+    {{-- ================================================================
+         Alpine.data — toastManager
+         Mengelola stack toast notifikasi (sukses, error, warning, info).
+         ================================================================ --}}
+    <script>
+        document.addEventListener('alpine:init', () => {
+
+            // ── Toast Manager ─────────────────────────────────────────
+            Alpine.data('toastManager', () => ({
+                toasts: [],
+                _id: 0,
+
+                _cfg: {
+                    sukses: {
+                        title: 'Berhasil',
+                        wrapperClass: 'bg-emerald-50 border-emerald-200',
+                        iconBgClass:  'bg-emerald-100',
+                        iconClass:    'text-emerald-600',
+                        iconPath:     'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+                        titleClass:   'text-emerald-800',
+                        textClass:    'text-emerald-600',
+                        closeClass:   'text-emerald-400 hover:text-emerald-600 hover:bg-emerald-100',
+                        barClass:     'bg-emerald-400',
+                    },
+                    error: {
+                        title: 'Terjadi Kesalahan',
+                        wrapperClass: 'bg-red-50 border-red-200',
+                        iconBgClass:  'bg-red-100',
+                        iconClass:    'text-red-600',
+                        iconPath:     'M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z',
+                        titleClass:   'text-red-800',
+                        textClass:    'text-red-600',
+                        closeClass:   'text-red-400 hover:text-red-600 hover:bg-red-100',
+                        barClass:     'bg-red-400',
+                    },
+                    warning: {
+                        title: 'Perhatian',
+                        wrapperClass: 'bg-amber-50 border-amber-200',
+                        iconBgClass:  'bg-amber-100',
+                        iconClass:    'text-amber-600',
+                        iconPath:     'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z',
+                        titleClass:   'text-amber-800',
+                        textClass:    'text-amber-700',
+                        closeClass:   'text-amber-400 hover:text-amber-600 hover:bg-amber-100',
+                        barClass:     'bg-amber-400',
+                    },
+                    info: {
+                        title: 'Informasi',
+                        wrapperClass: 'bg-blue-50 border-blue-200',
+                        iconBgClass:  'bg-blue-100',
+                        iconClass:    'text-blue-600',
+                        iconPath:     'M11.25 11.25l.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z',
+                        titleClass:   'text-blue-800',
+                        textClass:    'text-blue-600',
+                        closeClass:   'text-blue-400 hover:text-blue-600 hover:bg-blue-100',
+                        barClass:     'bg-blue-400',
+                    },
+                },
+
+                add({ type = 'info', message = '', duration = 4500 }) {
+                    const id  = ++this._id;
+                    const cfg = this._cfg[type] ?? this._cfg.info;
+                    this.toasts.push({ id, message, duration, visible: true, progress: 100, ...cfg });
+
+                    // Setelah elemen dirender pada 100%, animasikan ke 0% via CSS transition.
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            const toast = this.toasts.find(t => t.id === id);
+                            if (toast) toast.progress = 0;
+                        }, 30);
+                    });
+
+                    setTimeout(() => this.dismiss(id), duration);
+                },
+
+                dismiss(id) {
+                    const toast = this.toasts.find(t => t.id === id);
+                    if (toast) toast.visible = false;
+                    setTimeout(() => { this.toasts = this.toasts.filter(t => t.id !== id); }, 300);
+                },
+            }));
+
+            // ── Confirm Modal ────────────────────────────────────────
+            Alpine.data('confirmModal', () => ({
+                isOpen:       false,
+                message:      '',
+                confirmLabel: 'Ya, Lanjutkan',
+                isDestructive: false,
+                _onConfirm:   null,
+
+                open({ message, confirmLabel = 'Ya, Lanjutkan', destructive = false, onConfirm = null }) {
+                    this.message      = message;
+                    this.confirmLabel = confirmLabel;
+                    this.isDestructive = destructive;
+                    this._onConfirm   = onConfirm;
+                    this.isOpen       = true;
+                    this.$nextTick(() => this.$refs.confirmBtn?.focus());
+                },
+
+                confirm() {
+                    this.isOpen = false;
+                    const cb = this._onConfirm;
+                    this._onConfirm = null;
+                    if (typeof cb === 'function') setTimeout(cb, 150);
+                },
+
+                cancel() {
+                    this.isOpen = false;
+                    this._onConfirm = null;
+                },
+            }));
+        });
+
+        // ── Intercept semua form dengan atribut data-confirm ────────────
+        // Menggantikan native confirm() dialog dengan x-confirm-modal.
+        document.addEventListener('submit', function (e) {
+            const form    = e.target;
+            const message = form.dataset.confirm;
+            if (!message) return;
+
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            window.dispatchEvent(new CustomEvent('confirm-modal', {
+                detail: {
+                    message,
+                    confirmLabel: form.dataset.confirmLabel  ?? 'Ya, Lanjutkan',
+                    destructive:  form.dataset.confirmDestructive === 'true',
+                    onConfirm() {
+                        // Hapus data-confirm agar tidak masuk loop infinit.
+                        delete form.dataset.confirm;
+                        form.submit();
+                    },
+                },
+            }));
+        }, true); // capture phase — sebelum handler lain
+    </script>
 
     {{-- Script yang di-push oleh halaman/komponen individual (mis. Chart.js) --}}
     @stack('scripts')
