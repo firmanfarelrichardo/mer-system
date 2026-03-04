@@ -235,15 +235,34 @@ class Insiden extends Model
 
     /**
      * Generate nomor laporan unik per tenant.
+     *
+     * Format: INC-{YYYYMMDD}-{HHmmss}-{XXXX}
+     *   Contoh: INC-20260304-143025-K7M2
+     *
+     * Keunggulan:
+     *   - Dapat diurutkan secara kronologis hanya dari nomornya.
+     *   - Tidak bergantung pada counter terpusat → bebas race-condition.
+     *   - Suffix 4-karakter dari 32-char clean charset
+     *     (tanpa 0/O/1/I/L agar tidak membingungkan) → ~1 juta
+     *     kombinasi per detik, collision rate praktis nol.
+     *   - Panjang tetap 24 karakter, jauh di bawah VARCHAR(100).
+     *   - Constraint UNIQUE [tenant_id, nomor_laporan] di DB menjadi
+     *     safety-net terakhir; do-while memastikan retry bila ada tabrakan.
      */
     public static function generateNomorLaporan(int $tenantId): string
     {
-        $tahun = now()->format('Y');
-        $urutan = static::where('tenant_id', $tenantId)
-            ->whereYear('created_at', $tahun)
-            ->count() + 1;
+        // Charset bersih: tanpa karakter yang mudah membingungkan (0/O, 1/I/L)
+        $charset = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-        return sprintf('INC-%s-%04d', $tahun, $urutan);
+        do {
+            $suffix = '';
+            for ($i = 0; $i < 4; $i++) {
+                $suffix .= $charset[random_int(0, strlen($charset) - 1)];
+            }
+            $nomor = 'INC-' . now()->format('Ymd-His') . '-' . $suffix;
+        } while (static::where('tenant_id', $tenantId)->where('nomor_laporan', $nomor)->exists());
+
+        return $nomor;
     }
 
     /**

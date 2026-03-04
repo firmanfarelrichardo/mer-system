@@ -407,7 +407,6 @@ class InsidenSeeder extends Seeder
         $sekarang   = Carbon::parse('2026-12-31 23:59:59');
         $tigaTahunLalu = Carbon::parse('2024-01-01 00:00:00');
         $unitList   = array_values($unitKerja);
-        $nomorUrut  = [];  // key: "YYYY" => int
 
         for ($i = 1; $i <= 500; $i++) {
             // ── Tanggal acak dalam 3 tahun (2024-2026) ──────────────────
@@ -417,9 +416,14 @@ class InsidenSeeder extends Seeder
             $tglLapor = $tglKejadian->copy()->addMinutes(random_int(10, 300));
 
             // ── Nomor laporan ────────────────────────────────────────────
-            $tahun = $tglKejadian->format('Y');
-            $nomorUrut[$tahun] = ($nomorUrut[$tahun] ?? 0) + 1;
-            $nomorLaporan = sprintf('INC-%s-%04d', $tahun, $nomorUrut[$tahun]);
+            // Format: INC-{YYYYMMDD}-{HHmmss}-{XXXX} konsisten dengan produksi.
+            // Suffix menggunakan loop index (zero-padded) agar seed data
+            // dijamin unik meski dua insiden kebetulan jatuh di detik yang sama.
+            $nomorLaporan = sprintf('INC-%s-%s-%04d',
+                $tglKejadian->format('Ymd'),
+                $tglKejadian->format('His'),
+                $i,
+            );
 
             // ── Pelapor & unit secara acak ───────────────────────────────
             $pelapor  = $nakesList[array_rand($nakesList)];
@@ -478,6 +482,7 @@ class InsidenSeeder extends Seeder
                 'nama_pasien'          => $namaPasien,
                 'nomor_rekam_medis'    => $nomorRM,
                 'obat_terkait'         => $obat,
+                'dosis_obat'           => $this->ambilAcak(['500mg', '250mg', '1000mg', '10mg/mL', '50mg', '5mg', '200mg', '100mg'], 1)[0],
                 'dokter_penulis_resep' => $dokterResep,
                 'kronologi'            => $kronologi,
                 'tindakan_awal'        => $this->ambilAcak(self::INTERVENSI_POOL, 1)[0],
