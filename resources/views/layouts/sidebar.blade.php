@@ -30,8 +30,8 @@
                 class="h-13 w-auto shrink-0 rounded-lg"
             >
             <div>
-                <h2 class="text-md font-bold leading-tight tracking-wide">Sistem MER</h2>
-                <p class="text-[11px] text-white/60">Pelaporan Insiden Kesalahan Pengobatan</p>
+                <h2 class="text-md font-bold leading-tight tracking-wide">MERS</h2>
+                <p class="text-[11px] text-white/60">Sistem Pelaporan Kesalahan Pengobatan</p>
             </div>
         </div>
         {{-- Tombol tutup sidebar — hanya tampil di mobile --}}

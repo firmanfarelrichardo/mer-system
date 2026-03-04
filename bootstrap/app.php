@@ -13,11 +13,6 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Alias middleware: batas durasi sesi aktif (10 menit sejak login).
-        $middleware->alias([
-            'sesi.maks' => \App\Http\Middleware\SesiMaksimalMasuk::class,
-        ]);
-
         // -----------------------------------------------------------------
         // TrustProxies — Wajib dikonfigurasi agar Request::ip() mengembalikan
         // IP asli pengguna, bukan IP container Nginx/Docker.

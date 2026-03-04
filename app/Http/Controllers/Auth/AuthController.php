@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Pengguna;
 use App\Services\AuditLogService;
 use App\Services\SuspiciousLoginService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -124,9 +125,6 @@ class AuthController extends Controller
         Auth::login($pengguna);
         $permintaan->session()->regenerate();
 
-        // Simpan waktu masuk untuk penegakan batas durasi sesi (SesiMaksimalMasuk middleware).
-        $permintaan->session()->put(\App\Http\Middleware\SesiMaksimalMasuk::KUNCI_LOGIN_PADA, now()->timestamp);
-
         // ----------------------------------------------------------
         // 6. Hapus catatan throttle setelah masuk berhasil.
         // ----------------------------------------------------------
@@ -225,6 +223,63 @@ class AuthController extends Controller
         return redirect()
             ->route('login')
             ->with('sukses', 'Anda telah berhasil keluar.');
+    }
+
+    /* ==================================================================
+     | KELUAR IDLE (Auto-Logout karena tidak ada aktivitas)
+     | ================================================================*/
+
+    /**
+     * Logout otomatis yang dipicu oleh Alpine.js saat pengguna idle ≥ 5 menit.
+     *
+     * Dipanggil via: POST /logout-idle (Fetch API dari browser).
+     * Selalu merespons JSON agar Alpine.js dapat menangani redirect di sisi klien.
+     *
+     * Perbedaan dengan keluar() biasa:
+     *  - Konteks audit berbeda: aksi 'LOGOUT_IDLE' vs 'LOGOUT'.
+     *  - Flash message berbeda: menjelaskan alasan sesi berakhir.
+     */
+    public function logoutIdle(Request $permintaan): JsonResponse
+    {
+        /** @var Pengguna|null $pengguna */
+        $pengguna = Auth::user();
+
+        // ----------------------------------------------------------
+        // 1. Catat ke audit trail SEBELUM menghapus sesi.
+        //    Penting: Auth::user() tidak lagi tersedia setelah logout.
+        // ----------------------------------------------------------
+        if ($pengguna) {
+            $this->auditLog->catat(
+                namaTabel:  'akun.pengguna',
+                aksi:       'LOGOUT_IDLE',
+                idData:     $pengguna->id,
+                idPengguna: $pengguna->id,
+                dataBaru:   [
+                    'deskripsi' => 'Sistem melakukan auto-logout karena pengguna idle (tidak aktif) selama 5 menit.',
+                ],
+            );
+
+            Log::info('Auto-logout idle dieksekusi.', [
+                'pengguna_id' => $pengguna->id,
+                'nomor_induk' => $pengguna->nomor_induk,
+                'ip'          => $permintaan->ip(),
+            ]);
+        }
+
+        // ----------------------------------------------------------
+        // 2. Hancurkan sesi dan keluarkan pengguna.
+        // ----------------------------------------------------------
+        Auth::logout();
+        $permintaan->session()->invalidate();
+        $permintaan->session()->regenerateToken();
+
+        // ----------------------------------------------------------
+        // 3. Kembalikan JSON — Alpine.js yang menangani redirect.
+        // ----------------------------------------------------------
+        return response()->json([
+            'pesan'    => 'Anda telah logout otomatis karena tidak ada aktivitas selama 5 menit.',
+            'redirect' => route('login'),
+        ]);
     }
 
     /* ==================================================================
