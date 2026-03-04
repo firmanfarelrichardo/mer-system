@@ -116,20 +116,25 @@
                 Kode Keamanan
             </label>
 
-            {{-- Side-by-side: gambar kiri | input kanan --}}
+            {{--
+                Side-by-side: gambar kiri | input kanan.
+                Panel gambar menggunakan lebar relatif (60%) agar mengikuti lebar
+                kartu — gambar di-stretch tepat mengisi panel sehingga tidak terpotong.
+            --}}
             <div class="flex overflow-hidden rounded-xl border
                         {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }}">
 
-                {{-- Kiri: gambar captcha --}}
-                <div class="flex-shrink-0 w-[52%] border-r {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }}">
+                {{-- Kiri: gambar captcha — 60% lebar kartu, tinggi tetap 60px --}}
+                <div class="w-[60%] shrink-0 border-r
+                            {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }} bg-white">
                     <img
                         id="gambar-captcha"
                         src="{{ captcha_src('default') }}"
                         alt="Kode keamanan captcha"
                         title="Klik untuk memperbarui kode"
                         onclick="this.src='{{ url('captcha/default') }}?'+Date.now()"
-                        class="block h-full w-full cursor-pointer object-contain bg-white"
-                        style="min-height:52px"
+                        class="block w-full cursor-pointer"
+                        style="height:60px;object-fit:fill;"
                     >
                 </div>
 

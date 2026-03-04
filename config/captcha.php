@@ -7,10 +7,16 @@ return [
      */
     'disable' => env('CAPTCHA_DISABLE', false),
 
-    'characters' => ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-        'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd',
-        'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's',
-        't', 'u', 'v', 'w', 'x', 'y', 'z', 0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    'characters' => [
+        // Huruf kapital — dihilangkan yang mudah tertukar: I, O
+        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
+        'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+        // Huruf kecil — dihilangkan yang mudah tertukar: i, l, o
+        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j', 'k', 'm', 'n',
+        'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+        // Angka — dihilangkan yang mudah tertukar: 0, 1
+        2, 3, 4, 5, 6, 7, 8, 9,
+    ],
 
     /*
      | Resolved from the mews/captcha vendor package so no manual asset
@@ -20,13 +26,13 @@ return [
     'bgsDirectory'   => base_path('vendor/mews/captcha/assets/backgrounds'),
     'default' => [
         'length'     => 4,
-        'width'      => 280,
-        'height'     => 70,
+        'width'      => 200,
+        'height'     => 60,
         'quality'    => 100,
         'math'       => false,
         'expire'     => 60,
         'encrypt'    => false,
-        'angle'      => 8,
+        'angle'      => 6,
         'lines'      => 2,
         'bgImage'    => false,
         'bgColor'    => '#f0f4ff',
