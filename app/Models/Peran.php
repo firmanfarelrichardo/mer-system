@@ -52,7 +52,7 @@ class Peran extends Model
      * Sentralisasi di sini agar seluruh aplikasi konsisten.
      */
     public const PETA_LABEL_DISPLAY = [
-        'Nakes'          => 'Tenaga Kesehatan',
+        'Nakes'          => 'Tenaga Medis/Tenaga Kesehatan',
         'Kepala Ruangan' => 'Kepala Ruangan',
         'Komite'         => 'Komite',
         'Admin'          => 'Admin',
@@ -85,7 +85,7 @@ class Peran extends Model
     /**
      * Accessor: nama peran yang ramah pengguna untuk ditampilkan di UI.
      *
-     * Contoh: 'Nakes' → 'Tenaga Kesehatan'
+     * Contoh: 'Nakes' → 'Tenaga Medis/Tenaga Kesehatan'
      * Gunakan $peran->nama_display di Blade.
      */
     public function getNamaDisplayAttribute(): string
