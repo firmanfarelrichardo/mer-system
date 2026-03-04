@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Masuk — Sistem Pelaporan Insiden')
+@section('title', 'Masuk — Sistem Pelaporan Kesalahan Pengobatan')
 
 @section('content')
     {{--

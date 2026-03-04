@@ -314,7 +314,7 @@
                                  0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25
                                  0 0 1 5.25 6H10" />
                     </svg>
-                    Tindak Lanjut Laporan
+                    Feedback Laporan 
                 </h2>
 
                 <form method="POST" action="{{ route('laporan.tindak-lanjut', $insiden->id) }}">
@@ -346,13 +346,13 @@
                     {{-- Catatan --}}
                     <div class="mb-4">
                         <label for="catatan" class="block text-sm font-medium text-slate-700">
-                            Catatan Tindak Lanjut <span class="text-red-500">*</span>
+                            Catatan <span class="text-red-500">*</span>
                         </label>
                         <textarea name="catatan" id="catatan" rows="4"
                                   class="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5
                                          text-sm text-slate-700 shadow-sm placeholder:text-slate-300
                                          focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20"
-                                  placeholder="Tuliskan catatan tindak lanjut yang telah atau akan dilakukan..."
+                                  placeholder="Tuliskan catatan yang telah atau akan dilakukan..."
                                   required
                                   minlength="10"
                                   maxlength="2000">{{ old('catatan') }}</textarea>
@@ -369,7 +369,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round"
                                   d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
                         </svg>
-                        Simpan Tindak Lanjut
+                        Simpan
                     </button>
                 </form>
             </div>
