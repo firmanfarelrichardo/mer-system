@@ -374,33 +374,40 @@
     @endif
 
     {{-- ================================================================
-         VI. HISTORI TINDAK LANJUT (jika ada)
+         VI. HISTORI TINDAK LANJUT (selalu tampil)
          ================================================================ --}}
-    @if($insiden->tindakLanjut->isNotEmpty())
     <div class="section-header" style="margin-top: 6px;">VI. HISTORI TINDAK LANJUT</div>
     <table width="100%" cellpadding="0" cellspacing="0" class="tbl-bordered" style="margin-top: 4px;">
         <thead>
             <tr>
                 <th style="width: 26px;">No.</th>
                 <th style="width: 105px;">Tanggal</th>
-                <th style="width: 95px;">Status Baru</th>
-                <th style="width: 110px;">Petugas</th>
+                <th style="width: 95px;">Status</th>
+                <th style="width: 130px;">Petugas</th>
                 <th>Catatan</th>
             </tr>
         </thead>
         <tbody>
+            {{-- Baris pertama: unggah laporan oleh Nakes --}}
+            <tr>
+                <td class="text-center">1.</td>
+                <td class="text-center">{{ $insiden->created_at?->translatedFormat('d M Y, H:i') }}</td>
+                <td class="text-center">Unggah Laporan</td>
+                <td>{{ $insiden->is_anonim ? 'Anonim' : ($insiden->pelapor?->labelPelapor() ?? '-') }}</td>
+                <td>Laporan insiden diunggah ke sistem.</td>
+            </tr>
+            {{-- Baris tindak lanjut (Karu / Komite), diurutkan kronologis --}}
             @foreach($insiden->tindakLanjut->sortBy('created_at')->values() as $idx => $tl)
             <tr>
-                <td class="text-center">{{ $idx + 1 }}.</td>
+                <td class="text-center">{{ $idx + 2 }}.</td>
                 <td class="text-center">{{ $tl->created_at?->translatedFormat('d M Y, H:i') }}</td>
                 <td class="text-center">{{ $tl->labelStatus() }}</td>
-                <td>{{ $tl->pengguna?->nama_lengkap ?? '-' }}</td>
+                <td>{{ $tl->pengguna?->labelPeranDanUnit() ?? '-' }}</td>
                 <td>{{ $tl->catatan ?? '-' }}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
-    @endif
 
     {{-- ================================================================
          FOOTER — TANDA TANGAN PELAPOR (rata kanan)
