@@ -53,7 +53,7 @@
             vertical-align: top;
             padding: 3px 0;
         }
-        .row-colon { padding: 3px 4px; width: 10px; text-align: center; }
+        .row-colon { padding: 3px 12px 3px 0; width: 8px; text-align: left; }
 
         .cb {
             font-family: 'DejaVu Sans', sans-serif;
@@ -199,23 +199,27 @@
                         @php $tipe = $insiden->tipe_insiden; @endphp
                         <table width="100%" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td width="50%" style="font-size: 11pt; padding: 2px 0;">
+                                <td style="font-size: 11pt; padding: 2px 0;">
                                     <span class="cb">{!! $tipe === 'KPC' ? '&#9745;' : '&#9744;' !!}</span>&nbsp;Kondisi Potensial Cedera (KPC)
-                                </td>
-                                <td width="50%" style="font-size: 11pt; padding: 2px 0;">
-                                    <span class="cb">{!! $tipe === 'KTC' ? '&#9745;' : '&#9744;' !!}</span>&nbsp;Kejadian Tidak Cedera (KTC)
                                 </td>
                             </tr>
                             <tr>
                                 <td style="font-size: 11pt; padding: 2px 0;">
                                     <span class="cb">{!! $tipe === 'KNC' ? '&#9745;' : '&#9744;' !!}</span>&nbsp;Kejadian Nyaris Cedera (KNC)
                                 </td>
+                            </tr>
+                            <tr>
+                                <td style="font-size: 11pt; padding: 2px 0;">
+                                    <span class="cb">{!! $tipe === 'KTC' ? '&#9745;' : '&#9744;' !!}</span>&nbsp;Kejadian Tidak Cedera (KTC)
+                                </td>
+                            </tr>
+                            <tr>
                                 <td style="font-size: 11pt; padding: 2px 0;">
                                     <span class="cb">{!! $tipe === 'KTD' ? '&#9745;' : '&#9744;' !!}</span>&nbsp;Kejadian Tidak Diharapkan (KTD)
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="2" style="font-size: 11pt; padding: 2px 0;">
+                                <td style="font-size: 11pt; padding: 2px 0;">
                                     <span class="cb">{!! $tipe === 'SENTINEL' ? '&#9745;' : '&#9744;' !!}</span>&nbsp;Kejadian Sentinel
                                 </td>
                             </tr>
