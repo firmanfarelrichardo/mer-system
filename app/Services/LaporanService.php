@@ -17,7 +17,9 @@ use Illuminate\Support\Facades\DB;
  * LaporanService — orkestrasi bisnis logik penyimpanan laporan insiden.
  *
  * Mendukung dua mode:
- *   - Simpan Draf: status = 'DRAF', tanpa notifikasi, tanpa nomor laporan definitif.
+ *   - Simpan Draf: status = 'DRAF', tanpa notifikasi. Nomor laporan INC sudah
+ *     digenerate sejak pertama kali dibuat — status-lah yang membedakan draf
+ *     dengan laporan terkirim, bukan prefix di nomor_laporan.
  *   - Kirim Laporan: status = 'kasus_baru', dengan notifikasi ke Kepala Ruangan.
  *
  * Logika dinamis berdasarkan DTO:
@@ -71,8 +73,7 @@ class LaporanService
             $dataDetail = [
                 'nama_pasien'          => $dto->namaPasien,
                 'nomor_rekam_medis'    => $dto->nomorRekamMedis,
-                'obat_terkait'         => $dto->namaObat,
-                'kronologi'            => $dto->kronologiKejadian,
+                'obat_terkait'         => $dto->namaObat,                'dosis_obat'           => $dto->dosisObat,                'kronologi'            => $dto->kronologiKejadian,
                 'jenis_kesalahan'      => $dto->jenisKesalahanGabungan() ?: null,
                 'cedera'               => $dto->cederaGabungan() ?: null,
                 'faktor_penyebab'      => $dto->faktorPenyebabGabungan() ?: null,
@@ -87,13 +88,8 @@ class LaporanService
                     ->where('status_saat_ini', 'DRAF')
                     ->firstOrFail();
 
-                // Generate nomor laporan saat pertama kali di-submit (bukan draf lagi).
-                if (! $isDraft && empty($insiden->nomor_laporan)) {
-                    $dataInsiden['nomor_laporan'] = Insiden::generateNomorLaporan($pengguna->tenant_id);
-                } elseif (! $isDraft && ! empty($insiden->nomor_laporan)) {
-                    // Nomor sudah ada (draf pernah di-generate), tetap pertahankan.
-                    unset($dataInsiden['nomor_laporan']);
-                }
+                // nomor_laporan (INC-...) sudah ada sejak CREATE — jangan diubah.
+                unset($dataInsiden['nomor_laporan']);
 
                 $insiden->update($dataInsiden);
 
@@ -106,10 +102,10 @@ class LaporanService
                 }
             } else {
                 // ── CREATE: Laporan baru ────────────────────────────
-                // Generate nomor laporan hanya jika bukan draf.
-                $dataInsiden['nomor_laporan'] = $isDraft
-                    ? 'DRAF-' . now()->format('YmdHis') . '-' . $pengguna->id
-                    : Insiden::generateNomorLaporan($pengguna->tenant_id);
+                // Selalu generate INC-... sejak awal — baik draf maupun kirim langsung.
+                // Status (DRAF vs kasus_baru) sudah membedakan keduanya; nomor
+                // laporan tidak perlu prefix berbeda.
+                $dataInsiden['nomor_laporan'] = Insiden::generateNomorLaporan($pengguna->tenant_id);
 
                 $insiden = Insiden::create($dataInsiden);
 
@@ -187,6 +183,7 @@ class LaporanService
                 'nama_pasien'          => $dto->namaPasien,
                 'nomor_rekam_medis'    => $dto->nomorRekamMedis,
                 'obat_terkait'         => $dto->namaObat,
+                'dosis_obat'           => $dto->dosisObat,
                 'kronologi'            => $dto->kronologiKejadian,
                 'jenis_kesalahan'      => $dto->jenisKesalahanGabungan() ?: null,
                 'cedera'               => $dto->cederaGabungan() ?: null,
@@ -217,7 +214,9 @@ class LaporanService
             } else {
                 // ── CREATE: Draf baru ────────────────────────────────
                 // Biarkan Observer `created` terpicu untuk audit log pertama kali.
-                $dataInsiden['nomor_laporan'] = 'DRAF-' . now()->format('YmdHis') . '-' . $pengguna->id;
+                // Nomor INC-... digenerate langsung — auto-save pun sudah mendapat
+                // nomor laporan final; tidak ada tempat untuk prefix DRAF-.
+                $dataInsiden['nomor_laporan'] = Insiden::generateNomorLaporan($pengguna->tenant_id);
 
                 $insiden = Insiden::create($dataInsiden);
 
