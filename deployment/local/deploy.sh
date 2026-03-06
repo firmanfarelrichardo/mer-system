@@ -117,6 +117,7 @@ show_menu() {
     echo -e "  ${GREEN}23)${NC} Run Artisan Command"
     echo -e "  ${GREEN}24)${NC} Access App Shell"
     echo -e "  ${YELLOW}25)${NC} Re-initialize App (composer install + key:generate + migrate)"
+    echo -e "  ${GREEN}26)${NC} Install / Update Dependensi PHP (Composer Install)"
     echo ""
     echo -e "  ${CYAN}--- Frontend (Vite) ---${NC}"
     echo -e "  ${GREEN}30)${NC} NPM Install (via Vite container)"
@@ -1077,6 +1078,58 @@ while true; do
             fi
             print_header "Re-initialize App"
             app_init
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+
+        26)
+            # -----------------------------------------------------------
+            # Install / Update Dependensi PHP (Composer Install)
+            # Berguna sebagai "Sapu Jagat" untuk menyinkronkan ekstensi
+            # PHP baru (DOMPDF, Excel, dll) ke seluruh anggota tim.
+            # -----------------------------------------------------------
+            print_header "Install / Update Dependensi PHP (Composer Install)"
+
+            # Safety Check: pastikan container app sedang berjalan
+            if ! is_container_running "${APP_CONTAINER}"; then
+                echo -e "${RED}ERROR: Container tidak berjalan.${NC}"
+                echo -e "${RED}Silakan pilih menu 'Start Development' terlebih dahulu.${NC}"
+                echo ""
+                read -p "Press Enter to continue..."
+                continue
+            fi
+
+            echo -e "${YELLOW}Menyinkronkan dependensi PHP...${NC}"
+            echo -e "${CYAN}  Menjalankan: composer install --no-interaction --prefer-dist --optimize-autoloader${NC}"
+            echo ""
+
+            if docker exec "$APP_CONTAINER" \
+                composer install --no-interaction --prefer-dist --optimize-autoloader; then
+                echo ""
+                echo -e "${GREEN}✓ Composer install selesai.${NC}"
+            else
+                echo ""
+                echo -e "${RED}✗ Composer install gagal — periksa output di atas.${NC}"
+                echo ""
+                read -p "Press Enter to continue..."
+                continue
+            fi
+
+            # Cache Clearing: daftarkan class/alias baru ke autoload Laravel
+            echo ""
+            echo -e "${YELLOW}Membersihkan cache...${NC}"
+            echo -e "${CYAN}  Menjalankan: php artisan optimize:clear${NC}"
+            echo ""
+
+            if docker exec "$APP_CONTAINER" php artisan optimize:clear; then
+                echo ""
+                echo -e "${GREEN}✓ Berhasil! Dependensi diperbarui dan cache dibersihkan.${NC}"
+                echo -e "${CYAN}  Class dan alias baru (DOMPDF, Excel, dll) sudah terdaftar.${NC}"
+            else
+                echo ""
+                echo -e "${YELLOW}⚠ Cache clear gagal — jalankan Option 22 secara manual.${NC}"
+            fi
+
             echo ""
             read -p "Press Enter to continue..."
             ;;
