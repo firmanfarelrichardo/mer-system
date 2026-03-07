@@ -44,7 +44,7 @@ class SimpanPenggunaRequest extends FormRequest
             'unit_id'     => ['nullable', 'integer', Rule::exists(UnitKerja::class, 'id')],
             'kata_sandi'  => ['required', 'string', 'min:8', 'confirmed'],
             'is_aktif'    => ['sometimes', 'boolean'],
-            'peran_ids'   => ['required', 'array', 'min:1'],
+            'peran_ids'   => ['required', 'array', 'size:1'],
             'peran_ids.*' => ['integer', Rule::exists(Peran::class, 'id')],
         ];
     }
@@ -65,8 +65,8 @@ class SimpanPenggunaRequest extends FormRequest
             'kata_sandi.required'   => 'Kata sandi wajib diisi.',
             'kata_sandi.min'        => 'Kata sandi minimal 8 karakter.',
             'kata_sandi.confirmed'  => 'Konfirmasi kata sandi tidak cocok.',
-            'peran_ids.required'    => 'Minimal satu peran harus dipilih.',
-            'peran_ids.min'         => 'Minimal satu peran harus dipilih.',
+            'peran_ids.required'    => 'Peran wajib dipilih.',
+            'peran_ids.size'        => 'Hanya boleh memilih satu peran.',
         ];
     }
 }

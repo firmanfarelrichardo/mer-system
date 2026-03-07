@@ -97,13 +97,20 @@
                 </svg>
                 Informasi Pelapor
             </h2>
-            @if ($insiden->is_anonim)
+            @if ($insiden->is_anonim && ! $isPeneliti)
                 <p class="text-sm italic text-slate-400">Pelapor memilih untuk melapor secara anonim.</p>
             @else
                 <div class="grid grid-cols-1 gap-y-3 sm:grid-cols-3 sm:gap-x-6">
                     <div>
                         <p class="text-xs font-medium text-slate-400">Nama Pelapor</p>
-                        <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->nama_pelapor ?? $insiden->pelapor?->nama_lengkap ?? '—' }}</p>
+                        <p class="mt-0.5 text-sm font-medium text-slate-800">
+                            {{ $insiden->nama_pelapor ?? $insiden->pelapor?->nama_lengkap ?? '—' }}
+                            @if ($insiden->is_anonim && $isPeneliti)
+                                <span class="ml-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                                    Disembunyikan: Anonim
+                                </span>
+                            @endif
+                        </p>
                     </div>
                     <div>
                         <p class="text-xs font-medium text-slate-400">Nomor Induk</p>
@@ -302,7 +309,12 @@
                             </span>
                             <span class="text-xs text-slate-400">
                                 oleh <span class="font-medium text-slate-600">
-                                    {{ $insiden->is_anonim ? 'Anonim' : ($insiden->pelapor?->labelPelapor() ?? '—') }}
+                                    @if ($insiden->is_anonim && $isPeneliti)
+                                        {{ $insiden->pelapor?->labelPelapor() ?? '—' }}
+                                        <span class="ml-1 inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">Anonim</span>
+                                    @else
+                                        {{ $insiden->is_anonim ? 'Anonim' : ($insiden->pelapor?->labelPelapor() ?? '—') }}
+                                    @endif
                                 </span>
                                 &middot; {{ $insiden->created_at?->translatedFormat('d M Y, H:i') }}
                             </span>

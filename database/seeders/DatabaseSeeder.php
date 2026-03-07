@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             MasterFormSeeder::class,     // 5. Master data formulir (cedera, faktor, intervensi)
             InsidenSeeder::class,        // 6. 500 sample incident reports (2024-2026)
             LogAktivitasSeeder::class,   // 7. Audit log entries (2024-2026)
+            PenelitiSeeder::class,       // 8. Akun sementara peneliti/dosen pembimbing
         ]);
     }
 }
