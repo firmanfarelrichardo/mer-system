@@ -77,6 +77,40 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // ----------------------------------------------------------------
+        // Gate::before — Bypass Universal untuk Akun Peneliti
+        // ----------------------------------------------------------------
+        // Memberikan seluruh izin Gate kepada pengguna yang nomor_induk-nya
+        // cocok dengan NIP peneliti yang dikonfigurasi di .env.
+        //
+        // PRINSIP KEAMANAN:
+        //   - Nilai diambil dari env(), BUKAN di-hardcode, sehingga akses
+        //     dapat dicabut cukup dengan mengosongkan PENELITI_NIP di .env
+        //     tanpa perlu deploy ulang kode.
+        //   - Guard berlapis: env kosong/null → bypass TIDAK aktif.
+        //   - Tidak ada peran khusus di database; mudah dihapus bersih.
+        //
+        // CARA MENONAKTIFKAN:
+        //   Kosongkan atau hapus baris PENELITI_NIP dari file .env:
+        //     PENELITI_NIP=
+        //   Untuk menonaktifkan permanen, hapus/comment seluruh blok ini.
+        // ----------------------------------------------------------------
+        $nipPeneliti = env('PENELITI_NIP');
+
+        if (! empty($nipPeneliti)) {
+            Gate::before(function ($pengguna, string $ability) use ($nipPeneliti): ?bool {
+                // Kembalikan true (bukan false) agar Gate::after & policy
+                // lain tidak dieksekusi — langsung diberi akses penuh.
+                if ($pengguna->nomor_induk === $nipPeneliti) {
+                    return true;
+                }
+
+                // Null berarti "teruskan ke pengecekan Gate/Policy berikutnya".
+                // Jangan kembalikan false agar pengguna lain tidak terblokir.
+                return null;
+            });
+        }
+
+        // ----------------------------------------------------------------
         // View Composer: Sidebar Navigation
         // Menyuntikkan data menu ke layouts.sidebar agar tidak bergantung
         // pada @php block scope — lebih andal dan mudah diuji.
