@@ -231,6 +231,59 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
+     | RIWAYAT SAYA — Laporan yang Dibuat Sendiri (Kepala Ruangan)
+     | =================================================================*/
+
+    /**
+     * Tampilkan daftar laporan yang dikirim oleh pengguna saat ini sebagai pelapor.
+     *
+     * Digunakan oleh Kepala Ruangan yang juga dapat bertindak sebagai pelapor
+     * seperti halnya Nakes. Berbeda dengan laporan.index (yang untuk Karu
+     * menampilkan seluruh laporan unit), method ini SELALU mem-filter berdasarkan
+     * pelapor_id sehingga hanya laporan milik sendiri yang tampil.
+     */
+    public function riwayatSaya(Request $permintaan): View
+    {
+        $pengguna = Auth::user();
+
+        $query = Insiden::with(['detailPasien', 'unitKerja'])
+            ->where('tenant_id', $pengguna->tenant_id)
+            ->where('pelapor_id', $pengguna->id)
+            ->bukanDraf()
+            ->latest('tgl_lapor');
+
+        if ($cari = $permintaan->input('cari')) {
+            $query->where(function ($q) use ($cari) {
+                $q->where('nomor_laporan', 'ilike', "%{$cari}%")
+                  ->orWhereHas('detailPasien', fn ($dp) => $dp->where('nama_pasien', 'ilike', "%{$cari}%"));
+            });
+        }
+
+        if ($status = $permintaan->input('status')) {
+            $query->where('status_saat_ini', $status);
+        }
+
+        if ($tipe = $permintaan->input('tipe')) {
+            $query->where('tipe_insiden', $tipe);
+        }
+
+        $daftarLaporan = $query->paginate(Paginasi::perHalaman())->withQueryString();
+
+        $baseQuery = Insiden::where('tenant_id', $pengguna->tenant_id)
+            ->where('pelapor_id', $pengguna->id)
+            ->bukanDraf();
+
+        $statistik = [
+            'total'           => (clone $baseQuery)->count(),
+            'kasus_baru'      => (clone $baseQuery)->where('status_saat_ini', 'kasus_baru')->count(),
+            'sedang_diproses' => (clone $baseQuery)->whereIn('status_saat_ini', ['investigasi', 'tindak_lanjut'])->count(),
+            'selesai'         => (clone $baseQuery)->where('status_saat_ini', 'selesai')->count(),
+        ];
+
+        return view('laporan.index', compact('daftarLaporan', 'statistik', 'pengguna'));
+    }
+
+    /* ==================================================================
      | EDIT — Form Edit Draf (Nakes melanjutkan pengisian)
      | =================================================================*/
 

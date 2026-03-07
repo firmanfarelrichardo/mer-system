@@ -230,6 +230,10 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('/laporan/draf', [LaporanController::class, 'draf'])
         ->name('laporan.draf');
 
+    // Riwayat laporan milik pengguna sendiri (digunakan Kepala Ruangan sebagai pelapor).
+    Route::get('/laporan/saya', [LaporanController::class, 'riwayatSaya'])
+        ->name('laporan.riwayat-saya');
+
     Route::post('/laporan', [LaporanController::class, 'simpan'])
         ->name('laporan.simpan');
 
