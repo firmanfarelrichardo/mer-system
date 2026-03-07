@@ -47,6 +47,14 @@ Route::middleware('guest')->group(function (): void {
 });
 
 // -----------------------------------------------------------------------
+// Rute Publik (tidak memerlukan autentikasi)
+// -----------------------------------------------------------------------
+// Bantuan Akses — Dynamic WhatsApp Redirect ke Admin aktif.
+// Bebas dari middleware auth agar dapat diakses oleh pengguna yang lupa sandi.
+Route::get('bantuan-akses', [AuthController::class, 'bantuanLogin'])
+    ->name('auth.bantuan-akses');
+
+// -----------------------------------------------------------------------
 // Rute Terautentikasi (harus sudah masuk)
 // -----------------------------------------------------------------------
 Route::middleware(['auth'])->group(function (): void {
@@ -59,6 +67,21 @@ Route::middleware(['auth'])->group(function (): void {
     Route::post('logout-idle', [AuthController::class, 'logoutIdle'])
         ->name('logout.idle');
 
+    // ----- Ganti Sandi Paksa (Force Change Password) -----
+    // Route ini WAJIB berada DI LUAR middleware force.password.change
+    // agar tidak menyebabkan infinite redirect loop.
+    Route::get('ubah-sandi-wajib', [AuthController::class, 'tampilkanFormGantiSandiPaksa'])
+        ->name('auth.force-change-password');
+
+    Route::post('ubah-sandi-wajib', [AuthController::class, 'prosesGantiSandiPaksa'])
+        ->name('auth.force-change-password.update');
+
+    // -------------------------------------------------------------------
+    // Rute yang dilindungi oleh CheckForcePasswordChange middleware.
+    // Pengguna dengan flag wajib_ganti_sandi=true akan di-redirect
+    // ke halaman ganti sandi paksa sebelum mengakses route di bawah ini.
+    // -------------------------------------------------------------------
+    Route::middleware(['force.password.change'])->group(function (): void {
     // ----- Ganti Peran (eksklusif peneliti) -----
     // Otorisasi dilakukan di dalam controller via abort_unless($pengguna->isPeneliti()).
     // Tidak memerlukan middleware khusus — guard 'auth' sudah mencakup grup ini.
@@ -295,4 +318,6 @@ Route::middleware(['auth'])->group(function (): void {
 
     Route::post('/notifikasi/tandai-semua-dibaca', [NotifikasiController::class, 'tandaiSemuaDibaca'])
         ->name('notifikasi.tandai-semua-dibaca');
+
+    }); // Akhir middleware force.password.change
 });

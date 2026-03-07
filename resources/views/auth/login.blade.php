@@ -179,5 +179,18 @@
             Login
         </button>
 
+        {{-- Bantuan Akses / Lupa Password --}}
+        <div class="mt-3 text-center">
+            <p class="text-[12px] text-slate-400">
+                Lupa kata sandi?
+                <a href="{{ route('auth.bantuan-akses') }}"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="font-semibold text-primary-600 hover:text-primary-500 hover:underline">
+                    Hubungi Admin
+                </a>
+            </p>
+        </div>
+
     </form>
 @endsection

@@ -49,6 +49,7 @@ class Pengguna extends Authenticatable
         'nama_lengkap',
         'kata_sandi',
         'is_aktif',
+        'wajib_ganti_sandi',
         'terakhir_login_pada',
         'jabatan',
         'tanggal_bergabung_unit',
@@ -66,6 +67,7 @@ class Pengguna extends Authenticatable
     {
         return [
             'is_aktif'               => 'boolean',
+            'wajib_ganti_sandi'      => 'boolean',
             'terakhir_login_pada'    => 'datetime',
             'kata_sandi'             => 'hashed',   // Hash otomatis saat di-set (Laravel 10+)
             'tanggal_bergabung_unit' => 'date',

@@ -9,6 +9,7 @@ use App\Models\Pengguna;
 use App\Repositories\PenggunaRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Service Pengguna — logika bisnis manajemen akun pengguna.
@@ -217,6 +218,82 @@ class PenggunaService
     }
 
     /* ------------------------------------------------------------------
+     | Command — Reset Kata Sandi Darurat (Emergency Password Reset)
+     | ----------------------------------------------------------------*/
+
+    /**
+     * Reset sandi pengguna ke sandi acak sementara yang aman secara kriptografi.
+     *
+     * Alur:
+     *  1. Generate sandi acak 8 karakter (huruf besar, kecil, angka, simbol).
+     *  2. Update DB: kata_sandi = hashed, wajib_ganti_sandi = true.
+     *  3. Catat ke audit log.
+     *  4. Return sandi acak (plain text) untuk ditampilkan 1 kali ke Admin.
+     *
+     * @throws \Throwable
+     */
+    public function resetSandiDarurat(int $penggunaId): string
+    {
+        $pengguna = $this->repository->cariBerdasarkanId($penggunaId);
+
+        if (! $pengguna) {
+            throw new \InvalidArgumentException("Pengguna dengan ID {$penggunaId} tidak ditemukan.");
+        }
+
+        return DB::transaction(function () use ($pengguna): string {
+            // Generate sandi acak 8 karakter yang aman secara kriptografi
+            $sandiAcak = $this->generateSandiAcak(8);
+
+            $this->repository->perbarui($pengguna, [
+                'kata_sandi'        => $sandiAcak,
+                'wajib_ganti_sandi' => true,
+            ]);
+
+            $this->auditLog->catat(
+                namaTabel: 'akun.pengguna',
+                aksi:      'EMERGENCY_RESET',
+                idData:    $pengguna->id,
+                dataBaru:  [
+                    'deskripsi' => "Admin mereset kata sandi darurat untuk pengguna ID: {$pengguna->id} ({$pengguna->nama_lengkap})",
+                ],
+            );
+
+            Log::info('Admin melakukan reset sandi darurat.', [
+                'pengguna_id'   => $pengguna->id,
+                'nama_lengkap'  => $pengguna->nama_lengkap,
+            ]);
+
+            return $sandiAcak;
+        });
+    }
+
+    /**
+     * Selesaikan proses ganti sandi paksa setelah emergency reset.
+     *
+     * @throws \InvalidArgumentException
+     * @throws \Throwable
+     */
+    public function selesaikanGantiSandiPaksa(Pengguna $pengguna, string $kataSandiBaru): void
+    {
+        DB::transaction(function () use ($pengguna, $kataSandiBaru): void {
+            $this->repository->perbarui($pengguna, [
+                'kata_sandi'        => $kataSandiBaru,
+                'wajib_ganti_sandi' => false,
+            ]);
+
+            $this->auditLog->catat(
+                namaTabel: 'akun.pengguna',
+                aksi:      'FORCE_CHANGE_PW',
+                idData:    $pengguna->id,
+                dataBaru:  [
+                    'deskripsi' => 'Pengguna berhasil mengganti sandi darurat menjadi permanen',
+                ],
+                idPengguna: $pengguna->id,
+            );
+        });
+    }
+
+    /* ------------------------------------------------------------------
      | Statistik
      | ----------------------------------------------------------------*/
 
@@ -232,5 +309,42 @@ class PenggunaService
             'aktif'    => $this->repository->hitungAktif($tenantId),
             'nonaktif' => $this->repository->hitungNonaktif($tenantId),
         ];
+    }
+
+    /* ------------------------------------------------------------------
+     | Private Helpers
+     | ----------------------------------------------------------------*/
+
+    /**
+     * Generate sandi acak yang aman secara kriptografi.
+     *
+     * Menjamin minimal 1 huruf besar, 1 huruf kecil, 1 angka, 1 simbol,
+     * lalu sisa karakter diisi secara acak dari seluruh pool.
+     */
+    private function generateSandiAcak(int $panjang): string
+    {
+        $hurufBesar = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $hurufKecil = 'abcdefghjkmnpqrstuvwxyz';
+        $angka      = '23456789';
+        $simbol     = '!@#$%&*?';
+
+        // Jamin minimal 1 karakter dari setiap kategori
+        $sandi = [
+            $hurufBesar[random_int(0, strlen($hurufBesar) - 1)],
+            $hurufKecil[random_int(0, strlen($hurufKecil) - 1)],
+            $angka[random_int(0, strlen($angka) - 1)],
+            $simbol[random_int(0, strlen($simbol) - 1)],
+        ];
+
+        // Isi sisa karakter dari gabungan seluruh pool
+        $semuaKarakter = $hurufBesar . $hurufKecil . $angka . $simbol;
+        for ($i = count($sandi); $i < $panjang; $i++) {
+            $sandi[] = $semuaKarakter[random_int(0, strlen($semuaKarakter) - 1)];
+        }
+
+        // Acak urutan agar posisi karakter tidak terprediksi
+        shuffle($sandi);
+
+        return implode('', $sandi);
     }
 }

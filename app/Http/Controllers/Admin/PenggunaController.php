@@ -13,6 +13,7 @@ use App\Models\UnitKerja;
 use App\Services\PenggunaService;
 use App\Support\Paginasi;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -169,21 +170,43 @@ class PenggunaController extends Controller
      | ----------------------------------------------------------------*/
 
     /**
-     * Reset kata sandi pengguna ke nilai default.
+     * Reset kata sandi pengguna secara darurat.
+     *
+     * Generate sandi acak sementara dan set flag wajib_ganti_sandi = true.
+     * Sandi acak dikembalikan sebagai JSON agar dapat ditampilkan 1 kali via SweetAlert/Modal.
      */
-    public function resetKataSandi(int $pengguna): RedirectResponse
+    public function resetKataSandi(int $pengguna): JsonResponse
     {
         $tenantId     = auth()->user()->tenant_id;
         $dataPengguna = $this->penggunaService->cariBerdasarkanId($pengguna);
 
         abort_if(! $dataPengguna || $dataPengguna->tenant_id !== $tenantId, 404);
 
-        // Reset ke nomor induk + '123' sebagai kata sandi default
-        $kataSandiDefault = $dataPengguna->nomor_induk . '123';
-        $this->penggunaService->resetKataSandi($dataPengguna, $kataSandiDefault);
+        try {
+            $sandiAcak = $this->penggunaService->resetSandiDarurat($dataPengguna->id);
 
-        return redirect()
-            ->route('admin.pengguna.index')
-            ->with('sukses', "Kata sandi {$dataPengguna->nama_lengkap} berhasil direset.");
+            // Format nomor WA untuk deep link
+            $nomorWa = null;
+            if ($dataPengguna->nomor_hp) {
+                $nomorBersih = preg_replace('/[^0-9]/', '', $dataPengguna->nomor_hp);
+                if (str_starts_with($nomorBersih, '0')) {
+                    $nomorBersih = '62' . substr($nomorBersih, 1);
+                }
+                $nomorWa = $nomorBersih;
+            }
+
+            return response()->json([
+                'sukses'     => true,
+                'sandi_acak' => $sandiAcak,
+                'nama'       => $dataPengguna->nama_lengkap,
+                'nomor_wa'   => $nomorWa,
+                'pesan'      => "Kata sandi {$dataPengguna->nama_lengkap} berhasil direset.",
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'sukses' => false,
+                'pesan'  => 'Gagal mereset kata sandi. Silakan coba lagi.',
+            ], 500);
+        }
     }
 }
