@@ -7,7 +7,9 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\Pengguna;
+use App\Models\Peran;
 use App\Services\AuditLogService;
+use App\Services\PenggunaService;
 use App\Services\SuspiciousLoginService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -32,6 +34,7 @@ class AuthController extends Controller
     public function __construct(
         private readonly AuditLogService        $auditLog,
         private readonly SuspiciousLoginService $suspiciousLogin,
+        private readonly PenggunaService        $penggunaService,
     ) {}
 
     /* ==================================================================
@@ -300,5 +303,115 @@ class AuthController extends Controller
             $pengguna->memilikiPeran('Nakes')          => route('nakes.dashboard'),
             default                                    => route('dashboard'),
         };
+    }
+
+    /* ==================================================================
+     | BANTUAN AKSES — Dynamic WhatsApp Redirect
+     | ================================================================*/
+
+    /**
+     * Arahkan pengguna yang lupa sandi ke WhatsApp Admin aktif secara dinamis.
+     *
+     * Alur:
+     *  1. Cari 1 Admin aktif yang memiliki nomor telepon.
+     *  2. Sanitasi nomor HP (hapus spasi, strip, ubah awalan ke '62').
+     *  3. Redirect ke wa.me dengan pesan otomatis.
+     *  4. Fallback: kembali ke login jika Admin tidak tersedia.
+     */
+    public function bantuanLogin(): RedirectResponse
+    {
+        // Cari Admin aktif pertama yang memiliki nomor telepon
+        $admin = Pengguna::whereHas('peran', function ($q): void {
+            $q->where('nama_peran', Peran::ADMIN);
+        })
+            ->where('is_aktif', true)
+            ->whereNotNull('nomor_hp')
+            ->where('nomor_hp', '!=', '')
+            ->first();
+
+        if (! $admin) {
+            return redirect()
+                ->route('login')
+                ->with('error', 'Kontak Admin tidak tersedia. Silakan hubungi tim IT.');
+        }
+
+        // Sanitasi nomor HP: hapus karakter non-digit, ubah awalan ke format internasional
+        $nomorBersih = preg_replace('/[^0-9]/', '', $admin->nomor_hp);
+
+        // Ubah awalan '0' → '62', '+62' sudah menjadi '62' setelah strip non-digit
+        if (str_starts_with($nomorBersih, '0')) {
+            $nomorBersih = '62' . substr($nomorBersih, 1);
+        }
+
+        $pesan = urlencode('Halo Admin, saya (Nama/NIP) merupakan staff RSD Ryacudu, memohon bantuan untuk mereset kata sandi MER System saya.');
+
+        return redirect()->away("https://wa.me/{$nomorBersih}?text={$pesan}");
+    }
+
+    /* ==================================================================
+     | GANTI SANDI PAKSA — Tampilkan Formulir
+     | ================================================================*/
+
+    /**
+     * Tampilkan halaman ganti sandi paksa setelah emergency reset.
+     */
+    public function tampilkanFormGantiSandiPaksa()
+    {
+        return view('auth.force-change');
+    }
+
+    /* ==================================================================
+     | GANTI SANDI PAKSA — Proses
+     | ================================================================*/
+
+    /**
+     * Proses penggantian sandi paksa.
+     *
+     * Validasi:
+     *  - kata_sandi_baru: min 8, mengandung huruf besar, kecil, dan angka.
+     *  - kata_sandi_baru_confirmation: harus cocok.
+     *
+     * Setelah berhasil:
+     *  - Hash sandi baru
+     *  - Set wajib_ganti_sandi = false
+     *  - Catat ke audit log
+     *  - Redirect ke dashboard sesuai peran
+     */
+    public function prosesGantiSandiPaksa(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'kata_sandi_baru' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/[a-z]/',      // minimal 1 huruf kecil
+                'regex:/[A-Z]/',      // minimal 1 huruf besar
+                'regex:/[0-9]/',      // minimal 1 angka
+            ],
+        ], [
+            'kata_sandi_baru.required'  => 'Kata sandi baru wajib diisi.',
+            'kata_sandi_baru.min'       => 'Kata sandi baru minimal 8 karakter.',
+            'kata_sandi_baru.confirmed' => 'Konfirmasi kata sandi tidak cocok.',
+            'kata_sandi_baru.regex'     => 'Kata sandi harus mengandung huruf besar, huruf kecil, dan angka.',
+        ]);
+
+        /** @var Pengguna $pengguna */
+        $pengguna = Auth::user();
+
+        $this->penggunaService->selesaikanGantiSandiPaksa(
+            $pengguna,
+            $request->input('kata_sandi_baru'),
+        );
+
+        Log::info('Pengguna berhasil mengganti sandi darurat.', [
+            'pengguna_id' => $pengguna->id,
+        ]);
+
+        $pengguna->load('peran');
+
+        return redirect()
+            ->to($this->tentukanHalamanSesuaiPeran($pengguna))
+            ->with('sukses', 'Kata sandi berhasil diperbarui. Selamat datang kembali!');
     }
 }

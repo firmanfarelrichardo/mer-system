@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CheckForcePasswordChange;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -32,6 +33,14 @@ return Application::configure(basePath: dirname(__DIR__))
                      Request::HEADER_X_FORWARDED_PORT |
                      Request::HEADER_X_FORWARDED_PROTO,
         );
+
+        // -----------------------------------------------------------------
+        // Alias Middleware — deklarasi alias agar dapat dipakai di route
+        // tanpa menulis FQCN penuh.
+        // -----------------------------------------------------------------
+        $middleware->alias([
+            'force.password.change' => CheckForcePasswordChange::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
