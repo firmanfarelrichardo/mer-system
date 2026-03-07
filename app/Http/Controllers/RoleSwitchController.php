@@ -68,8 +68,6 @@ class RoleSwitchController extends Controller
             $request->session()->put('active_role', $peranDipilih);
         }
 
-        // Regenerate agar ID sesi berubah setelah perubahan hak tampil.
-        $request->session()->regenerate(deleteOldSession: false);
 
         return redirect()->route('dashboard');
     }

@@ -133,41 +133,28 @@ class AppServiceProvider extends ServiceProvider
             $pengguna = auth()->user();
 
             // ── Identitas & peran aktif ────────────────────────────────────
-            // isPeneliti()  → apakah ini akun peneliti sementara?
-            // peranAktif()  → peran yang sedang disimulasikan (dari sesi),
-            //                 atau peran DB pertama untuk pengguna biasa.
-            // $peranAktif === null berarti peneliti belum memilih simulasi
-            //                 → tampilkan semua menu (mode penuh).
             $isPeneliti = $pengguna?->isPeneliti() ?? false;
             $peranAktif = $isPeneliti ? session('active_role') : null;
 
             // ── Helper: apakah pengguna "punya" salah satu peran daftar? ──
-            // Tiga kasus:
-            //   1. Peneliti (mode penuh, $peranAktif null) → selalu true.
-            //   2. Peneliti (mode simulasi, $peranAktif diset) → cek $peranAktif.
-            //   3. Pengguna biasa → cek peran DB seperti biasa.
-            $punyaPeran = fn (array $daftar): bool => match (true) {
-                $isPeneliti && $peranAktif === null => true,
-                $isPeneliti && $peranAktif !== null => collect($daftar)->contains($peranAktif),
-                default => $pengguna
+            // memilikiPeran() sudah session-aware untuk peneliti (cek Pengguna::memilikiPeran).
+            // Peneliti mode penuh ($peranAktif === null) → semua seksi ditampilkan.
+            $punyaPeran = fn (array $daftar): bool => ($isPeneliti && $peranAktif === null)
+                || ($pengguna
                     ? collect($daftar)->contains(fn (string $p) => $pengguna->memilikiPeran($p))
-                    : false,
-            };
+                    : false);
 
             // ── Helper: route dashboard sesuai peran aktif ────────────────
+            // memilikiPeran() sudah session-aware, jadi match ini otomatis
+            // mencerminkan peran yang sedang disimulasikan.
             $routeDashboard = match (true) {
-                $isPeneliti && $peranAktif === 'Admin'          => 'admin.dashboard',
-                $isPeneliti && $peranAktif === 'Direktur'       => 'direktur.dashboard',
-                $isPeneliti && $peranAktif === 'Komite'         => 'komite.dashboard',
-                $isPeneliti && $peranAktif === 'Kepala Ruangan' => 'kepala-ruangan.dashboard',
-                $isPeneliti && $peranAktif === 'Nakes'          => 'nakes.dashboard',
-                $isPeneliti                                     => 'admin.dashboard',   // Peneliti mode penuh
-                $pengguna?->memilikiPeran('Direktur')           => 'direktur.dashboard',
-                $pengguna?->memilikiPeran('Admin')              => 'admin.dashboard',
-                $pengguna?->memilikiPeran('Komite')             => 'komite.dashboard',
-                $pengguna?->memilikiPeran('Kepala Ruangan')     => 'kepala-ruangan.dashboard',
-                $pengguna?->memilikiPeran('Nakes')               => 'nakes.dashboard',
-                default                                          => 'dashboard',
+                $pengguna?->memilikiPeran('Direktur')       => 'direktur.dashboard',
+                $pengguna?->memilikiPeran('Admin')          => 'admin.dashboard',
+                $pengguna?->memilikiPeran('Komite')         => 'komite.dashboard',
+                $pengguna?->memilikiPeran('Kepala Ruangan') => 'kepala-ruangan.dashboard',
+                $pengguna?->memilikiPeran('Nakes')          => 'nakes.dashboard',
+                $isPeneliti                                 => 'admin.dashboard',   // mode penuh
+                default                                     => 'dashboard',
             };
 
             $menuUtama = [

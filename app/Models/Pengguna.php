@@ -126,9 +126,22 @@ class Pengguna extends Authenticatable
 
     /**
      * Periksa apakah pengguna memiliki peran tertentu berdasarkan nama.
+     *
+     * Untuk peneliti dalam mode simulasi (session 'active_role' diset):
+     *   → kembalikan true HANYA jika $namaPeran sesuai peran aktif di sesi.
+     *   Ini memastikan semua controller yang sudah ada (DashboardController,
+     *   LaporanController, dll.) otomatis bereaksi terhadap switch peran
+     *   tanpa perlu dimodifikasi satu per satu.
+     *
+     * Untuk peneliti mode penuh (belum memilih simulasi) dan semua pengguna
+     * biasa: cek berdasarkan peran di database.
      */
     public function memilikiPeran(string $namaPeran): bool
     {
+        if ($this->isPeneliti() && session()->has('active_role')) {
+            return session('active_role') === $namaPeran;
+        }
+
         return $this->peran->contains('nama_peran', $namaPeran);
     }
 

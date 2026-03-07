@@ -73,25 +73,17 @@ Route::middleware(['auth'])->group(function (): void {
         /** @var \App\Models\Pengguna $pengguna */
         $pengguna = auth()->user();
 
-        // Untuk peneliti: gunakan peranAktif() agar redirect mengikuti
-        // peran yang sedang disimulasikan via dropdown "Ganti Peran".
-        if ($pengguna->isPeneliti()) {
-            return match ($pengguna->peranAktif()) {
-                'Admin'          => redirect()->route('admin.dashboard'),
-                'Direktur'       => redirect()->route('direktur.dashboard'),
-                'Komite'         => redirect()->route('komite.dashboard'),
-                'Kepala Ruangan' => redirect()->route('kepala-ruangan.dashboard'),
-                'Nakes'          => redirect()->route('nakes.dashboard'),
-                default          => redirect()->route('admin.dashboard'),   // Peneliti (mode penuh)
-            };
-        }
-
+        // memilikiPeran() session-aware untuk peneliti — redirect otomatis
+        // mencerminkan peran yang sedang disimulasikan. Peneliti mode penuh
+        // tidak memiliki active_role di sesi, sehingga memilikiPeran() jatuh
+        // ke cek DB (Peneliti), semua branch false → default admin.dashboard.
         return match (true) {
             $pengguna->memilikiPeran('Admin')           => redirect()->route('admin.dashboard'),
             $pengguna->memilikiPeran('Direktur')        => redirect()->route('direktur.dashboard'),
             $pengguna->memilikiPeran('Komite')          => redirect()->route('komite.dashboard'),
             $pengguna->memilikiPeran('Kepala Ruangan')  => redirect()->route('kepala-ruangan.dashboard'),
             $pengguna->memilikiPeran('Nakes')           => redirect()->route('nakes.dashboard'),
+            $pengguna->isPeneliti()                     => redirect()->route('admin.dashboard'),
             default                                     => redirect()->route('laporan.index'),
         };
     })->name('dashboard');
