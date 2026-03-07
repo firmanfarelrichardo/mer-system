@@ -6,7 +6,9 @@
 |
 | Variabel disuntikkan via View Composer di AppServiceProvider::boot():
 |   $pengguna        — Auth::user()
-|   $punyaPeran      — closure: fn(array) => bool
+|   $punyaPeran      — closure: fn(array) => bool, respects $peranAktif
+|   $isPeneliti      — bool, true jika pengguna adalah auditor/peneliti
+|   $peranAktif      — string|null, peran simulasi aktif (null = mode penuh)
 |   $menuUtama       — menu dashboard (semua peran)
 |   $menuPelaporan   — menu laporan (Nakes / Kepala Ruangan / Komite)
 |   $menuNotifikasi  — menu notifikasi (semua peran)
@@ -50,34 +52,39 @@
          ============================================================ --}}
     <nav class="mt-4 flex-1 space-y-1 overflow-y-auto px-3" aria-label="Menu utama">
 
+        {{-- Peneliti dalam "mode penuh" (tidak sedang menyimulasikan peran tertentu):
+             semua seksi menu ditampilkan tanpa kecuali.
+             Saat peneliti menyimulasikan peran, $isPenelitiPenuh = false
+             dan $punyaPeran() memfilter menu berdasarkan $peranAktif. --}}
+        @php $isPenelitiPenuh = $isPeneliti && $peranAktif === null; @endphp
+
         {{-- === Menu Umum (semua peran) === --}}
         @foreach ($menuUtama as $item)
             @include('layouts.partials.sidebar-item', $item)
         @endforeach
 
-        {{-- === Notifikasi (tepat di bawah Dashboard — bukan Admin/Direktur) === --}}
-        @unless ($punyaPeran(['Admin']))
+        {{-- === Notifikasi (tepat di bawah Dashboard — bukan Admin, kecuali Peneliti) === --}}
+        @if ($isPenelitiPenuh || ! $punyaPeran(['Admin']))
             @foreach ($menuNotifikasi as $item)
                 @include('layouts.partials.sidebar-item', $item)
             @endforeach
-        @endunless
+        @endif
 
-        {{-- === Menu Pelaporan (Nakes / Kepala Ruangan / Komite) === --}}
-        {{-- Tiap item mem-filter dirinya sendiri via kunci 'peran'. --}}
-        @if ($punyaPeran(['Nakes', 'Kepala Ruangan', 'Komite']))
+        {{-- === Menu Pelaporan (Nakes / Kepala Ruangan / Komite / Peneliti) === --}}
+        @if ($isPenelitiPenuh || $punyaPeran(['Nakes', 'Kepala Ruangan', 'Komite']))
             <div class="my-3 border-t border-white/10"></div>
             <p class="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
                 Pelaporan
             </p>
             @foreach ($menuPelaporan as $item)
-                @if (empty($item['peran']) || $punyaPeran($item['peran']))
+                @if ($isPenelitiPenuh || empty($item['peran']) || $punyaPeran($item['peran']))
                     @include('layouts.partials.sidebar-item', $item)
                 @endif
             @endforeach
         @endif
 
-        {{-- === Menu Admin === --}}
-        @if ($punyaPeran(['Admin']))
+        {{-- === Menu Admin (Admin / Peneliti) === --}}
+        @if ($isPenelitiPenuh || $punyaPeran(['Admin']))
             <div class="my-3 border-t border-white/10"></div>
             <p class="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
                 Administrasi
@@ -96,8 +103,8 @@
             @endforeach
         @endif
 
-        {{-- === Menu Direktur (Laporan + Statistik, read-only) === --}}
-        @if ($punyaPeran(['Direktur']))
+        {{-- === Menu Direktur (Laporan + Statistik, read-only / Peneliti) === --}}
+        @if ($isPenelitiPenuh || $punyaPeran(['Direktur']))
             <div class="my-3 border-t border-white/10"></div>
             <p class="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
                 Laporan

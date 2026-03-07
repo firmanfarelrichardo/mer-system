@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\RoleSwitchController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\ProfilController;
@@ -58,6 +59,12 @@ Route::middleware(['auth'])->group(function (): void {
     Route::post('logout-idle', [AuthController::class, 'logoutIdle'])
         ->name('logout.idle');
 
+    // ----- Ganti Peran (eksklusif peneliti) -----
+    // Otorisasi dilakukan di dalam controller via abort_unless($pengguna->isPeneliti()).
+    // Tidak memerlukan middleware khusus — guard 'auth' sudah mencakup grup ini.
+    Route::post('/ganti-peran', [RoleSwitchController::class, 'switch'])
+        ->name('peneliti.ganti-peran');
+
     // ----- Hub Dasbor -----
     // Route 'dashboard' wajib ada: digunakan oleh Laravel's RedirectIfAuthenticated
     // (middleware 'guest') sebagai fallback — mencegah infinite redirect loop.
@@ -65,6 +72,19 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('/dasbor', function () {
         /** @var \App\Models\Pengguna $pengguna */
         $pengguna = auth()->user();
+
+        // Untuk peneliti: gunakan peranAktif() agar redirect mengikuti
+        // peran yang sedang disimulasikan via dropdown "Ganti Peran".
+        if ($pengguna->isPeneliti()) {
+            return match ($pengguna->peranAktif()) {
+                'Admin'          => redirect()->route('admin.dashboard'),
+                'Direktur'       => redirect()->route('direktur.dashboard'),
+                'Komite'         => redirect()->route('komite.dashboard'),
+                'Kepala Ruangan' => redirect()->route('kepala-ruangan.dashboard'),
+                'Nakes'          => redirect()->route('nakes.dashboard'),
+                default          => redirect()->route('admin.dashboard'),   // Peneliti (mode penuh)
+            };
+        }
 
         return match (true) {
             $pengguna->memilikiPeran('Admin')           => redirect()->route('admin.dashboard'),

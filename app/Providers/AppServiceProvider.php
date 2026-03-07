@@ -111,6 +111,20 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // ----------------------------------------------------------------
+        // View Composer: isPeneliti (global)
+        // Flag boolean untuk mengidentifikasi akun peneliti/auditor.
+        // Tersedia di SEMUA view — digunakan oleh sidebar (menu bypass),
+        // tampil.blade.php (bypass anonimitas), dll.
+        // Menggunakan metode model isPeneliti() sebagai satu-satunya
+        // sumber kebenaran — tidak duplikasi logika pengecekan NIP.
+        // ----------------------------------------------------------------
+        View::composer('*', function (\Illuminate\View\View $view): void {
+            $pengguna = auth()->user();
+
+            $view->with('isPeneliti', $pengguna?->isPeneliti() ?? false);
+        });
+
+        // ----------------------------------------------------------------
         // View Composer: Sidebar Navigation
         // Menyuntikkan data menu ke layouts.sidebar agar tidak bergantung
         // pada @php block scope — lebih andal dan mudah diuji.
@@ -118,19 +132,42 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.sidebar', function (\Illuminate\View\View $view): void {
             $pengguna = auth()->user();
 
-            // Helper: cek apakah pengguna punya salah satu peran dari daftar.
-            $punyaPeran = fn (array $daftar): bool => $pengguna
-                ? collect($daftar)->contains(fn (string $p) => $pengguna->memilikiPeran($p))
-                : false;
+            // ── Identitas & peran aktif ────────────────────────────────────
+            // isPeneliti()  → apakah ini akun peneliti sementara?
+            // peranAktif()  → peran yang sedang disimulasikan (dari sesi),
+            //                 atau peran DB pertama untuk pengguna biasa.
+            // $peranAktif === null berarti peneliti belum memilih simulasi
+            //                 → tampilkan semua menu (mode penuh).
+            $isPeneliti = $pengguna?->isPeneliti() ?? false;
+            $peranAktif = $isPeneliti ? session('active_role') : null;
 
-            // Helper: menentukan route dashboard sesuai peran pengguna.
+            // ── Helper: apakah pengguna "punya" salah satu peran daftar? ──
+            // Tiga kasus:
+            //   1. Peneliti (mode penuh, $peranAktif null) → selalu true.
+            //   2. Peneliti (mode simulasi, $peranAktif diset) → cek $peranAktif.
+            //   3. Pengguna biasa → cek peran DB seperti biasa.
+            $punyaPeran = fn (array $daftar): bool => match (true) {
+                $isPeneliti && $peranAktif === null => true,
+                $isPeneliti && $peranAktif !== null => collect($daftar)->contains($peranAktif),
+                default => $pengguna
+                    ? collect($daftar)->contains(fn (string $p) => $pengguna->memilikiPeran($p))
+                    : false,
+            };
+
+            // ── Helper: route dashboard sesuai peran aktif ────────────────
             $routeDashboard = match (true) {
-                $pengguna?->memilikiPeran('Direktur')       => 'direktur.dashboard',
-                $pengguna?->memilikiPeran('Admin')          => 'admin.dashboard',
-                $pengguna?->memilikiPeran('Komite')         => 'komite.dashboard',
-                $pengguna?->memilikiPeran('Kepala Ruangan') => 'kepala-ruangan.dashboard',
-                $pengguna?->memilikiPeran('Nakes')           => 'nakes.dashboard',
-                default                                      => 'dashboard',
+                $isPeneliti && $peranAktif === 'Admin'          => 'admin.dashboard',
+                $isPeneliti && $peranAktif === 'Direktur'       => 'direktur.dashboard',
+                $isPeneliti && $peranAktif === 'Komite'         => 'komite.dashboard',
+                $isPeneliti && $peranAktif === 'Kepala Ruangan' => 'kepala-ruangan.dashboard',
+                $isPeneliti && $peranAktif === 'Nakes'          => 'nakes.dashboard',
+                $isPeneliti                                     => 'admin.dashboard',   // Peneliti mode penuh
+                $pengguna?->memilikiPeran('Direktur')           => 'direktur.dashboard',
+                $pengguna?->memilikiPeran('Admin')              => 'admin.dashboard',
+                $pengguna?->memilikiPeran('Komite')             => 'komite.dashboard',
+                $pengguna?->memilikiPeran('Kepala Ruangan')     => 'kepala-ruangan.dashboard',
+                $pengguna?->memilikiPeran('Nakes')               => 'nakes.dashboard',
+                default                                          => 'dashboard',
             };
 
             $menuUtama = [
@@ -314,6 +351,8 @@ class AppServiceProvider extends ServiceProvider
             $view->with(compact(
                 'pengguna',
                 'punyaPeran',
+                'isPeneliti',
+                'peranAktif',
                 'menuUtama',
                 'menuPelaporan',
                 'menuNotifikasi',

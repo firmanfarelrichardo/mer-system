@@ -172,6 +172,39 @@ class Pengguna extends Authenticatable
         return $jabatan ? "{$jabatan} - {$nama}" : $nama;
     }
 
+    /**
+     * Apakah pengguna ini adalah akun peneliti sementara?
+     *
+     * Cek dilakukan terhadap env PENELITI_NIP — satu-satunya sumber
+     * kebenaran untuk identitas peneliti — bukan terhadap peran database.
+     * Dengan demikian, metode ini tetap benar meski peran database diubah.
+     */
+    public function isPeneliti(): bool
+    {
+        $nipPeneliti = env('PENELITI_NIP');
+
+        return ! empty($nipPeneliti) && $this->nomor_induk === $nipPeneliti;
+    }
+
+    /**
+     * Kembalikan nama peran yang sedang aktif untuk pengguna ini.
+     *
+     * - Untuk peneliti: kembalikan peran yang dipilih via dropdown "Ganti Peran"
+     *   (disimpan di sesi), atau Peran::PENELITI jika belum ada pilihan aktif.
+     * - Untuk pengguna biasa: kembalikan peran pertama dari database.
+     *
+     * Digunakan oleh navbar (label peran), sidebar composer (routing &
+     * filter menu), dan dasbor hub untuk menentukan redirect yang tepat.
+     */
+    public function peranAktif(): string
+    {
+        if ($this->isPeneliti()) {
+            return session('active_role', Peran::PENELITI);
+        }
+
+        return $this->peran->first()?->nama_peran ?? '—';
+    }
+
     /* ------------------------------------------------------------------
      | Override Notifiable: Custom Notification Table
      | -----------------------------------------------------------------

@@ -22,8 +22,8 @@ use Illuminate\Database\Seeder;
  *
  *  Prosedur penghapusan akses setelah penelitian selesai:
  *    1. Hapus baris PENELITI_NIP dari file .env (atau kosongkan nilainya).
- *    2. Jalankan: php artisan db:seed --class=PenelitiSeeder --force
- *       ATAU hapus manual via UI Admin > Manajemen Pengguna.
+ *    2. Hapus manual via UI Admin > Manajemen Pengguna,
+ *       ATAU jalankan query: DELETE FROM akun.pengguna WHERE nomor_induk = '...';
  *    3. Hapus (atau comment-out) blok Gate::before di AppServiceProvider
  *       jika bypass tidak lagi diperlukan.
  *
@@ -33,12 +33,12 @@ use Illuminate\Database\Seeder;
  * ├──────────────────────────┼────────────────────┼────────────────────────────┤
  * │ nomor_induk (username)   │ 198012312005011001 │ NIP dosen pembimbing       │
  * │ kata_sandi (password)    │ Peneliti@2026!     │ Ganti sebelum demo/serah   │
- * │ Peran database           │ Direktur           │ Hanya sebagai fallback UI  │
+ * │ Peran database           │ Peneliti           │ Label UI: "Dosen Peneliti" │
  * └──────────────────────────┴────────────────────┴────────────────────────────┘
  *
- *  Catatan: Peran "Direktur" di atas hanya berfungsi sebagai label UI
- *  dan penentu routing dashboard. Akses sesungguhnya diberikan oleh
- *  Gate::before berdasarkan nomor_induk, bukan oleh peran ini.
+ *  Catatan: Peran "Peneliti" di atas berfungsi sebagai label UI dan penentu
+ *  routing sidebar/dashboard. Akses sesungguhnya diberikan oleh Gate::before
+ *  berdasarkan nomor_induk, bukan oleh peran ini.
  * =====================================================================
  *
  * Cara menjalankan seeder ini secara mandiri:
@@ -55,51 +55,45 @@ class PenelitiSeeder extends Seeder
     public function run(): void
     {
         // ── 1. Ambil tenant default ────────────────────────────────────────
-        // Gunakan firstOrFail() agar seeder gagal dengan pesan jelas jika
-        // OrganisasiSeeder belum dijalankan (mencegah silent data inconsistency).
         $tenant = Organisasi::where('kode_organisasi', 'default')->firstOrFail();
 
-        // ── 2. Ambil peran Direktur untuk keperluan routing dashboard & UI ─
-        // Peneliti mendapatkan akses "Direktur" di UI (monitoring read-only),
-        // namun Gate::before yang sesungguhnya memberikan bypas universal.
-        $peranDirektur = Peran::where([
-            'tenant_id'  => $tenant->id,
-            'nama_peran' => Peran::DIREKTUR,
-        ])->firstOrFail();
+        // ── 2. Buat peran "Peneliti" jika belum ada (idempotent) ──────────
+        // Peran ini hanya digunakan sebagai label UI dan penentu routing.
+        // Akses sesungguhnya diberikan oleh Gate::before di AppServiceProvider.
+        $peranPeneliti = Peran::firstOrCreate(
+            [
+                'tenant_id'  => $tenant->id,
+                'nama_peran' => Peran::PENELITI,
+            ],
+        );
 
         // ── 3. Buat atau perbarui akun peneliti (idempotent) ───────────────
-        // Menggunakan updateOrCreate sehingga aman dijalankan berulang kali,
-        // termasuk saat me-refresh database lingkungan staging.
         $peneliti = Pengguna::updateOrCreate(
-            // Kunci pencarian: nomor_induk unik dalam satu tenant.
             [
                 'tenant_id'   => $tenant->id,
                 'nomor_induk' => self::NIP_PENELITI,
             ],
-            // Nilai yang di-set / di-update.
             [
-                'nama_lengkap' => 'Prof. Dr. Dosen Pembimbing, M.Kes.',
+                'nama_lengkap' => 'Dosen Peneliti',
                 'email'        => 'peneliti.mer@universitas.ac.id',
                 'nomor_hp'     => '08119999001',
                 'alamat'       => 'Kampus Universitas, Gedung Kesehatan',
-                'jabatan'      => 'Peneliti / Dosen Pembimbing',
-                // Kata sandi di-hash otomatis oleh cast 'hashed' pada model Pengguna.
-                // PENTING: Ganti kata sandi ini sebelum deployment ke lingkungan produksi.
+                'jabatan'      => 'Dosen Peneliti',
                 'kata_sandi'   => 'Peneliti@2026!',
                 'is_aktif'     => true,
             ],
         );
 
-        // ── 4. Tetapkan peran Direktur ke akun peneliti ───────────────────
-        // syncWithoutDetaching: menambahkan peran jika belum ada,
-        // tanpa mencabut peran lain yang mungkin sudah ada.
-        $peneliti->peran()->syncWithoutDetaching([$peranDirektur->id]);
+        // ── 4. Tetapkan peran Peneliti ke akun ────────────────────────────
+        // sync() memastikan HANYA peran Peneliti yang terpasang,
+        // menggantikan peran lama (mis. Direktur) jika seeder dijalankan ulang.
+        $peneliti->peran()->sync([$peranPeneliti->id]);
 
         // ── 5. Informasi ke console ────────────────────────────────────────
         $this->command->info('✓ Akun peneliti berhasil dibuat/diperbarui.');
         $this->command->line("  NIP (username) : " . self::NIP_PENELITI);
         $this->command->line("  Nama           : {$peneliti->nama_lengkap}");
-        $this->command->line("  Peran database : Direktur (bypass via Gate::before)");
+        $this->command->line("  Peran database : Peneliti (akses via Gate::before)");
         $this->command->warn('  ⚠  Pastikan PENELITI_NIP=' . self::NIP_PENELITI . ' sudah ada di .env');
         $this->command->warn('  ⚠  Hapus PENELITI_NIP dari .env setelah penelitian selesai.');
     }
