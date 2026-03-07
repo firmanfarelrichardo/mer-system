@@ -126,9 +126,22 @@ class Pengguna extends Authenticatable
 
     /**
      * Periksa apakah pengguna memiliki peran tertentu berdasarkan nama.
+     *
+     * Untuk peneliti dalam mode simulasi (session 'active_role' diset):
+     *   → kembalikan true HANYA jika $namaPeran sesuai peran aktif di sesi.
+     *   Ini memastikan semua controller yang sudah ada (DashboardController,
+     *   LaporanController, dll.) otomatis bereaksi terhadap switch peran
+     *   tanpa perlu dimodifikasi satu per satu.
+     *
+     * Untuk peneliti mode penuh (belum memilih simulasi) dan semua pengguna
+     * biasa: cek berdasarkan peran di database.
      */
     public function memilikiPeran(string $namaPeran): bool
     {
+        if ($this->isPeneliti() && session()->has('active_role')) {
+            return session('active_role') === $namaPeran;
+        }
+
         return $this->peran->contains('nama_peran', $namaPeran);
     }
 
@@ -170,6 +183,39 @@ class Pengguna extends Authenticatable
         $nama    = $this->nama_lengkap ?? '—';
 
         return $jabatan ? "{$jabatan} - {$nama}" : $nama;
+    }
+
+    /**
+     * Apakah pengguna ini adalah akun peneliti sementara?
+     *
+     * Cek dilakukan terhadap env PENELITI_NIP — satu-satunya sumber
+     * kebenaran untuk identitas peneliti — bukan terhadap peran database.
+     * Dengan demikian, metode ini tetap benar meski peran database diubah.
+     */
+    public function isPeneliti(): bool
+    {
+        $nipPeneliti = env('PENELITI_NIP');
+
+        return ! empty($nipPeneliti) && $this->nomor_induk === $nipPeneliti;
+    }
+
+    /**
+     * Kembalikan nama peran yang sedang aktif untuk pengguna ini.
+     *
+     * - Untuk peneliti: kembalikan peran yang dipilih via dropdown "Ganti Peran"
+     *   (disimpan di sesi), atau Peran::PENELITI jika belum ada pilihan aktif.
+     * - Untuk pengguna biasa: kembalikan peran pertama dari database.
+     *
+     * Digunakan oleh navbar (label peran), sidebar composer (routing &
+     * filter menu), dan dasbor hub untuk menentukan redirect yang tepat.
+     */
+    public function peranAktif(): string
+    {
+        if ($this->isPeneliti()) {
+            return session('active_role', Peran::PENELITI);
+        }
+
+        return $this->peran->first()?->nama_peran ?? '—';
     }
 
     /* ------------------------------------------------------------------

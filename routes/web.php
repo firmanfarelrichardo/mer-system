@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\RoleSwitchController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PengaturanController;
 use App\Http\Controllers\ProfilController;
@@ -58,6 +59,12 @@ Route::middleware(['auth'])->group(function (): void {
     Route::post('logout-idle', [AuthController::class, 'logoutIdle'])
         ->name('logout.idle');
 
+    // ----- Ganti Peran (eksklusif peneliti) -----
+    // Otorisasi dilakukan di dalam controller via abort_unless($pengguna->isPeneliti()).
+    // Tidak memerlukan middleware khusus — guard 'auth' sudah mencakup grup ini.
+    Route::post('/ganti-peran', [RoleSwitchController::class, 'switch'])
+        ->name('peneliti.ganti-peran');
+
     // ----- Hub Dasbor -----
     // Route 'dashboard' wajib ada: digunakan oleh Laravel's RedirectIfAuthenticated
     // (middleware 'guest') sebagai fallback — mencegah infinite redirect loop.
@@ -66,12 +73,17 @@ Route::middleware(['auth'])->group(function (): void {
         /** @var \App\Models\Pengguna $pengguna */
         $pengguna = auth()->user();
 
+        // memilikiPeran() session-aware untuk peneliti — redirect otomatis
+        // mencerminkan peran yang sedang disimulasikan. Peneliti mode penuh
+        // tidak memiliki active_role di sesi, sehingga memilikiPeran() jatuh
+        // ke cek DB (Peneliti), semua branch false → default admin.dashboard.
         return match (true) {
             $pengguna->memilikiPeran('Admin')           => redirect()->route('admin.dashboard'),
             $pengguna->memilikiPeran('Direktur')        => redirect()->route('direktur.dashboard'),
             $pengguna->memilikiPeran('Komite')          => redirect()->route('komite.dashboard'),
             $pengguna->memilikiPeran('Kepala Ruangan')  => redirect()->route('kepala-ruangan.dashboard'),
             $pengguna->memilikiPeran('Nakes')           => redirect()->route('nakes.dashboard'),
+            $pengguna->isPeneliti()                     => redirect()->route('admin.dashboard'),
             default                                     => redirect()->route('laporan.index'),
         };
     })->name('dashboard');
@@ -229,6 +241,10 @@ Route::middleware(['auth'])->group(function (): void {
 
     Route::get('/laporan/draf', [LaporanController::class, 'draf'])
         ->name('laporan.draf');
+
+    // Riwayat laporan milik pengguna sendiri (digunakan Kepala Ruangan sebagai pelapor).
+    Route::get('/laporan/saya', [LaporanController::class, 'riwayatSaya'])
+        ->name('laporan.riwayat-saya');
 
     Route::post('/laporan', [LaporanController::class, 'simpan'])
         ->name('laporan.simpan');

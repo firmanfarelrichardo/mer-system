@@ -145,7 +145,7 @@
                     @enderror
                 </div>
 
-                {{-- Peran (multi-checkbox) --}}
+                {{-- Peran (single radio — satu peran per pengguna) --}}
                 <div>
                     <label class="mb-1 block text-sm font-medium text-slate-700">
                         Peran <span class="text-red-500">*</span>
@@ -153,9 +153,9 @@
                     <div class="rounded-lg border border-slate-200 px-3 py-2.5 @error('peran_ids') border-red-300 @enderror">
                         @foreach ($daftarPeran as $peran)
                             <label class="flex items-center gap-2 py-1 text-sm text-slate-700">
-                                <input type="checkbox" name="peran_ids[]" value="{{ $peran->id }}"
-                                       @checked(is_array(old('peran_ids')) && in_array($peran->id, old('peran_ids')))
-                                       class="h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand/50">
+                                <input type="radio" name="peran_ids[]" value="{{ $peran->id }}"
+                                       @checked(old('peran_ids.0') == $peran->id)
+                                       class="h-4 w-4 border-slate-300 text-brand focus:ring-brand/50">
                                 {{ $peran->nama_display }}
                             </label>
                         @endforeach

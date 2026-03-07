@@ -46,6 +46,7 @@ class Peran extends Model
     public const KOMITE          = 'Komite';
     public const ADMIN           = 'Admin';
     public const DIREKTUR        = 'Direktur';
+    public const PENELITI        = 'Peneliti';
 
     /**
      * Peta nama peran internal → label tampilan di UI.
@@ -57,6 +58,7 @@ class Peran extends Model
         'Komite'         => 'Komite',
         'Admin'          => 'Admin',
         'Direktur'       => 'Direktur',
+        'Peneliti'       => 'Dosen Peneliti',
     ];
 
     /* ------------------------------------------------------------------
