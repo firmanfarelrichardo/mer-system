@@ -69,7 +69,9 @@
                         {{ $inisial }}
                     </div>
                     <h2 class="mt-4 text-lg font-semibold text-slate-800">{{ $namaLengkap }}</h2>
-                    <p class="mt-0.5 text-sm text-slate-400">{{ $jabatan !== '—' ? $jabatan : $peranUtama }}</p>
+                    @if ($jabatan !== '—')
+                        <p class="mt-0.5 text-sm text-slate-400">{{ $jabatan }}</p>
+                    @endif
 
                     {{-- Badge peran --}}
                     <div class="mt-3 flex flex-wrap justify-center gap-1.5">
@@ -132,8 +134,12 @@
                         <p class="text-sm font-medium text-slate-800">{{ $namaLengkap }}</p>
                     </div>
                     <div>
-                        <label class="mb-1 block text-xs font-medium text-slate-400">Nomor Induk</label>
+                        <label class="mb-1 block text-xs font-medium text-slate-400">NIP (Nomor Induk)</label>
                         <p class="font-mono text-sm font-medium text-slate-800">{{ $pengguna->nomor_induk }}</p>
+                    </div>
+                    <div>
+                        <label class="mb-1 block text-xs font-medium text-slate-400">Username</label>
+                        <p class="font-mono text-sm font-medium text-slate-800">{{ $pengguna->username ?? '—' }}</p>
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-400">Email</label>
@@ -188,25 +194,7 @@
             </div>
 
             {{-- Statistik khusus peran --}}
-            @if($pengguna->memilikiPeran('Nakes') || $pengguna->memilikiPeran('Kepala Ruangan') || $pengguna->memilikiPeran('Komite'))
-                <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                    <h3 class="mb-4 text-base font-semibold text-slate-800">Ringkasan Aktivitas</h3>
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4 text-center">
-                            <p class="text-2xl font-bold text-brand">{{ $totalLaporanDibuat ?? 5 }}</p>
-                            <p class="mt-0.5 text-xs text-slate-400">Laporan Dibuat</p>
-                        </div>
-                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4 text-center">
-                            <p class="text-2xl font-bold text-amber-500">{{ $laporanDiproses ?? 2 }}</p>
-                            <p class="mt-0.5 text-xs text-slate-400">Sedang Diproses</p>
-                        </div>
-                        <div class="rounded-lg border border-slate-100 bg-slate-50 p-4 text-center">
-                            <p class="text-2xl font-bold text-emerald-500">{{ $laporanSelesai ?? 3 }}</p>
-                            <p class="mt-0.5 text-xs text-slate-400">Selesai</p>
-                        </div>
-                    </div>
-                </div>
-            @endif
+            {{-- Ringkasan Aktivitas dihapus --}}
 
         </div>
     </div>

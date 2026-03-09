@@ -397,7 +397,7 @@ class StatistikController extends Controller
 
         usort($hasilMap, fn ($a, $b) => $b['total'] <=> $a['total']);
 
-        return array_slice($hasilMap, 0, 20);
+        return $hasilMap;
     }
 
     /**

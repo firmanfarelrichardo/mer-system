@@ -34,6 +34,12 @@ class PerbaruiProfilRequest extends FormRequest
 
         return [
             'nama_lengkap'           => ['required', 'string', 'max:255'],
+            'username'               => [
+                'nullable', 'string', 'max:50',
+                'regex:/^[a-zA-Z0-9._-]+$/',
+                Rule::unique(Pengguna::class, 'username')
+                    ->ignore($penggunaId),
+            ],
             'email'                  => [
                 'required', 'email', 'max:255',
                 Rule::unique(Pengguna::class, 'email')
@@ -54,6 +60,9 @@ class PerbaruiProfilRequest extends FormRequest
         return [
             'nama_lengkap.required'          => 'Nama lengkap wajib diisi.',
             'nama_lengkap.max'               => 'Nama lengkap maksimal 255 karakter.',
+            'username.max'                   => 'Username maksimal 50 karakter.',
+            'username.regex'                 => 'Username hanya boleh berisi huruf, angka, titik, strip, dan garis bawah.',
+            'username.unique'                => 'Username sudah digunakan oleh akun lain.',
             'email.required'                 => 'Email wajib diisi.',
             'email.email'                    => 'Format email tidak valid.',
             'email.unique'                   => 'Email sudah digunakan oleh akun lain.',

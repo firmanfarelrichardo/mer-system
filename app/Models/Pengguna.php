@@ -43,6 +43,7 @@ class Pengguna extends Authenticatable
         'tenant_id',
         'unit_id',
         'nomor_induk',
+        'username',
         'email',
         'nomor_hp',
         'alamat',

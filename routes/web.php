@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\LaporanExportController;
 use App\Http\Controllers\RoleSwitchController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\PengaturanController;
@@ -310,6 +311,14 @@ Route::middleware(['auth'])->group(function (): void {
     // Akses: Kepala Ruangan, Komite, Direktur (otorisasi dihandle controller).
     Route::get('/statistik', [StatistikController::class, 'index'])
         ->name('statistik.index');
+
+    // ----- Ekspor Laporan Rekapitulasi (Komite & Direktur) -----
+    Route::get('/laporan/ekspor/rekapitulasi', [LaporanExportController::class, 'exportSummary'])
+        ->name('komite.export.summary');
+
+    // Alias untuk akses Direktur — sama route, cukup satu handler.
+    Route::get('/laporan/ekspor/rekapitulasi-direktur', [LaporanExportController::class, 'exportSummary'])
+        ->name('direktur.export.summary');
     Route::get('/notifikasi/{notifikasi}/baca', [NotifikasiController::class, 'bacaDanArahkan'])
         ->name('notifikasi.baca');
 

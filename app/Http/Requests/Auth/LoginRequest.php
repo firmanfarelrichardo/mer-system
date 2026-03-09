@@ -76,7 +76,7 @@ class LoginRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'nomor_induk' => 'nomor induk',
+            'nomor_induk' => 'NIP / username',
             'kata_sandi'  => 'kata sandi',
             'captcha'     => 'kode captcha',
         ];
@@ -90,8 +90,8 @@ class LoginRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'nomor_induk.required' => 'Nomor induk wajib diisi.',
-            'nomor_induk.max'      => 'Nomor induk maksimal 100 karakter.',
+            'nomor_induk.required' => 'NIP atau username wajib diisi.',
+            'nomor_induk.max'      => 'NIP atau username maksimal 100 karakter.',
             'kata_sandi.required'  => 'Kata sandi wajib diisi.',
             'kata_sandi.min'       => 'Kata sandi minimal 8 karakter.',
             'captcha.required'     => 'Kode captcha wajib diisi.',
@@ -157,7 +157,7 @@ class LoginRequest extends FormRequest
     public function kunciThrottle(): string
     {
         return Str::transliterate(
-            Str::lower($this->string('nomor_induk')) . '|' . $this->ip()
+            'login|' . Str::lower($this->string('nomor_induk')) . '|' . $this->ip()
         );
     }
 }
