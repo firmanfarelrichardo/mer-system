@@ -159,6 +159,7 @@
                         <tr class="border-b border-slate-100 bg-slate-50">
                             <th class="px-5 py-3 font-semibold text-slate-500">Nama</th>
                             <th class="px-5 py-3 font-semibold text-slate-500">NIP</th>
+                            <th class="px-5 py-3 font-semibold text-slate-500">Username</th>
                             <th class="px-5 py-3 font-semibold text-slate-500">Email</th>
                             <th class="px-5 py-3 font-semibold text-slate-500">Peran</th>
                             <th class="px-5 py-3 font-semibold text-slate-500">Unit Kerja</th>
@@ -180,6 +181,9 @@
 
                                 {{-- NIP --}}
                                 <td class="px-5 py-3 font-mono text-xs text-slate-600">{{ $akun->nomor_induk }}</td>
+
+                                {{-- Username --}}
+                                <td class="px-5 py-3 font-mono text-xs text-slate-500">{{ $akun->username ?? '—' }}</td>
 
                                 {{-- Email --}}
                                 <td class="px-5 py-3 text-slate-600">{{ $akun->email }}</td>

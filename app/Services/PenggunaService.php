@@ -108,6 +108,7 @@ class PenggunaService
                 'alamat'       => $dto->alamat,
                 'unit_id'      => $dto->unit_id,
                 'is_aktif'     => $dto->is_aktif,
+                'username'     => $dto->username ?: null,
             ];
 
             // Hanya perbarui kata sandi jika diisi
@@ -148,10 +149,11 @@ class PenggunaService
      */
     public function perbaruiProfil(Pengguna $pengguna, array $data): Pengguna
     {
-        $dataLama = $pengguna->only(['nama_lengkap', 'email', 'nomor_hp', 'jabatan', 'tanggal_bergabung_unit']);
+        $dataLama = $pengguna->only(['nama_lengkap', 'username', 'email', 'nomor_hp', 'jabatan', 'tanggal_bergabung_unit']);
 
         $atribut = [
             'nama_lengkap'           => $data['nama_lengkap'] ?? $pengguna->nama_lengkap,
+            'username'               => $data['username'] ?: null,
             'email'                  => $data['email'] ?? $pengguna->email,
             'nomor_hp'               => $data['nomor_hp'] ?? null,
             'jabatan'                => $data['jabatan'] ?? null,
@@ -165,7 +167,7 @@ class PenggunaService
             aksi:      'UPDATE_PROFIL',
             idData:    $pengguna->id,
             dataLama:  $dataLama,
-            dataBaru:  $pengguna->fresh()->only(['nama_lengkap', 'email', 'nomor_hp', 'jabatan', 'tanggal_bergabung_unit']),
+            dataBaru:  $pengguna->fresh()->only(['nama_lengkap', 'username', 'email', 'nomor_hp', 'jabatan', 'tanggal_bergabung_unit']),
         );
 
         return $pengguna->load('peran', 'unitKerja');

@@ -78,7 +78,9 @@ class AuthController extends Controller
         //    Pendekatan manual dipilih agar aman di lingkungan multi-tenant.
         //    Pada sistem multi-tenant, tambahkan filter tenant_id di sini.
         // ----------------------------------------------------------
-        $pengguna = Pengguna::where('nomor_induk', $permintaan->validated('nomor_induk'))
+        $identifier = $permintaan->validated('nomor_induk');
+        $pengguna = Pengguna::where('nomor_induk', $identifier)
+            ->orWhere('username', $identifier)
             ->first();
 
         // ----------------------------------------------------------
@@ -97,7 +99,7 @@ class AuthController extends Controller
             return back()
                 ->withInput($permintaan->only('nomor_induk'))
                 ->withErrors([
-                    'nomor_induk' => 'Nomor induk atau kata sandi salah.',
+                    'nomor_induk' => 'NIP/username atau kata sandi salah.',
                 ]);
         }
 

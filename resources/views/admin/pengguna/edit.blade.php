@@ -74,7 +74,7 @@
                 {{-- Email --}}
                 <div>
                     <label for="email" class="mb-1 block text-sm font-medium text-slate-700">
-                        Email <span class="text-red-500">*</span>
+                        Email <span class="text-slate-400 font-normal text-xs">(opsional)</span>
                     </label>
                     <input type="email" id="email" name="email"
                            value="{{ old('email', $dataPengguna->email) }}"
@@ -89,7 +89,7 @@
                 {{-- Nomor HP --}}
                 <div>
                     <label for="nomor_hp" class="mb-1 block text-sm font-medium text-slate-700">
-                        Nomor HP <span class="text-red-500">*</span>
+                        Nomor HP <span class="text-slate-400 font-normal text-xs">(opsional)</span>
                     </label>
                     <input type="text" id="nomor_hp" name="nomor_hp"
                            value="{{ old('nomor_hp', $dataPengguna->nomor_hp) }}"
@@ -110,6 +110,23 @@
                            class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm placeholder-slate-400
                                   focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
                     @error('alamat')
+                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Username --}}
+                <div class="sm:col-span-2">
+                    <label for="username" class="mb-1 block text-sm font-medium text-slate-700">
+                        Username <span class="text-slate-400 font-normal text-xs">(opsional)</span>
+                    </label>
+                    <input type="text" id="username" name="username"
+                           value="{{ old('username', $dataPengguna->username) }}"
+                           placeholder="Contoh: budi.santoso"
+                           class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-mono placeholder-slate-400
+                                  focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30
+                                  @error('username') border-red-300 focus:border-red-400 focus:ring-red-200 @enderror">
+                    <p class="mt-1 text-xs text-slate-400">Huruf, angka, titik, atau garis bawah. Maks. 50 karakter. Dapat digunakan untuk login.</p>
+                    @error('username')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
