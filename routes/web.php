@@ -150,6 +150,9 @@ Route::middleware(['auth'])->group(function (): void {
         Route::patch('/pengguna/{pengguna}/reset-sandi', [PenggunaController::class, 'resetKataSandi'])
             ->name('admin.pengguna.reset-sandi');
 
+        Route::patch('/pengguna/{pengguna}/unban-login', [PenggunaController::class, 'unbanLogin'])
+            ->name('admin.pengguna.unban-login');
+
         // ----- Master Unit Kerja -----
         Route::get('/unit-kerja', [UnitKerjaController::class, 'index'])
             ->name('admin.unit-kerja.index');

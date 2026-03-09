@@ -170,6 +170,7 @@
                     </thead>
                     <tbody class="divide-y divide-slate-100">
                         @foreach ($daftarPengguna as $akun)
+                            @php $akunTerblokir = in_array($akun->id, $idPenggunaTerblokir ?? [], true); @endphp
                             <tr class="transition-colors hover:bg-slate-50/50">
                                 {{-- Nama + No. HP --}}
                                 <td class="px-5 py-3">
@@ -206,7 +207,12 @@
 
                                 {{-- Status --}}
                                 <td class="px-5 py-3 text-center">
-                                    @if ($akun->is_aktif)
+                                    @if ($akunTerblokir)
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+                                            Terblokir
+                                        </span>
+                                    @elseif ($akun->is_aktif)
                                         <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
                                             <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
                                             Aktif
@@ -280,6 +286,23 @@
                                                       d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"/>
                                             </svg>
                                         </button>
+
+                                        @if ($akunTerblokir)
+                                            {{-- Unban Login (hanya tampil jika akun terblokir) --}}
+                                            <form method="POST" action="{{ route('admin.pengguna.unban-login', $akun->id) }}"
+                                                  data-confirm="Buka blokir login untuk {{ $akun->nama_lengkap }}?"
+                                                  data-confirm-label="Buka Blokir">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit"
+                                                        title="Buka Blokir Login"
+                                                        class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600">
+                                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 0h10.5A2.25 2.25 0 0 1 19.5 12.75v6A2.25 2.25 0 0 1 17.25 21h-10.5A2.25 2.25 0 0 1 4.5 18.75v-6A2.25 2.25 0 0 1 6.75 10.5Z" />
+                                                    </svg>
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
