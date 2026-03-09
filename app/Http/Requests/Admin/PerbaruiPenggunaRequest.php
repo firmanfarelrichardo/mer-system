@@ -37,14 +37,18 @@ class PerbaruiPenggunaRequest extends FormRequest
                     ->ignore($penggunaId),
             ],
             'email' => [
-                'required', 'email', 'max:255',
+                'nullable', 'email', 'max:255',
                 Rule::unique(Pengguna::class, 'email')
                     ->where('tenant_id', $tenantId)
                     ->ignore($penggunaId),
             ],
-            'nomor_hp'    => ['required', 'string', 'max:20'],
+            'nomor_hp'    => ['nullable', 'string', 'max:20'],
             'alamat'      => ['nullable', 'string', 'max:255'],
             'unit_id'     => ['nullable', 'integer', Rule::exists(UnitKerja::class, 'id')],
+            'username'    => [
+                'nullable', 'string', 'max:50', 'regex:/^[a-zA-Z0-9._-]+$/',
+                Rule::unique(Pengguna::class, 'username')->ignore($penggunaId),
+            ],
             'kata_sandi'  => ['nullable', 'string', 'min:8', 'confirmed'],
             'is_aktif'    => ['sometimes', 'boolean'],
             'peran_ids'   => ['required', 'array', 'size:1'],
@@ -61,14 +65,14 @@ class PerbaruiPenggunaRequest extends FormRequest
             'nama_lengkap.required' => 'Nama lengkap wajib diisi.',
             'nomor_induk.required'  => 'Nomor induk wajib diisi.',
             'nomor_induk.unique'    => 'Nomor induk sudah terdaftar.',
-            'email.required'        => 'Email wajib diisi.',
             'email.email'           => 'Format email tidak valid.',
             'email.unique'          => 'Email sudah terdaftar.',
-            'nomor_hp.required'     => 'Nomor HP wajib diisi.',
             'kata_sandi.min'        => 'Kata sandi minimal 8 karakter.',
             'kata_sandi.confirmed'  => 'Konfirmasi kata sandi tidak cocok.',
             'peran_ids.required'    => 'Peran wajib dipilih.',
             'peran_ids.size'        => 'Hanya boleh memilih satu peran.',
+            'username.regex'        => 'Username hanya boleh menggunakan huruf, angka, titik, atau garis bawah.',
+            'username.unique'       => 'Username sudah digunakan oleh pengguna lain.',
         ];
     }
 }

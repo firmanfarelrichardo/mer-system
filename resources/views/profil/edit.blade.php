@@ -83,7 +83,7 @@
                     </div>
 
                     {{-- Email --}}
-                    <div class="sm:col-span-2">
+                    <div>
                         <label for="email" class="mb-1 block text-sm font-medium text-slate-700">
                             Email <span class="text-red-500">*</span>
                         </label>
@@ -98,11 +98,29 @@
                         @enderror
                     </div>
 
+                    {{-- Username --}}
+                    <div>
+                        <label for="username" class="mb-1 block text-sm font-medium text-slate-700">
+                            Username
+                        </label>
+                        <input type="text" id="username" name="username"
+                               value="{{ old('username', $pengguna->username) }}"
+                               placeholder="Contoh: budi.santoso"
+                               autocomplete="username"
+                               class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm font-mono placeholder-slate-400
+                                      focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30
+                                      @error('username') border-red-300 focus:border-red-400 focus:ring-red-200 @enderror">
+                        <p class="mt-1 text-xs text-slate-400">Huruf, angka, titik, atau garis bawah. Maks. 50 karakter. Dapat digunakan untuk login.</p>
+                        @error('username')
+                            <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                 </div>
             </div>
 
             {{-- ===== INFORMASI PEKERJAAN ===== --}}
-            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 class="mb-1 text-sm font-semibold text-slate-700">Informasi Pekerjaan</h2>
                 <p class="mb-4 text-xs text-slate-400">
                     Unit kerja dikelola oleh administrator.
@@ -156,24 +174,23 @@
                 </div>
             </div>
 
-            {{-- ===== INFORMASI AKUN (read-only) ===== --}}
-            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+            {{-- ===== INFORMASI AKUN (nomor induk read-only) ===== --}}
+            <div class="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 class="mb-1 text-sm font-semibold text-slate-700">Informasi Akun</h2>
-                <p class="mb-4 text-xs text-slate-400">Nomor induk hanya dapat diubah oleh administrator.</p>
+                <p class="mb-4 text-xs text-slate-400">NIP hanya dapat diubah oleh administrator.</p>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label class="mb-1 block text-sm font-medium text-slate-700">Nomor Induk</label>
-                        <div class="flex w-full items-center rounded-lg border border-slate-200 bg-slate-50
-                                    px-3 py-2.5 font-mono text-sm text-slate-500">
-                            {{ $pengguna->nomor_induk }}
-                        </div>
+                <div>
+                    <label class="mb-1 block text-sm font-medium text-slate-700">NIP (Nomor Induk)</label>
+                    <div class="flex w-full items-center rounded-lg border border-slate-200 bg-slate-50
+                                px-3 py-2.5 font-mono text-sm text-slate-500">
+                        {{ $pengguna->nomor_induk }}
                     </div>
+                    <p class="mt-1 text-xs text-slate-400">Hanya dapat diubah oleh Admin.</p>
                 </div>
             </div>
 
             {{-- ===== AKSI ===== --}}
-            <div class="flex items-center justify-end gap-3">
+            <div class="mt-6 flex items-center justify-end gap-3">
                 <a href="{{ route('profil.index') }}"
                    class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium
                           text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 transition-colors">

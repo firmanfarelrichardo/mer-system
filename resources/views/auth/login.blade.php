@@ -11,11 +11,11 @@
     <form method="POST" action="{{ route('login') }}" novalidate class="space-y-5">
         @csrf
 
-        {{-- Nomor Induk --}}
+        {{-- NIP / Username --}}
         <div class="space-y-1.5">
             <label for="nomor_induk"
                    class="block text-[13px] font-semibold text-slate-600">
-                Username
+                NIP / Username
             </label>
             <div class="relative">
                 <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
@@ -32,7 +32,7 @@
                     autocomplete="username"
                     autofocus
                     required
-                    placeholder="Masukkan username"
+                    placeholder="Masukkan NIP atau username"
                     class="w-full rounded-xl border py-2.5 pl-10 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none transition
                            focus:ring-2 focus:ring-primary-600/30
                            {{ $errors->has('nomor_induk')
