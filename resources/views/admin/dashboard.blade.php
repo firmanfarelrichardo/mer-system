@@ -19,47 +19,6 @@
     @endphp
 
     {{-- ================================================================
-         BANNER PENELITI — hanya tampil saat akun peneliti belum memilih
-         simulasi peran (mode penuh). Mengarahkan untuk menggunakan
-         dropdown "Lihat Sebagai" di navbar.
-         ================================================================ --}}
-    @if ($isPeneliti && ! session()->has('active_role'))
-    <div class="mb-6 flex gap-4 rounded-xl border border-indigo-200 bg-indigo-50 p-5">
-        {{-- Ikon mata --}}
-        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
-            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                 stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5
-                         c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49
-                         16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-            </svg>
-        </div>
-        {{-- Teks --}}
-        <div>
-            <p class="text-sm font-semibold text-indigo-800">Mode Peneliti Aktif</p>
-            <p class="mt-1 text-sm text-indigo-700">
-                Anda sedang mengakses sistem sebagai <span class="font-semibold">Dosen Peneliti</span>.
-                Gunakan tombol <span class="inline-flex items-center gap-1 rounded-md border border-indigo-300
-                bg-white px-1.5 py-0.5 text-xs font-semibold text-indigo-700">
-                    <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                         stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                              d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5
-                                 c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49
-                                 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                    </svg>
-                    Lihat Sebagai
-                </span>
-                di sudut kanan atas untuk menjelajahi sistem dari sudut pandang setiap peran pengguna.
-            </p>
-        </div>
-    </div>
-    @endif
-
-    {{-- ================================================================
          HEADER SAPAAN
          ================================================================ --}}
     <div class="mb-6">
