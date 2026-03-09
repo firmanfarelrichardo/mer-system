@@ -149,6 +149,33 @@ class InsidenRepository
     }
 
     /**
+     * Ambil daftar insiden dalam rentang tanggal kejadian untuk laporan rekapitulasi.
+     *
+     * Aturan query:
+     *   - Filter berdasarkan tgl_kejadian (whereBetween).
+     *   - Abaikan status DRAF — hanya laporan yang sudah dikirim.
+     *   - Eager-load relasi untuk mencegah N+1: unitKerja, detailPasien, kategoriKesalahans.
+     *   - Diurutkan ASC berdasarkan tgl_kejadian agar tampil kronologis di PDF.
+     *
+     * @param  int    $tenantId
+     * @param  string $startDate  Format Y-m-d
+     * @param  string $endDate    Format Y-m-d
+     * @return \Illuminate\Database\Eloquent\Collection<int, Insiden>
+     */
+    public function getSummaryByDateRange(int $tenantId, string $startDate, string $endDate): \Illuminate\Database\Eloquent\Collection
+    {
+        return Insiden::with(['unitKerja', 'detailPasien', 'kategoriKesalahans'])
+            ->where('tenant_id', $tenantId)
+            ->where('status_saat_ini', '!=', 'DRAF')
+            ->whereBetween('tgl_kejadian', [
+                $startDate . ' 00:00:00',
+                $endDate   . ' 23:59:59',
+            ])
+            ->orderBy('tgl_kejadian', 'ASC')
+            ->get();
+    }
+
+    /**
      * Ambil satu insiden lengkap untuk cetak PDF.
      *
      * Eager-load semua relasi yang dibutuhkan view PDF agar bebas N+1:
