@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\FaktorPenyebabController;
+use App\Http\Controllers\Peneliti\DashboardController as PenelitiDashboardController;
 use App\Http\Controllers\Admin\IntervensiController;
 use App\Http\Controllers\Admin\JenisKesalahanController;
 use App\Http\Controllers\Admin\KategoriController;
@@ -107,7 +108,7 @@ Route::middleware(['auth'])->group(function (): void {
             $pengguna->memilikiPeran('Komite')          => redirect()->route('komite.dashboard'),
             $pengguna->memilikiPeran('Kepala Ruangan')  => redirect()->route('kepala-ruangan.dashboard'),
             $pengguna->memilikiPeran('Nakes')           => redirect()->route('nakes.dashboard'),
-            $pengguna->isPeneliti()                     => redirect()->route('admin.dashboard'),
+            $pengguna->isPeneliti()                     => redirect()->route('peneliti.dashboard'),
             default                                     => redirect()->route('laporan.index'),
         };
     })->name('dashboard');
@@ -117,6 +118,10 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('/kepala-ruangan/dasbor', [DashboardController::class, 'index'])->name('kepala-ruangan.dashboard');
     Route::get('/komite/dasbor',         [DashboardController::class, 'index'])->name('komite.dashboard');
     Route::get('/direktur/dasbor',       [DashboardController::class, 'index'])->name('direktur.dashboard');
+
+    // ----- Peneliti: Dasbor khusus peneliti -----
+    Route::get('/peneliti/dasbor', [PenelitiDashboardController::class, 'index'])
+        ->name('peneliti.dashboard');
 
     // ----- Admin: Dasbor & Manajemen Pengguna -----
     Route::prefix('admin')->group(function (): void {

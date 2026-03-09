@@ -31,7 +31,7 @@ use Illuminate\Database\Seeder;
  * ┌──────────────────────────┬────────────────────┬────────────────────────────┐
  * │ Field                    │ Nilai              │ Keterangan                 │
  * ├──────────────────────────┼────────────────────┼────────────────────────────┤
- * │ nomor_induk (username)   │ 198012312005011001 │ NIP dosen pembimbing       │
+ * │ nomor_induk (username)   │ dosenpeneliti      │ NIP dosen pembimbing       │
  * │ kata_sandi (password)    │ Peneliti@2026!     │ Ganti sebelum demo/serah   │
  * │ Peran database           │ Peneliti           │ Label UI: "Dosen Peneliti" │
  * └──────────────────────────┴────────────────────┴────────────────────────────┘
@@ -50,7 +50,7 @@ class PenelitiSeeder extends Seeder
      * NIP peneliti — harus sama persis dengan nilai PENELITI_NIP di .env.
      * Didefinisikan di sini sebagai konstanta agar mudah diubah di satu tempat.
      */
-    public const NIP_PENELITI = '198012312005011001';
+    public const NIP_PENELITI = 'dosenpeneliti';
 
     public function run(): void
     {

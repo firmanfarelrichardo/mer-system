@@ -136,7 +136,7 @@
         $hariLabel = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
     @endphp
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p class="mb-4 text-sm font-semibold text-slate-700">Tren Masuk — 7 Hari Terakhir</p>
+        <p class="mb-4 text-sm font-semibold text-slate-700">Laporan Masuk — 7 Hari Terakhir</p>
         <div class="flex items-end justify-between gap-2">
             @for ($i = 6; $i >= 0; $i--)
                 @php
