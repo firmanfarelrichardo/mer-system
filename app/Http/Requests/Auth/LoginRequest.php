@@ -6,6 +6,7 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -16,11 +17,16 @@ use Illuminate\Validation\ValidationException;
  * Langkah keamanan yang diterapkan:
  *  1. Validasi input (format nomor induk, panjang kata sandi).
  *  2. Verifikasi captcha via mews/captcha (aturan `captcha`).
- *  3. Pembatasan percobaan (throttle) — maks. 5 kali per 10 menit
- *     per kombinasi nomor-induk + IP untuk mencegah serangan brute-force.
+ *  3. Pembatasan bertingkat:
+ *     - 3 gagal berturut-turut -> ban sementara 5 menit.
+ *     - Jika kegagalan berlanjut hingga total 5 -> hard-ban dan wajib hubungi admin.
  */
 class LoginRequest extends FormRequest
 {
+     private const BATAS_GAGAL_SEMENTARA = 3;
+     private const DURASI_BAN_SEMENTARA_DETIK = 300; // 5 menit
+     private const BATAS_GAGAL_BAN_ADMIN = 5;
+
     /* ------------------------------------------------------------------
      | Otorisasi
      | -----------------------------------------------------------------
@@ -102,8 +108,11 @@ class LoginRequest extends FormRequest
     /* ------------------------------------------------------------------
      | Pembatasan Percobaan (Rate Limiting)
      | -----------------------------------------------------------------
-     | Memastikan maks. 5 percobaan login per 10 menit per kombinasi
-     | nomor-induk + IP. Jika melebihi batas:
+    | Keamanan bertingkat:
+    | 1) Throttle sementara setelah 3 gagal berturut-turut (5 menit).
+    | 2) Hard-ban setelah total gagal mencapai 5 (hingga admin menangani).
+    |
+    | Jika melebihi batas:
      |   - Peristiwa Lockout ditembakkan (dapat dilistenkan).
      |   - ValidationException dilempar beserta sisa waktu tunggu.
      | ----------------------------------------------------------------*/
@@ -115,7 +124,13 @@ class LoginRequest extends FormRequest
      */
     public function pastikanBelumDibatasi(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->kunciThrottle(), maxAttempts: 5)) {
+        if ($this->isHardBanned()) {
+            throw ValidationException::withMessages([
+                'nomor_induk' => 'Akun Anda diblokir karena terlalu banyak percobaan gagal. Silakan temui admin untuk penanganan lebih lanjut.',
+            ]);
+        }
+
+        if (! RateLimiter::tooManyAttempts($this->kunciThrottle(), maxAttempts: self::BATAS_GAGAL_SEMENTARA)) {
             return;
         }
 
@@ -126,7 +141,7 @@ class LoginRequest extends FormRequest
         $menit = (int) ceil($detik / 60);
 
         throw ValidationException::withMessages([
-            'nomor_induk' => __('Terlalu banyak percobaan masuk. Silakan coba lagi dalam :menit menit.', [
+            'nomor_induk' => __('Anda salah memasukkan NIP/username atau kata sandi sebanyak 3 kali. Silakan coba lagi dalam :menit menit.', [
                 'menit' => $menit,
             ]),
         ]);
@@ -137,9 +152,42 @@ class LoginRequest extends FormRequest
      * Jendela waktu 10 menit (600 detik) — setiap percobaan gagal
      * memperpanjang durasi pemblokiran dari hitungan paling awal.
      */
-    public function tambahHitungGagal(): void
+    /**
+     * Catat kegagalan login dan kembalikan status keamanan terkini.
+     *
+     * @return array{kena_ban_sementara: bool, kena_hard_ban: bool, sisa_menit: int}
+     */
+    public function tambahHitungGagal(): array
     {
-        RateLimiter::hit($this->kunciThrottle(), decaySeconds: 600);
+        RateLimiter::hit($this->kunciThrottle(), decaySeconds: self::DURASI_BAN_SEMENTARA_DETIK);
+
+        $jumlahGagalSementara = RateLimiter::attempts($this->kunciThrottle());
+        $kenaBanSementara = $jumlahGagalSementara >= self::BATAS_GAGAL_SEMENTARA;
+        $sisaMenit = (int) ceil(RateLimiter::availableIn($this->kunciThrottle()) / 60);
+
+        $kunciTotalGagal = $this->kunciTotalGagal();
+        $totalGagal = (int) Cache::increment($kunciTotalGagal);
+
+        if ($totalGagal === 1) {
+            // Pastikan key total gagal tidak kedaluwarsa selama user belum login sukses.
+            Cache::forever($kunciTotalGagal, 1);
+        }
+
+        if ($totalGagal >= self::BATAS_GAGAL_BAN_ADMIN) {
+            Cache::forever($this->kunciHardBan(), true);
+
+            return [
+                'kena_ban_sementara' => true,
+                'kena_hard_ban'      => true,
+                'sisa_menit'         => $sisaMenit,
+            ];
+        }
+
+        return [
+            'kena_ban_sementara' => $kenaBanSementara,
+            'kena_hard_ban'      => false,
+            'sisa_menit'         => $sisaMenit,
+        ];
     }
 
     /**
@@ -148,6 +196,8 @@ class LoginRequest extends FormRequest
     public function hapusThrottle(): void
     {
         RateLimiter::clear($this->kunciThrottle());
+        Cache::forget($this->kunciTotalGagal());
+        Cache::forget($this->kunciHardBan());
     }
 
     /**
@@ -156,8 +206,69 @@ class LoginRequest extends FormRequest
      */
     public function kunciThrottle(): string
     {
-        return Str::transliterate(
-            'login|' . Str::lower($this->string('nomor_induk')) . '|' . $this->ip()
-        );
+        return self::kunciThrottleDariIdentifier((string) $this->string('nomor_induk'));
+    }
+
+    /**
+     * Hapus seluruh status ban/login-failure untuk identifier tertentu.
+     * Digunakan oleh fitur Unban Admin.
+     */
+    public static function resetKeamananLogin(string $identifier): void
+    {
+        RateLimiter::clear(self::kunciThrottleDariIdentifier($identifier));
+        Cache::forget(self::kunciTotalGagalDariIdentifier($identifier));
+        Cache::forget(self::kunciHardBanDariIdentifier($identifier));
+    }
+
+    /**
+     * Cek apakah identifier saat ini berstatus hard-ban.
+     */
+    public static function isHardBannedIdentifier(string $identifier): bool
+    {
+        return (bool) Cache::get(self::kunciHardBanDariIdentifier($identifier), false);
+    }
+
+    /**
+     * Kunci total kegagalan beruntun untuk kombinasi identifier + IP.
+     */
+    private function kunciTotalGagal(): string
+    {
+        return self::kunciTotalGagalDariIdentifier((string) $this->string('nomor_induk'));
+    }
+
+    /**
+     * Kunci hard-ban yang aktif setelah total gagal >= 5.
+     */
+    private function kunciHardBan(): string
+    {
+        return self::kunciHardBanDariIdentifier((string) $this->string('nomor_induk'));
+    }
+
+    /**
+     * Apakah kombinasi identifier + IP ini sudah terkena hard-ban.
+     */
+    private function isHardBanned(): bool
+    {
+        return (bool) Cache::get($this->kunciHardBan(), false);
+    }
+
+    private static function kunciThrottleDariIdentifier(string $identifier): string
+    {
+        return Str::transliterate('login|' . self::normalisasiIdentifier($identifier));
+    }
+
+    private static function kunciTotalGagalDariIdentifier(string $identifier): string
+    {
+        return Str::transliterate('login-total-gagal|' . self::normalisasiIdentifier($identifier));
+    }
+
+    private static function kunciHardBanDariIdentifier(string $identifier): string
+    {
+        return Str::transliterate('login-hard-ban|' . self::normalisasiIdentifier($identifier));
+    }
+
+    private static function normalisasiIdentifier(string $identifier): string
+    {
+        return Str::lower(trim($identifier));
     }
 }

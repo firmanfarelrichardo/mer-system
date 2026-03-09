@@ -69,12 +69,7 @@ class AuthController extends Controller
     public function masuk(LoginRequest $permintaan): RedirectResponse
     {
         // ----------------------------------------------------------
-        // 1. Periksa batas percobaan (lempar ValidationException jika melebihi)
-        // ----------------------------------------------------------
-        $permintaan->pastikanBelumDibatasi();
-
-        // ----------------------------------------------------------
-        // 2. Cari akun berdasarkan nomor_induk.
+        // 1. Cari akun berdasarkan nomor_induk.
         //    Pendekatan manual dipilih agar aman di lingkungan multi-tenant.
         //    Pada sistem multi-tenant, tambahkan filter tenant_id di sini.
         // ----------------------------------------------------------
@@ -84,31 +79,56 @@ class AuthController extends Controller
             ->first();
 
         // ----------------------------------------------------------
-        // 3. Verifikasi keberadaan akun dan kecocokan kata sandi.
-        //    Pesan error digeneralisasi agar tidak mengekspos apakah
-        //    nomor_induk terdaftar atau tidak (mencegah user enumeration).
+        // 2. Jika identifier tidak terdaftar, langsung beri tahu pengguna.
+        //    Tidak menghitung percobaan gagal agar tidak membentuk blokir
+        //    untuk akun yang tidak ada.
         // ----------------------------------------------------------
-        if (! $pengguna || ! Hash::check($permintaan->validated('kata_sandi'), $pengguna->kata_sandi)) {
-            $permintaan->tambahHitungGagal();
-
-            Log::warning('Percobaan masuk gagal: kredensial tidak valid.', [
-                'nomor_induk' => $permintaan->validated('nomor_induk'),
+        if (! $pengguna) {
+            Log::warning('Percobaan masuk gagal: identifier tidak terdaftar.', [
+                'nomor_induk' => $identifier,
                 'ip'          => $permintaan->ip(),
             ]);
 
             return back()
                 ->withInput($permintaan->only('nomor_induk'))
                 ->withErrors([
-                    'nomor_induk' => 'NIP/username atau kata sandi salah.',
+                    'nomor_induk' => 'NIP/username yang Anda masukkan tidak terdaftar.',
                 ]);
         }
 
         // ----------------------------------------------------------
-        // 4. Cek status aktif — akun nonaktif langsung ditolak.
+        // 3. Periksa batas percobaan (lempar ValidationException jika melebihi)
+        // ----------------------------------------------------------
+        $permintaan->pastikanBelumDibatasi();
+
+        // ----------------------------------------------------------
+        // 4. Verifikasi kecocokan kata sandi.
+        // ----------------------------------------------------------
+        if (! Hash::check($permintaan->validated('kata_sandi'), $pengguna->kata_sandi)) {
+            $statusKeamanan = $permintaan->tambahHitungGagal();
+
+            Log::warning('Percobaan masuk gagal: kredensial tidak valid.', [
+                'nomor_induk' => $pengguna->nomor_induk,
+                'ip'          => $permintaan->ip(),
+            ]);
+
+            return back()
+                ->withInput($permintaan->only('nomor_induk'))
+                ->withErrors([
+                    'nomor_induk' => $statusKeamanan['kena_hard_ban']
+                        ? 'Akun Anda diblokir karena terlalu banyak percobaan gagal. Silakan temui admin untuk penanganan lebih lanjut.'
+                        : ($statusKeamanan['kena_ban_sementara']
+                            ? "Anda salah memasukkan NIP/username atau kata sandi sebanyak 3 kali. Silakan coba lagi dalam {$statusKeamanan['sisa_menit']} menit."
+                            : 'Kata sandi yang Anda masukkan salah.'),
+                ]);
+        }
+
+        // ----------------------------------------------------------
+        // 5. Cek status aktif — akun nonaktif langsung ditolak.
         //    Throttle tetap dihitung agar tidak menjadi celah enumerasi akun.
         // ----------------------------------------------------------
         if (! $pengguna->is_aktif) {
-            $permintaan->tambahHitungGagal();
+            $statusKeamanan = $permintaan->tambahHitungGagal();
 
             Log::notice('Percobaan masuk ditolak: akun tidak aktif.', [
                 'pengguna_id' => $pengguna->id,
@@ -118,12 +138,16 @@ class AuthController extends Controller
             return back()
                 ->withInput($permintaan->only('nomor_induk'))
                 ->withErrors([
-                    'nomor_induk' => 'Akun Anda tidak aktif. Silakan hubungi administrator.',
+                    'nomor_induk' => $statusKeamanan['kena_hard_ban']
+                        ? 'Akun Anda diblokir karena terlalu banyak percobaan gagal. Silakan temui admin untuk penanganan lebih lanjut.'
+                        : ($statusKeamanan['kena_ban_sementara']
+                            ? "Anda salah memasukkan NIP/username atau kata sandi sebanyak 3 kali. Silakan coba lagi dalam {$statusKeamanan['sisa_menit']} menit."
+                            : 'Akun Anda tidak aktif. Silakan hubungi administrator.'),
                 ]);
         }
 
         // ----------------------------------------------------------
-        // 5. Masukkan pengguna ke sesi.
+        // 6. Masukkan pengguna ke sesi.
         //    session()->regenerate() mengganti ID sesi — mencegah serangan
         //    session fixation dari sesi yang dibuat sebelum login.
         // ----------------------------------------------------------
@@ -131,12 +155,12 @@ class AuthController extends Controller
         $permintaan->session()->regenerate();
 
         // ----------------------------------------------------------
-        // 6. Hapus catatan throttle setelah masuk berhasil.
+        // 7. Hapus catatan throttle setelah masuk berhasil.
         // ----------------------------------------------------------
         $permintaan->hapusThrottle();
 
         // ----------------------------------------------------------
-        // 7. Perbarui timestamp terakhir masuk untuk keperluan audit.
+        // 8. Perbarui timestamp terakhir masuk untuk keperluan audit.
         //    updateQuietly agar tidak memicu event/observer model.
         // ----------------------------------------------------------
         $pengguna->updateQuietly([
@@ -144,7 +168,7 @@ class AuthController extends Controller
         ]);
 
         // ----------------------------------------------------------
-        // 8. Muat peran dan tentukan halaman tujuan berdasarkan peran.
+        // 9. Muat peran dan tentukan halaman tujuan berdasarkan peran.
         // ----------------------------------------------------------
         $pengguna->load('peran');
 
@@ -156,7 +180,7 @@ class AuthController extends Controller
         ]);
 
         // ----------------------------------------------------------
-        // 9. Catat event LOGIN ke audit trail.
+        // 10. Catat event LOGIN ke audit trail.
         // ----------------------------------------------------------
         $this->auditLog->catat(
             namaTabel:  'akun.pengguna',
@@ -166,7 +190,7 @@ class AuthController extends Controller
         );
 
         // ----------------------------------------------------------
-        // 10. Deteksi login mencurigakan (IP baru, jam aneh, dsb.).
+        // 11. Deteksi login mencurigakan (IP baru, jam aneh, dsb.).
         //     Skor >= 61 dicatat sebagai warning untuk investigasi admin.
         // ----------------------------------------------------------
         $risikoLogin = $this->suspiciousLogin->periksa(

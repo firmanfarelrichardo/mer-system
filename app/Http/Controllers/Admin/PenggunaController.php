@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\DataTransferObjects\PenggunaData;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Admin\PerbaruiPenggunaRequest;
 use App\Http\Requests\Admin\SimpanPenggunaRequest;
 use App\Models\Peran;
@@ -55,11 +56,24 @@ class PenggunaController extends Controller
         $daftarPeran    = Peran::where('tenant_id', $tenantId)->orderBy('nama_peran')->get();
         $daftarUnit     = UnitKerja::where('tenant_id', $tenantId)->orderBy('nama_unit')->get();
 
+        $idPenggunaTerblokir = collect($daftarPengguna->items())
+            ->filter(function ($akun): bool {
+                $terblokirByNip = LoginRequest::isHardBannedIdentifier((string) $akun->nomor_induk);
+                $terblokirByUsername = ! empty($akun->username)
+                    ? LoginRequest::isHardBannedIdentifier((string) $akun->username)
+                    : false;
+
+                return $terblokirByNip || $terblokirByUsername;
+            })
+            ->pluck('id')
+            ->all();
+
         return view('admin.pengguna.index', compact(
             'daftarPengguna',
             'daftarPeran',
             'daftarUnit',
             'filter',
+            'idPenggunaTerblokir',
         ));
     }
 
@@ -208,5 +222,31 @@ class PenggunaController extends Controller
                 'pesan'  => 'Gagal mereset kata sandi. Silakan coba lagi.',
             ], 500);
         }
+    }
+
+    /* ------------------------------------------------------------------
+     | UNBAN LOGIN
+     | ----------------------------------------------------------------*/
+
+    /**
+     * Hapus status ban login (sementara/hard-ban) untuk akun pengguna.
+     */
+    public function unbanLogin(int $pengguna): RedirectResponse
+    {
+        $tenantId     = auth()->user()->tenant_id;
+        $dataPengguna = $this->penggunaService->cariBerdasarkanId($pengguna);
+
+        abort_if(! $dataPengguna || $dataPengguna->tenant_id !== $tenantId, 404);
+
+        // Reset berdasarkan NIP dan username karena form login menerima keduanya.
+        LoginRequest::resetKeamananLogin((string) $dataPengguna->nomor_induk);
+
+        if (! empty($dataPengguna->username)) {
+            LoginRequest::resetKeamananLogin((string) $dataPengguna->username);
+        }
+
+        return redirect()
+            ->route('admin.pengguna.index')
+            ->with('sukses', "Status ban login untuk {$dataPengguna->nama_lengkap} berhasil dibuka.");
     }
 }
