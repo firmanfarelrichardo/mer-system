@@ -72,8 +72,8 @@
             @endforeach
         @endif
 
-        {{-- === Menu Pelaporan (Nakes / Kepala Ruangan / Komite) === --}}
-        @if (! $isPenelitiPenuh && $punyaPeran(['Nakes', 'Kepala Ruangan', 'Komite']))
+        {{-- === Menu Pelaporan (Admin / Nakes / Kepala Ruangan / Komite) === --}}
+        @if (! $isPenelitiPenuh && $punyaPeran(['Admin', 'Nakes', 'Kepala Ruangan', 'Komite']))
             <div class="my-3 border-t border-white/10"></div>
             <p class="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-white/40">
                 Pelaporan

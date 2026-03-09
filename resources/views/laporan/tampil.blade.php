@@ -18,6 +18,10 @@
 
 @section('konten')
 
+    @php
+        $isAdmin = $pengguna->memilikiPeran(\App\Models\Peran::ADMIN);
+    @endphp
+
     {{-- ================================================================
          HEADER HALAMAN
          ================================================================ --}}
@@ -97,15 +101,15 @@
                 </svg>
                 Informasi Pelapor
             </h2>
-            @if ($insiden->is_anonim && ! $isPeneliti)
+            @if ($insiden->is_anonim && ! $isAdmin)
                 <p class="text-sm italic text-slate-400">Pelapor memilih untuk melapor secara anonim.</p>
             @else
                 <div class="grid grid-cols-1 gap-y-3 sm:grid-cols-3 sm:gap-x-6">
                     <div>
                         <p class="text-xs font-medium text-slate-400">Nama Pelapor</p>
                         <p class="mt-0.5 text-sm font-medium text-slate-800">
-                            {{ $insiden->nama_pelapor ?? $insiden->pelapor?->nama_lengkap ?? '—' }}
-                            @if ($insiden->is_anonim && $isPeneliti)
+                            {{ blank($insiden->nama_pelapor) ? ($insiden->pelapor?->nama_lengkap ?? '—') : $insiden->nama_pelapor }}
+                            @if ($insiden->is_anonim && $isAdmin)
                                 <span class="ml-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                                     Disembunyikan: Anonim
                                 </span>
@@ -309,7 +313,7 @@
                             </span>
                             <span class="text-xs text-slate-400">
                                 oleh <span class="font-medium text-slate-600">
-                                    @if ($insiden->is_anonim && $isPeneliti)
+                                    @if ($insiden->is_anonim && $isAdmin)
                                         {{ $insiden->pelapor?->labelPelapor() ?? '—' }}
                                         <span class="ml-1 inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">Anonim</span>
                                     @else

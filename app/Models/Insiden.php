@@ -155,8 +155,12 @@ class Insiden extends Model
         // Selalu batasi ke tenant pengguna (multi-tenant safety).
         $query->where($this->qualifyColumn('tenant_id'), $pengguna->tenant_id);
 
-        // Komite & Direktur: lihat SEMUA laporan dalam tenant (kecuali DRAF milik Nakes lain).
-        if ($pengguna->memilikiPeran(Peran::KOMITE) || $pengguna->memilikiPeran(Peran::DIREKTUR)) {
+        // Admin, Komite, dan Direktur: lihat SEMUA laporan tenant (kecuali DRAF).
+        if (
+            $pengguna->memilikiPeran(Peran::ADMIN)
+            || $pengguna->memilikiPeran(Peran::KOMITE)
+            || $pengguna->memilikiPeran(Peran::DIREKTUR)
+        ) {
             return $query->where($this->qualifyColumn('status_saat_ini'), '!=', 'DRAF');
         }
 
@@ -172,11 +176,6 @@ class Insiden extends Model
                 $q->where($this->qualifyColumn('unit_id'), $pengguna->unit_id)
                   ->orWhere($this->qualifyColumn('nama_unit_kerja'), $pengguna->unitKerja?->nama_unit);
             });
-            return $query->where($this->qualifyColumn('status_saat_ini'), '!=', 'DRAF')
-                ->where(function (Builder $q) use ($pengguna) {
-                    $q->where($this->qualifyColumn('unit_id'), $pengguna->unit_id)
-                      ->orWhere($this->qualifyColumn('nama_unit_kerja'), $pengguna->unitKerja?->nama_unit);
-                });
         }
 
         // Nakes (default): hanya insiden yang ia buat.
