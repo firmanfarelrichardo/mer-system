@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -116,6 +117,19 @@ class Insiden extends Model
     {
         return $this->hasMany(TindakLanjut::class, 'insiden_id')
             ->latest('created_at');
+    }
+
+    /**
+     * Kategori kesalahan yang terkait dengan insiden ini (pivot: pelaporan.insiden_kategori).
+     */
+    public function kategoriKesalahans(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            KategoriKesalahan::class,
+            'pelaporan.insiden_kategori',
+            'insiden_id',
+            'kategori_id',
+        );
     }
 
     /* ------------------------------------------------------------------

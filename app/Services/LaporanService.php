@@ -253,4 +253,45 @@ class LaporanService
 
         return $pdf;
     }
+
+    /**
+     * Generate PDF rekapitulasi laporan insiden berdasarkan rentang tanggal.
+     *
+     * - Hanya insiden yang sudah dikirim (bukan DRAF).
+     * - Orientasi kertas: portrait (default) atau landscape — dikendalikan
+     *   oleh parameter $orientation agar hasilnya fleksibel.
+     * - Jika tidak ada data pada rentang tersebut, abort 404.
+     *
+     * @param  int    $tenantId
+     * @param  string $startDate   Format Y-m-d
+     * @param  string $endDate     Format Y-m-d
+     * @param  string $orientation 'portrait' | 'landscape'
+     * @return \Barryvdh\DomPDF\PDF
+     */
+    public function generateSummaryPdf(
+        int    $tenantId,
+        string $startDate,
+        string $endDate,
+        string $orientation = 'portrait',
+    ): \Barryvdh\DomPDF\PDF {
+        $insidensCollection = $this->repository->getSummaryByDateRange($tenantId, $startDate, $endDate);
+
+        if ($insidensCollection->isEmpty()) {
+            abort(404, 'Tidak ada data insiden pada rentang waktu tersebut.');
+        }
+
+        $pdf = Pdf::loadView('laporan.summary-pdf', [
+            'insidens'    => $insidensCollection,
+            'startDate'   => $startDate,
+            'endDate'     => $endDate,
+            'orientation' => $orientation,
+        ])
+            ->setPaper('A4', $orientation)
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('defaultFont', 'Times New Roman')
+            ->setOption('dpi', 150)
+            ->setOption('isPhpEnabled', true);
+
+        return $pdf;
+    }
 }
