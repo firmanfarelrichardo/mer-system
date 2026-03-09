@@ -8,13 +8,11 @@ return [
     'disable' => env('CAPTCHA_DISABLE', false),
 
     'characters' => [
-        // Huruf kapital — dihilangkan yang mudah tertukar: I, O
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N',
-        'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        // Huruf kecil — dihilangkan yang mudah tertukar: i, l, o
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j', 'k', 'm', 'n',
-        'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-        // Angka — dihilangkan yang mudah tertukar: 0, 1
+        // Hanya huruf kecil + angka agar mudah dibaca (tanpa huruf besar).
+        // Huruf ambigu/berisiko terpotong dihapus: i, j, l, o, g, q, y.
+        // Angka ambigu dihapus: 0, 1.
+        'a', 'b', 'c', 'd', 'e', 'f', 'h', 'k', 'm', 'n',
+        'p', 'r', 's', 't', 'u', 'v', 'w', 'x', 'z',
         2, 3, 4, 5, 6, 7, 8, 9,
     ],
 
@@ -26,14 +24,16 @@ return [
     'bgsDirectory'   => base_path('vendor/mews/captcha/assets/backgrounds'),
     'default' => [
         'length'     => 4,
-        'width'      => 200,
-        'height'     => 60,
+        // Kanvas diperbesar agar glyph tetap utuh pada berbagai font metrics.
+        'width'      => 220,
+        'height'     => 84,
         'quality'    => 100,
         'math'       => false,
         'expire'     => 60,
         'encrypt'    => false,
-        'angle'      => 6,
-        'lines'      => 2,
+        // Distorsi/noise diperkecil agar captcha tetap aman namun mudah dibaca.
+        'angle'      => 0,
+        'lines'      => 0,
         'bgImage'    => false,
         'bgColor'    => '#f0f4ff',
         'fontColors' => ['#1a237e', '#b71c1c', '#1b5e20', '#e65100', '#4a148c', '#006064'],

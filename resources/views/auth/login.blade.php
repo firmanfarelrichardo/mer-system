@@ -125,7 +125,7 @@
                         {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }}">
 
                 {{-- Kiri: gambar captcha — 60% lebar kartu, tinggi tetap 60px --}}
-                <div class="w-[60%] shrink-0 border-r
+                <div class="flex w-[60%] shrink-0 items-center justify-center border-r p-2
                             {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }} bg-white">
                     <img
                         id="gambar-captcha"
@@ -133,8 +133,7 @@
                         alt="Kode keamanan captcha"
                         title="Klik untuk memperbarui kode"
                         onclick="this.src='{{ url('captcha/default') }}?'+Date.now()"
-                        class="block w-full cursor-pointer"
-                        style="height:60px;object-fit:fill;"
+                        class="block h-[84px] w-full cursor-pointer object-contain object-center"
                     >
                 </div>
 
