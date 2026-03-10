@@ -425,12 +425,12 @@
                                  4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125
                                  0 0 1-1.125-1.125V4.125Z" />
                     </svg>
-                    Eskalasi ke Direktur
+                    Meminta Feedback Direktur
                 </h2>
 
                 @if ($insiden->is_eskalasi_direktur)
                     <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-                        <strong>Status:</strong> Laporan ini sudah dieskalasikan ke Direktur untuk memohon arahan/kebijakan eksekutif.
+                        <strong>Status:</strong> Laporan ini sudah diteruskan ke Direktur untuk memohon feedback.
                     </div>
                 @endif
 
@@ -448,7 +448,7 @@
                                  viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                             </svg>
-                            Batalkan Eskalasi
+                            Batalkan Permintaan
                         </button>
                     @else
                         <button type="submit"
@@ -554,7 +554,7 @@
                                  0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563
                                  0 0 0 .475-.345L11.48 3.5Z" />
                     </svg>
-                    Instruksi Eksekutif — Arahan Direktur
+                    Feedback
                 </h2>
                 <div class="rounded-lg border border-amber-200 bg-white p-4">
                     <p class="whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ $insiden->solusi_direktur }}</p>
