@@ -9,9 +9,12 @@ use App\Events\InsidenStatusBerubah;
 use App\Http\Requests\SimpanLaporanRequest;
 use App\Models\DetailPasien;
 use App\Models\Insiden;
+use App\Models\Pengguna;
 use App\Models\Peran;
 use App\Models\TindakLanjut;
+use App\Notifications\InsidenNotifikasi;
 use App\Repositories\InsidenRepository;
+use Illuminate\Support\Facades\Notification;
 use App\Services\FaktorPenyebabService;
 use App\Services\IntervensiService;
 use App\Services\JenisKesalahanService;
@@ -459,5 +462,81 @@ class LaporanController extends Controller
         $namaFile = 'Laporan-Insiden-' . str_replace('/', '-', $insiden->nomor_laporan) . '.pdf';
 
         return $pdf->stream($namaFile);
+    }
+
+    /* ==================================================================
+     | ESKALASI KE DIREKTUR — Toggle Eskalasi (Komite Only)
+     | =================================================================*/
+
+    /**
+     * Toggle status eskalasi laporan ke Direktur.
+     *
+     * Dilindungi oleh InsidenPolicy@eskalasi — hanya Komite yang diizinkan.
+     */
+    public function eskalasi(Request $permintaan, string $laporan): RedirectResponse
+    {
+        $insiden = Insiden::findOrFail($laporan);
+
+        $this->authorize('eskalasi', $insiden);
+
+        $aktifkan = ! $insiden->is_eskalasi_direktur;
+
+        $insiden->update(['is_eskalasi_direktur' => $aktifkan]);
+
+        // Kirim notifikasi ke semua Direktur aktif di tenant saat laporan dieskalasikan.
+        if ($aktifkan) {
+            $direktur = Pengguna::where('tenant_id', $insiden->tenant_id)
+                ->where('is_aktif', true)
+                ->whereHas('peran', fn ($q) => $q->where('nama_peran', Peran::DIREKTUR))
+                ->get();
+
+            if ($direktur->isNotEmpty()) {
+                Notification::send($direktur, new InsidenNotifikasi(
+                    insiden:   $insiden,
+                    judul:     'Eskalasi — Butuh Arahan Eksekutif',
+                    pesan:     "Laporan insiden {$insiden->nomor_laporan} ({$insiden->labelTipeInsiden()}) membutuhkan arahan/kebijakan eksekutif Direktur. Komite telah mengeskalasikan laporan ini kepada Anda.",
+                    tipe:      'tindakan',
+                    ikonWarna: 'bg-amber-50 text-amber-500',
+                ));
+            }
+        }
+
+        $pesan = $aktifkan
+            ? 'Laporan berhasil dieskalasikan ke Direktur.'
+            : 'Eskalasi ke Direktur telah dibatalkan.';
+
+        return back()->with('sukses', $pesan);
+    }
+
+    /* ==================================================================
+     | SOLUSI DIREKTUR — Arahan / Feedback Eksekutif (Direktur Only)
+     | =================================================================*/
+
+    /**
+     * Simpan arahan/solusi eksekutif dari Direktur.
+     *
+     * Dilindungi oleh InsidenPolicy@solusiDirektur — hanya Direktur yang
+     * diizinkan, dan HANYA jika laporan sudah dieskalasikan oleh Komite.
+     */
+    public function solusiDirektur(Request $permintaan, string $laporan): RedirectResponse
+    {
+        $insiden = Insiden::findOrFail($laporan);
+
+        $this->authorize('solusiDirektur', $insiden);
+
+        $data = $permintaan->validate([
+            'solusi_direktur' => ['required', 'string', 'min:10', 'max:5000'],
+        ], [
+            'solusi_direktur.required' => 'Arahan/solusi Direktur wajib diisi.',
+            'solusi_direktur.min'      => 'Arahan/solusi minimal 10 karakter.',
+            'solusi_direktur.max'      => 'Arahan/solusi maksimal 5000 karakter.',
+        ]);
+
+        $insiden->update([
+            'solusi_direktur'       => $data['solusi_direktur'],
+            'waktu_solusi_direktur' => now(),
+        ]);
+
+        return back()->with('sukses', 'Arahan Direktur berhasil disimpan.');
     }
 }

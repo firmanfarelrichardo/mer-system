@@ -103,4 +103,42 @@ class InsidenPolicy
             || $pengguna->memilikiPeran(Peran::KOMITE)
             || $pengguna->memilikiPeran(Peran::ADMIN);
     }
+
+    /* ------------------------------------------------------------------
+     | Eskalasi ke Direktur
+     | -----------------------------------------------------------------
+     | HANYA Komite yang boleh mengaktifkan eskalasi ke Direktur.
+     | ----------------------------------------------------------------*/
+
+    /**
+     * Apakah pengguna (Komite) boleh mengubah status eskalasi laporan?
+     */
+    public function eskalasi(Pengguna $pengguna, Insiden $insiden): bool
+    {
+        if ($pengguna->tenant_id !== $insiden->tenant_id) {
+            return false;
+        }
+
+        return $pengguna->memilikiPeran(Peran::KOMITE);
+    }
+
+    /* ------------------------------------------------------------------
+     | Solusi Direktur
+     | -----------------------------------------------------------------
+     | HANYA Direktur yang boleh mengisi solusi, dan HANYA jika laporan
+     | sudah dieskalasikan oleh Komite.
+     | ----------------------------------------------------------------*/
+
+    /**
+     * Apakah pengguna (Direktur) boleh mengisi arahan/solusi eksekutif?
+     */
+    public function solusiDirektur(Pengguna $pengguna, Insiden $insiden): bool
+    {
+        if ($pengguna->tenant_id !== $insiden->tenant_id) {
+            return false;
+        }
+
+        return $pengguna->memilikiPeran(Peran::DIREKTUR)
+            && $insiden->is_eskalasi_direktur;
+    }
 }

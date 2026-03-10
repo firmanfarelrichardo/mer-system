@@ -23,11 +23,25 @@
 
 @section('konten')
 
+    @php
+        $judulHalaman = match(true) {
+            request()->routeIs('laporan.riwayat-saya')
+                => 'Riwayat Laporan Saya',
+            $pengguna->memilikiPeran(\App\Models\Peran::DIREKTUR)
+                || $pengguna->memilikiPeran(\App\Models\Peran::ADMIN)
+                => 'Semua Laporan',
+            $pengguna->memilikiPeran(\App\Models\Peran::KEPALA_RUANGAN)
+                || $pengguna->memilikiPeran(\App\Models\Peran::KOMITE)
+                => 'Laporan Masuk',
+            default => 'Riwayat Laporan',
+        };
+    @endphp
+
     {{-- ================================================================
          HEADER HALAMAN
          ================================================================ --}}
     <div class="mb-6">
-        <h1 class="text-2xl font-bold text-slate-800">Riwayat Laporan</h1>
+        <h1 class="text-2xl font-bold text-slate-800">{{ $judulHalaman }}</h1>
         <p class="mt-1 text-sm text-slate-400">Sistem Pelaporan Kesalahan Pengobatan</p>
     </div>
 
@@ -257,9 +271,39 @@
 
                             {{-- Status (badge berwarna) --}}
                             <td class="whitespace-nowrap px-4 py-3.5 sm:px-5">
-                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $laporan->warnaStatus() }}">
-                                    {{ $laporan->labelStatus() }}
-                                </span>
+                                <div class="flex flex-wrap items-center gap-1.5">
+                                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $laporan->warnaStatus() }}">
+                                        {{ $laporan->labelStatus() }}
+                                    </span>
+                                    @if ($laporan->is_eskalasi_direktur && is_null($laporan->solusi_direktur))
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700"
+                                              title="Laporan ini memerlukan arahan eksekutif dari Direktur">
+                                            <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                 viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                      d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504
+                                                         1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125
+                                                         1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125
+                                                         1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0
+                                                         .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0
+                                                         1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125
+                                                         1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0
+                                                         .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0
+                                                         1-1.125-1.125V4.125Z" />
+                                            </svg>
+                                            Butuh Arahan
+                                        </span>
+                                    @elseif ($laporan->is_eskalasi_direktur && !is_null($laporan->solusi_direktur))
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"
+                                              title="Direktur telah memberikan arahan eksekutif">
+                                            <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                 viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                            </svg>
+                                            Arahan Diberikan
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
 
                             {{-- Kolom Aksi --}}
