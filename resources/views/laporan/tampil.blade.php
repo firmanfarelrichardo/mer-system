@@ -243,7 +243,7 @@
                             <p class="text-xs font-medium text-slate-400">Cedera</p>
                             <div class="mt-1 flex flex-wrap gap-1">
                                 @foreach ((array) $insiden->detailPasien->cedera as $c)
-                                    <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">{{ Str::headline(str_replace('_', ' ', $c)) }}</span>
+                                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{{ Str::headline(str_replace('_', ' ', $c)) }}</span>
                                 @endforeach
                             </div>
                         </div>
@@ -253,7 +253,7 @@
                             <p class="text-xs font-medium text-slate-400">Faktor Penyebab</p>
                             <div class="mt-1 flex flex-wrap gap-1">
                                 @foreach ((array) $insiden->detailPasien->faktor_penyebab as $fp)
-                                    <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">{{ Str::headline(str_replace('_', ' ', $fp)) }}</span>
+                                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{{ Str::headline(str_replace('_', ' ', $fp)) }}</span>
                                 @endforeach
                             </div>
                         </div>
@@ -263,7 +263,7 @@
                             <p class="text-xs font-medium text-slate-400">Intervensi Pasien</p>
                             <div class="mt-1 flex flex-wrap gap-1">
                                 @foreach ((array) $insiden->detailPasien->intervensi_pasien as $ip)
-                                    <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">{{ Str::headline(str_replace('_', ' ', $ip)) }}</span>
+                                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">{{ Str::headline(str_replace('_', ' ', $ip)) }}</span>
                                 @endforeach
                             </div>
                         </div>
@@ -273,7 +273,7 @@
         @endif
 
         {{-- ============================================================
-             HISTORI TINDAK LANJUT (timeline)
+             RIWAYAT TINDAK LANJUT (timeline)
              ============================================================ --}}
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-slate-800">
@@ -282,7 +282,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
-                Histori Tindak Lanjut
+                Riwayat Tindak Lanjut
             </h2>
 
             <div class="relative ml-3 border-l-2 border-slate-200 pl-6">
