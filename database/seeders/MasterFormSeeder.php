@@ -29,7 +29,8 @@ class MasterFormSeeder extends Seeder
     private const JENIS_KESALAHAN = [
         'Salah Pasien',
         'Salah Obat',
-        'Salah Dosis/Frekuensi',
+        'Salah Dosis',
+        'Salah Frekuensi/Interval',
         'Salah Formula',
         'Salah Rute',
         'Salah Nomor',
@@ -39,7 +40,6 @@ class MasterFormSeeder extends Seeder
         'Obat Terlewat/Tidak Diberikan',
         'Obat Kadaluarsa',
         'Reaksi Obat Merugikan (ROM)',
-        'Lainnya, Sebutkan....',
     ];
 
     /* ------------------------------------------------------------------
@@ -63,7 +63,6 @@ class MasterFormSeeder extends Seeder
         'Infiltrasi/Ekstravasasi',
         'Perubahan Nilai Lab Signifikan',
         'Perubahan TTV',
-        'Lainnya, Sebutkan....',
     ];
 
     /* ------------------------------------------------------------------
@@ -80,11 +79,11 @@ class MasterFormSeeder extends Seeder
         'Defisit Pengetahuan',
         'Label Etiket Obat Tidak Terbaca',
         'Tidak Diresepkan',
-        'Masalah Stok/Distribusi Obat',
+        'Masalah Stok',
+        'Distribusi Obat',
         'Salah Baca/Interpretasi Resep',
         'Alat Kesehatan Rusak/Tidak Layak Pakai',
         'Ada Distraksi (Manusia)',
-        'Lainnya, Sebutkan....',
     ];
 
     /* ------------------------------------------------------------------
@@ -94,6 +93,7 @@ class MasterFormSeeder extends Seeder
     private const TINDAKAN_INTERVENSI = [
         'Transfusi Darah',
         'Konsultasi ke DPJP',
+        'Konsultasi ke Apoteker',
         'Intubasi',
         'Dibawa ke IGD',
         'Lama Rawat Bertambah',
@@ -105,7 +105,6 @@ class MasterFormSeeder extends Seeder
         'Prosedur Tambahan Dilakukan',
         'Dilakukan Rawat Inap',
         'Transfer ke ICU',
-        'Lainnya, Sebutkan....',
     ];
 
     /**
