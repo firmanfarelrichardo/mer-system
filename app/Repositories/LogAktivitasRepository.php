@@ -9,6 +9,7 @@ use App\Models\LogAktivitas;
 use App\Models\Peran;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
  * Repository LogAktivitas — akses data ke tabel `audit.log_aktivitas`.
@@ -32,7 +33,7 @@ class LogAktivitasRepository
         // @phpstan-ignore return.type
         return LogAktivitas::query()
             // @phpstan-ignore argument.type
-            ->with(['pengguna' => function (Builder $q): void {
+            ->with(['pengguna' => function (Relation $q): void {
                 // @phpstan-ignore method.notFound
                 $q->withTrashed()->with('peran');
             }])
