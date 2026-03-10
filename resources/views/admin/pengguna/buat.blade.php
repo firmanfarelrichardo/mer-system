@@ -145,11 +145,14 @@
                     @enderror
                 </div>
 
-                {{-- Peran (single radio — satu peran per pengguna) --}}
+                {{-- Peran (radio — satu peran per pengguna) --}}
                 <div>
                     <label class="mb-1 block text-sm font-medium text-slate-700">
                         Peran <span class="text-red-500">*</span>
                     </label>
+                    <p class="mb-2 text-xs text-slate-400">
+                        Pilih satu peran untuk pengguna ini.
+                    </p>
                     <div class="rounded-lg border border-slate-200 px-3 py-2.5 @error('peran_ids') border-red-300 @enderror">
                         @foreach ($daftarPeran as $peran)
                             <label class="flex items-center gap-2 py-1 text-sm text-slate-700">

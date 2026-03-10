@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\KategoriController;
 use App\Http\Controllers\Admin\LogAktivitasController;
 use App\Http\Controllers\Admin\PenggunaController;
 use App\Http\Controllers\Admin\TipeCederaController;
+use App\Http\Controllers\Admin\KepalaRuanganController;
 use App\Http\Controllers\Admin\UnitKerjaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
@@ -84,11 +85,15 @@ Route::middleware(['auth'])->group(function (): void {
     // ke halaman ganti sandi paksa sebelum mengakses route di bawah ini.
     // -------------------------------------------------------------------
     Route::middleware(['force.password.change'])->group(function (): void {
-    // ----- Ganti Peran (eksklusif peneliti) -----
-    // Otorisasi dilakukan di dalam controller via abort_unless($pengguna->isPeneliti()).
-    // Tidak memerlukan middleware khusus — guard 'auth' sudah mencakup grup ini.
+    // ----- Ganti Peran (untuk pengguna multi-role) -----
+    // Mendukung: akun peneliti (simulasi semua peran) dan pengguna dual-role
+    // (misal Nakes + Karu). Otorisasi dilakukan di dalam controller via
+    // abort_unless($pengguna->bisaGantiPeran()).
     Route::post('/ganti-peran', [RoleSwitchController::class, 'switch'])
-        ->name('peneliti.ganti-peran');
+        ->name('ganti-peran');
+
+    Route::post('/reset-peran', [RoleSwitchController::class, 'reset'])
+        ->name('reset-peran');
 
     // ----- Hub Dasbor -----
     // Route 'dashboard' wajib ada: digunakan oleh Laravel's RedirectIfAuthenticated
@@ -254,6 +259,19 @@ Route::middleware(['auth'])->group(function (): void {
 
         Route::delete('/intervensi/{id}', [IntervensiController::class, 'hapus'])
             ->name('admin.intervensi.hapus');
+
+        // ----- Kepala Ruangan -----
+        Route::get('/kepala-ruangan', [KepalaRuanganController::class, 'index'])
+            ->name('admin.kepala-ruangan.index');
+
+        Route::get('/kepala-ruangan/{unit_kerja}/tunjuk', [KepalaRuanganController::class, 'tunjuk'])
+            ->name('admin.kepala-ruangan.tunjuk');
+
+        Route::post('/kepala-ruangan/{unit_kerja}', [KepalaRuanganController::class, 'simpanPenunjukan'])
+            ->name('admin.kepala-ruangan.simpan-penunjukan');
+
+        Route::delete('/kepala-ruangan/{unit_kerja}', [KepalaRuanganController::class, 'cabut'])
+            ->name('admin.kepala-ruangan.cabut');
 
         // ----- Log Aktivitas (dipisah: Pengguna & Admin) -----
         Route::get('/log-aktivitas/pengguna', [LogAktivitasController::class, 'indexPengguna'])
