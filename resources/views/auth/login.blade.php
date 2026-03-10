@@ -111,10 +111,18 @@
         @unless(config('captcha.disable'))
         {{-- ── CAPTCHA FIELD ─────────────────────────────────────────────────── --}}
         <div class="min-w-0 space-y-1.5">
-            <label for="captcha"
-                   class="block text-[13px] font-semibold text-slate-600">
-                Kode Keamanan
-            </label>
+            {{-- Label + countdown realtime di sebelah kanan --}}
+            <div class="flex items-center justify-between">
+                <label for="captcha"
+                       class="block text-[13px] font-semibold text-slate-600">
+                    Kode Keamanan
+                </label>
+                <span id="captcha-countdown"
+                      class="text-[11px] font-medium tabular-nums text-slate-400"
+                      aria-live="polite"
+                      aria-atomic="true">
+                </span>
+            </div>
 
             {{--
                 Side-by-side: gambar kiri | input kanan.
@@ -124,17 +132,26 @@
             <div class="flex overflow-hidden rounded-xl border
                         {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }}">
 
-                {{-- Kiri: gambar captcha — 60% lebar kartu, tinggi tetap 60px --}}
-                <div class="flex w-[60%] shrink-0 items-center justify-center border-r p-2
+                {{-- Kiri: gambar captcha + overlay kedaluwarsa --}}
+                <div class="relative flex w-[60%] shrink-0 items-center justify-center border-r p-2
                             {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }} bg-white">
                     <img
                         id="gambar-captcha"
                         src="{{ captcha_src('default') }}"
                         alt="Kode keamanan captcha"
                         title="Klik untuk memperbarui kode"
-                        onclick="this.src='{{ url('captcha/default') }}?'+Date.now()"
                         class="block h-[84px] w-full cursor-pointer object-contain object-center"
                     >
+                    {{-- Overlay muncul ketika captcha sudah kedaluwarsa --}}
+                    <div id="captcha-overlay"
+                         style="display: none"
+                         class="absolute inset-0 cursor-pointer flex-col items-center justify-center gap-1.5 bg-white/90 text-center">
+                        <svg class="h-5 w-5 text-amber-500" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"/>
+                        </svg>
+                        <span class="text-[11px] font-semibold leading-tight text-slate-600">Klik untuk<br>memperbarui</span>
+                    </div>
                 </div>
 
                 {{-- Kanan: input kode --}}
@@ -161,6 +178,77 @@
             @enderror
         </div>
         {{-- ── /CAPTCHA FIELD ────────────────────────────────────────────────── --}}
+
+        @push('scripts')
+        <script>
+        (function () {
+            'use strict';
+
+            var DURASI_DETIK = {{ (int) config('captcha.default.expire', 60) }};
+            var elHitung     = document.getElementById('captcha-countdown');
+            var elOverlay    = document.getElementById('captcha-overlay');
+            var elGambar     = document.getElementById('gambar-captcha');
+            var elInput      = document.getElementById('captcha');
+            var waktuHabis, interval;
+
+            /** Perbarui teks & warna countdown setiap detik. */
+            function perbarui() {
+                var sisa = Math.max(0, Math.round((waktuHabis - Date.now()) / 1000));
+                var mnt  = Math.floor(sisa / 60);
+                var dtk  = sisa % 60;
+
+                elHitung.textContent = mnt + ':' + (dtk < 10 ? '0' : '') + dtk;
+
+                if (sisa <= 10) {
+                    elHitung.className = 'text-[11px] font-semibold tabular-nums text-red-500';
+                } else if (sisa <= 20) {
+                    elHitung.className = 'text-[11px] font-semibold tabular-nums text-amber-500';
+                } else {
+                    elHitung.className = 'text-[11px] font-medium tabular-nums text-slate-400';
+                }
+
+                if (sisa === 0) {
+                    clearInterval(interval);
+                    tampilkanKedaluwarsa();
+                }
+            }
+
+            /** Mulai hitung mundur dari DURASI_DETIK. */
+            function mulaiHitung() {
+                clearInterval(interval);
+                waktuHabis = Date.now() + DURASI_DETIK * 1000;
+                perbarui();
+                interval = setInterval(perbarui, 1000);
+            }
+
+            /** Tampilkan overlay & nonaktifkan input saat captcha kedaluwarsa. */
+            function tampilkanKedaluwarsa() {
+                elOverlay.style.display = 'flex';
+                elInput.disabled        = true;
+                elInput.value           = '';
+                elHitung.textContent    = 'Kedaluwarsa';
+                elHitung.className      = 'text-[11px] font-semibold text-red-600';
+            }
+
+            /** Muat ulang gambar captcha dan reset hitung mundur. */
+            function perbaruiCaptcha() {
+                elGambar.src          = '{{ url('captcha/default') }}?' + Date.now();
+                elOverlay.style.display = 'none';
+                elInput.disabled      = false;
+                elInput.value         = '';
+                elInput.focus();
+                mulaiHitung();
+            }
+
+            elGambar.addEventListener('click',   perbaruiCaptcha);
+            elOverlay.addEventListener('click',  perbaruiCaptcha);
+            window.addEventListener('beforeunload', function () { clearInterval(interval); });
+
+            mulaiHitung();
+        }());
+        </script>
+        @endpush
+
         @endunless
 
         {{-- Tombol Masuk --}}
