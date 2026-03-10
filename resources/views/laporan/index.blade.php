@@ -295,7 +295,7 @@
                                         </span>
                                     @elseif ($laporan->is_eskalasi_direktur && !is_null($laporan->solusi_direktur))
                                         <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"
-                                              title="Direktur telah memberikan arahan eksekutif">
+                                              title="Direktur telah memberikan feedback untuk laporan ini">
                                             <svg class="h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none"
                                                  viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />

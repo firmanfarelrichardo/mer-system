@@ -212,11 +212,11 @@ class Insiden extends Model
     public function warnaInsiden(): string
     {
         return match ($this->tipe_insiden) {
-            'KPC'      => 'bg-sky-100 text-sky-700',
-            'KNC'      => 'bg-orange-100 text-orange-700',
-            'KTC'      => 'bg-yellow-100 text-yellow-700',
-            'KTD'      => 'bg-red-100 text-red-700',
-            'SENTINEL' => 'bg-purple-100 text-purple-700',
+            'KPC'      => 'bg-green-100 text-green-700',
+            'KNC'      => 'bg-blue-100 text-blue-700',
+            'KTC'      => 'bg-amber-100 text-amber-700',
+            'KTD'      => 'bg-orange-100 text-orange-700',
+            'SENTINEL' => 'bg-red-100 text-red-700',
             default    => 'bg-slate-100 text-slate-700',
         };
     }
