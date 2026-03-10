@@ -55,6 +55,9 @@ class Insiden extends Model
         'kontak_pelapor',
         'is_anonim',
         'sudah_dibaca',
+        'is_eskalasi_direktur',
+        'solusi_direktur',
+        'waktu_solusi_direktur',
     ];
 
     /* ------------------------------------------------------------------
@@ -66,9 +69,11 @@ class Insiden extends Model
         return [
             'tgl_kejadian' => 'datetime',
             'tgl_lapor'    => 'datetime',
-            'is_anonim'    => 'boolean',
-            'sudah_dibaca' => 'boolean',
-            'created_at'   => 'datetime',
+            'is_anonim'              => 'boolean',
+            'sudah_dibaca'           => 'boolean',
+            'is_eskalasi_direktur'   => 'boolean',
+            'waktu_solusi_direktur'  => 'datetime',
+            'created_at'             => 'datetime',
             'updated_at'   => 'datetime',
             'deleted_at'   => 'datetime',
         ];

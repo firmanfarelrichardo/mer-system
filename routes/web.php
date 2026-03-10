@@ -293,6 +293,12 @@ Route::middleware(['auth'])->group(function (): void {
     Route::patch('/laporan/{laporan}/tindak-lanjut', [LaporanController::class, 'tindakLanjut'])
         ->name('laporan.tindak-lanjut');
 
+    Route::patch('/laporan/{laporan}/eskalasi', [LaporanController::class, 'eskalasi'])
+        ->name('laporan.eskalasi');
+
+    Route::patch('/laporan/{laporan}/solusi-direktur', [LaporanController::class, 'solusiDirektur'])
+        ->name('laporan.solusi-direktur');
+
     Route::get('/laporan/{laporan}/cetak-pdf', [LaporanController::class, 'cetakPdf'])
         ->name('laporan.cetak-pdf');
 

@@ -19,7 +19,9 @@
 @section('konten')
 
     @php
-        $isAdmin = $pengguna->memilikiPeran(\App\Models\Peran::ADMIN);
+        $isAdmin    = $pengguna->memilikiPeran(\App\Models\Peran::ADMIN);
+        $isKomite   = $pengguna->memilikiPeran(\App\Models\Peran::KOMITE);
+        $isDirektur = $pengguna->memilikiPeran(\App\Models\Peran::DIREKTUR);
     @endphp
 
     {{-- ================================================================
@@ -404,6 +406,164 @@
                 </form>
             </div>
         @endcan
+
+        {{-- ============================================================
+             ESKALASI KE DIREKTUR (Komite Only)
+             ============================================================ --}}
+        @if ($isKomite)
+            <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-slate-800">
+                    <svg class="h-5 w-5 text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504
+                                 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125
+                                 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125
+                                 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0
+                                 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5
+                                 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21
+                                 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125
+                                 0 0 1-1.125-1.125V4.125Z" />
+                    </svg>
+                    Eskalasi ke Direktur
+                </h2>
+
+                @if ($insiden->is_eskalasi_direktur)
+                    <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                        <strong>Status:</strong> Laporan ini sudah dieskalasikan ke Direktur untuk memohon arahan/kebijakan eksekutif.
+                    </div>
+                @endif
+
+                <form method="POST" action="{{ route('laporan.eskalasi', $insiden->id) }}"
+                      data-confirm="{{ $insiden->is_eskalasi_direktur ? 'Apakah Anda yakin ingin membatalkan eskalasi ke Direktur?' : 'Apakah Anda yakin ingin mengekskalasikan laporan ini ke Direktur?' }}">
+                    @csrf
+                    @method('PATCH')
+
+                    @if ($insiden->is_eskalasi_direktur)
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white
+                                       px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors
+                                       hover:bg-slate-50">
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                 viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                            Batalkan Eskalasi
+                        </button>
+                    @else
+                        <button type="submit"
+                                class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-5 py-2.5
+                                       text-sm font-medium text-white shadow-sm transition-colors hover:bg-amber-600">
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                 viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                      d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504
+                                         1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125
+                                         1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125
+                                         1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0
+                                         .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5
+                                         4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21
+                                         4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125
+                                         0 0 1-1.125-1.125V4.125Z" />
+                            </svg>
+                            Eskalasikan ke Direktur (Butuh Kebijakan Eksekutif)
+                        </button>
+                    @endif
+                </form>
+            </div>
+        @endif
+
+        {{-- ============================================================
+             FORMULIR ARAHAN DIREKTUR (Direktur Only — jika dieskalasikan)
+             ============================================================ --}}
+        @if ($isDirektur && $insiden->is_eskalasi_direktur && is_null($insiden->solusi_direktur))
+            <div class="rounded-xl border-2 border-dashed border-amber-400/50 bg-amber-50/30 p-6">
+                <div class="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                    <div class="flex items-start gap-2">
+                        <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" xmlns="http://www.w3.org/2000/svg"
+                             fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73
+                                     0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898
+                                     0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                        </svg>
+                        <span>Laporan ini dieskalasikan oleh Komite untuk memohon arahan/kebijakan Direktur.</span>
+                    </div>
+                </div>
+
+                <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-slate-800">
+                    <svg class="h-5 w-5 text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582
+                                 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1
+                                 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25
+                                 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25
+                                 0 0 1 5.25 6H10" />
+                    </svg>
+                    Berikan Arahan / Solusi Eksekutif
+                </h2>
+
+                <form method="POST" action="{{ route('laporan.solusi-direktur', $insiden->id) }}"
+                      data-confirm="Apakah Anda yakin ingin menyimpan arahan eksekutif ini?">
+                    @csrf
+                    @method('PATCH')
+
+                    <div class="mb-4">
+                        <label for="solusi_direktur" class="block text-sm font-medium text-slate-700">
+                            Arahan / Kebijakan Direktur <span class="text-red-500">*</span>
+                        </label>
+                        <textarea name="solusi_direktur" id="solusi_direktur" rows="4"
+                                  class="mt-1 block w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5
+                                         text-sm text-slate-700 shadow-sm placeholder:text-slate-300
+                                         focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400/20"
+                                  placeholder="Tuliskan arahan, kebijakan, atau solusi eksekutif untuk laporan ini..."
+                                  required
+                                  minlength="10"
+                                  maxlength="5000">{{ old('solusi_direktur') }}</textarea>
+                        <p class="mt-1 text-xs text-slate-400">Minimal 10 karakter, maksimal 5000 karakter.</p>
+                    </div>
+
+                    <button type="submit"
+                            class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-5 py-2.5 text-sm
+                                   font-medium text-white shadow-sm transition-colors hover:bg-amber-600">
+                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                             viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                  d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                        </svg>
+                        Simpan Arahan Direktur
+                    </button>
+                </form>
+            </div>
+        @endif
+
+        {{-- ============================================================
+             INSTRUKSI EKSEKUTIF / ARAHAN DIREKTUR (Read-Only — All Roles)
+             ============================================================ --}}
+        @if ($insiden->solusi_direktur)
+            <div class="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 via-white to-amber-50/50 p-6 shadow-sm">
+                <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-slate-800">
+                    <svg class="h-5 w-5 text-amber-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0
+                                 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563
+                                 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562
+                                 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562
+                                 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563
+                                 0 0 0 .475-.345L11.48 3.5Z" />
+                    </svg>
+                    Instruksi Eksekutif — Arahan Direktur
+                </h2>
+                <div class="rounded-lg border border-amber-200 bg-white p-4">
+                    <p class="whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ $insiden->solusi_direktur }}</p>
+                </div>
+                <p class="mt-3 text-xs text-slate-400">
+                    Disampaikan pada {{ $insiden->waktu_solusi_direktur?->translatedFormat('d F Y, H:i') ?? '—' }} WIB
+                </p>
+            </div>
+        @endif
 
     </div>
 
