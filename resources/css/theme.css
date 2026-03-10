@@ -1,0 +1,198 @@
+/*
+|=============================================================================
+| PALET WARNA — resources/css/theme.css
+|=============================================================================
+|
+| File ini adalah SATU-SATUNYA sumber kebenaran untuk seluruh warna sistem.
+| Untuk mengganti tema, cukup ubah nilai hex di blok :root berikut.
+| TIDAK perlu menyentuh file lain (app.css, blade, dsb.).
+|
+| STRUKTUR BERLAPIS:
+|   Layer 1 — Raw Palette   : skala warna 50–950 untuk setiap warna dasar
+|   Layer 2 — Semantic Token: memetakan palette → peran fungsional (brand,
+|                              info, warning, success, danger)
+|   Layer 3 — Tailwind Token: di-register ke @theme pada app.css sehingga
+|                              semua utilitas Tailwind otomatis tersedia
+|                              (bg-primary-*, text-secondary-*, dst.)
+|
+| ASAL PALETTE (terinspirasi logo Sistem MER):
+|   - Primary  : Teal / Hijau-Toska  — warna palang medis pada logo
+|   - Secondary: Biru Profesional    — warna bingkai / border logo
+|   - Accent   : Kuning / Emas       — aksen kilat / garis dinamis logo
+|
+| CARA MELAKUKAN RE-THEMING:
+|   Opsi A — Ganti seluruh palet:
+|             Ubah nilai hex di bagian "RAW PALETTE" sesuai identitas baru.
+|   Opsi B — Ganti warna peran saja (tanpa ubah palet):
+|             Ubah nilai var(--palette-*) di bagian "SEMANTIC TOKENS".
+|             Contoh: jadikan brand menggunakan warna biru:
+|               --token-brand: var(--palette-secondary-800);
+|
+|=============================================================================
+*/
+
+/* ============================================================
+   LAYER 1 — RAW PALETTE
+   Definisi skala warna 50–950 sebagai variabel mentah.
+   Nilai ini TIDAK langsung dipakai di JSX/Blade — gunakan
+   semantic token di Layer 2.
+   ============================================================ */
+:root {
+
+    /* ----------------------------------------------------------
+       PRIMARY — Cyan-Teal Medis  (brand anchor: #3AE3DC)
+       Referensi logo: warna utama palang medis (toska cerah-vivid)
+       Gunakan untuk: sidebar, tombol primer, state aktif, badge
+
+       Shade 400 = #3AE3DC (warna utama yang diberikan).
+       Shade 600 = warna sidebar & tombol (kontras cukup untuk teks putih).
+       Shade 400 dipakai untuk gradient, focus ring, dan elemen aktif
+       untuk memastikan #3AE3DC TERLIHAT JELAS di seluruh sistem.
+       ---------------------------------------------------------- */
+    --palette-primary-50:  #ecfffe;
+    --palette-primary-100: #c8fbf8;
+    --palette-primary-200: #93f4ee;
+    --palette-primary-300: #5ceae2;
+    --palette-primary-400: #3ae3dc;  /* ← brand anchor — warna utama */
+    --palette-primary-500: #11c7bf;  /* ← sidebar hover             */
+    --palette-primary-600: #0d9f99;  /* ← sidebar bg & tombol       */
+    --palette-primary-700: #0f7f7a;
+    --palette-primary-800: #116462;
+    --palette-primary-900: #125250;
+    --palette-primary-950: #083332;
+
+    /* ----------------------------------------------------------
+       SECONDARY — Biru Profesional / Medis
+       Referensi logo: warna bingkai luar (biru cerah-netral)
+       Gunakan untuk: link, ikon informatif, border fokus, heading
+       ---------------------------------------------------------- */
+    --palette-secondary-50:  #eff6ff;
+    --palette-secondary-100: #dbeafe;
+    --palette-secondary-200: #bfdbfe;
+    --palette-secondary-300: #93c5fd;
+    --palette-secondary-400: #60a5fa;
+    --palette-secondary-500: #3b82f6;
+    --palette-secondary-600: #2563eb;
+    --palette-secondary-700: #1d4ed8;
+    --palette-secondary-800: #1e40af;
+    --palette-secondary-900: #1e3a8a;
+    --palette-secondary-950: #172554;
+
+    /* ----------------------------------------------------------
+       ACCENT — Kuning / Emas / Amber
+       Referensi logo: aksen garis dinamis / kilat pada logo
+       Gunakan untuk: badge peringatan, highlight, CTA sekunder,
+                      notifikasi perlu perhatian
+       ---------------------------------------------------------- */
+    --palette-accent-50:  #fffbeb;
+    --palette-accent-100: #fef3c7;
+    --palette-accent-200: #fde68a;
+    --palette-accent-300: #fcd34d;
+    --palette-accent-400: #fbbf24;
+    --palette-accent-500: #f59e0b;
+    --palette-accent-600: #d97706;
+    --palette-accent-700: #b45309;
+    --palette-accent-800: #92400e;
+    --palette-accent-900: #78350f;
+    --palette-accent-950: #451a03;
+
+    /* ----------------------------------------------------------
+       SUCCESS — Hijau (status berhasil / laporan diterima)
+       ---------------------------------------------------------- */
+    --palette-success-50:  #f0fdf4;
+    --palette-success-100: #dcfce7;
+    --palette-success-200: #bbf7d0;
+    --palette-success-500: #22c55e;
+    --palette-success-600: #16a34a;
+    --palette-success-700: #15803d;
+
+    /* ----------------------------------------------------------
+       DANGER — Merah (error, hapus, insiden kritis)
+       ---------------------------------------------------------- */
+    --palette-danger-50:  #fef2f2;
+    --palette-danger-100: #fee2e2;
+    --palette-danger-200: #fecaca;
+    --palette-danger-500: #ef4444;
+    --palette-danger-600: #dc2626;
+    --palette-danger-700: #b91c1c;
+
+    /* ----------------------------------------------------------
+       NEUTRAL — Abu-abu (teks, border, background permukaan)
+       ---------------------------------------------------------- */
+    --palette-neutral-50:  #f8fafc;
+    --palette-neutral-100: #f1f5f9;
+    --palette-neutral-200: #e2e8f0;
+    --palette-neutral-300: #cbd5e1;
+    --palette-neutral-400: #94a3b8;
+    --palette-neutral-500: #64748b;
+    --palette-neutral-600: #475569;
+    --palette-neutral-700: #334155;
+    --palette-neutral-800: #1e293b;
+    --palette-neutral-900: #0f172a;
+    --palette-neutral-950: #020617;
+}
+
+
+/* ============================================================
+   LAYER 2 — SEMANTIC TOKENS
+   Petakan palette → peran fungsional.
+   *** UBAH BAGIAN INI UNTUK RE-THEMING CEPAT ***
+   ============================================================ */
+:root {
+
+    /* --- BRAND (Identity Utama Sistem) -----------------------
+       Digunakan untuk sidebar, tombol primer, elemen aktif.
+       Default: Teal (primary)
+
+       Mapping:
+         brand (sidebar/tombol) → 600 (#0D9F99) — medium teal terang
+         hover                  → 500 (#11C7BF) — lebih terang saat hover
+         active                 → 400 (#3AE3DC) — warna utama user!
+       --------------------------------------------------------- */
+    --token-brand:          var(--palette-primary-600);   /* sidebar bg & tombol  */
+    --token-brand-hover:    var(--palette-primary-500);   /* sidebar hover state  */
+    --token-brand-active:   var(--palette-primary-400);   /* item menu aktif (#3AE3DC) */
+    --token-brand-subtle:   var(--palette-primary-50);    /* bg ringan (card tint)*/
+    --token-brand-border:   var(--palette-primary-200);   /* border ringan        */
+    --token-brand-text:     var(--palette-primary-600);   /* teks berwarna brand  */
+    --token-brand-muted:    var(--palette-primary-500);   /* teks brand lebih terang */
+
+    /* --- SURFACE & BACKGROUND --------------------------------- */
+    --token-surface:        #ffffff;
+    --token-surface-raised: var(--palette-neutral-50);
+    --token-surface-overlay:var(--palette-neutral-100);
+    --token-page-bg:        var(--palette-neutral-100);
+
+    /* --- TEXT ------------------------------------------------- */
+    --token-text-base:      var(--palette-neutral-800);
+    --token-text-muted:     var(--palette-neutral-500);
+    --token-text-subtle:    var(--palette-neutral-400);
+    --token-text-inverted:  #ffffff;
+
+    /* --- INFO (Link, Fokus, Informatif) ----------------------- */
+    --token-info:           var(--palette-secondary-600);
+    --token-info-light:     var(--palette-secondary-50);
+    --token-info-border:    var(--palette-secondary-300);
+    --token-info-dark:      var(--palette-secondary-800);
+
+    /* --- WARNING (Alert, Perhatian) --------------------------- */
+    --token-warning:        var(--palette-accent-500);
+    --token-warning-light:  var(--palette-accent-50);
+    --token-warning-border: var(--palette-accent-300);
+    --token-warning-dark:   var(--palette-accent-700);
+
+    /* --- SUCCESS (Berhasil, Laporan Diterima) ----------------- */
+    --token-success:        var(--palette-success-600);
+    --token-success-light:  var(--palette-success-50);
+    --token-success-border: var(--palette-success-200);
+
+    /* --- DANGER (Error, Insiden Kritis, Hapus) ---------------- */
+    --token-danger:         var(--palette-danger-600);
+    --token-danger-light:   var(--palette-danger-50);
+    --token-danger-border:  var(--palette-danger-200);
+
+    /* --- BORDER & RING --------------------------------------- */
+    --token-border:         var(--palette-neutral-200);
+    --token-border-strong:  var(--palette-neutral-300);
+    --token-focus-ring:     var(--palette-primary-400);
+}

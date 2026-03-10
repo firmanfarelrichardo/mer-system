@@ -1,11 +1,135 @@
 @import 'tailwindcss';
 
+/*
+|--------------------------------------------------------------------
+| Import palet warna — satu-satunya file yang perlu diubah
+| saat melakukan re-theming sistem.  Lihat resources/css/theme.css.
+|--------------------------------------------------------------------
+*/
+@import './theme.css';
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/*
+|====================================================================
+| @theme — Registrasi Token ke Tailwind v4
+|====================================================================
+| Semua variabel --color-* di bawah ini otomatis menghasilkan
+| utilitas Tailwind: bg-primary-500, text-secondary-800, dst.
+|
+| JANGAN ubah file ini untuk re-theming — ubah theme.css saja.
+|====================================================================
+*/
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* ============================================================
+       TIPOGRAFI
+       ============================================================ */
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* ============================================================
+       PRIMARY — Teal / Hijau-Toska (bg-primary-*, text-primary-*)
+       ============================================================ */
+    --color-primary-50:  var(--palette-primary-50);
+    --color-primary-100: var(--palette-primary-100);
+    --color-primary-200: var(--palette-primary-200);
+    --color-primary-300: var(--palette-primary-300);
+    --color-primary-400: var(--palette-primary-400);
+    --color-primary-500: var(--palette-primary-500);
+    --color-primary-600: var(--palette-primary-600);
+    --color-primary-700: var(--palette-primary-700);
+    --color-primary-800: var(--palette-primary-800);
+    --color-primary-900: var(--palette-primary-900);
+    --color-primary-950: var(--palette-primary-950);
+
+    /* ============================================================
+       SECONDARY — Biru Profesional (bg-secondary-*, text-secondary-*)
+       ============================================================ */
+    --color-secondary-50:  var(--palette-secondary-50);
+    --color-secondary-100: var(--palette-secondary-100);
+    --color-secondary-200: var(--palette-secondary-200);
+    --color-secondary-300: var(--palette-secondary-300);
+    --color-secondary-400: var(--palette-secondary-400);
+    --color-secondary-500: var(--palette-secondary-500);
+    --color-secondary-600: var(--palette-secondary-600);
+    --color-secondary-700: var(--palette-secondary-700);
+    --color-secondary-800: var(--palette-secondary-800);
+    --color-secondary-900: var(--palette-secondary-900);
+    --color-secondary-950: var(--palette-secondary-950);
+
+    /* ============================================================
+       ACCENT — Kuning/Emas/Amber (bg-accent-*, text-accent-*)
+       ============================================================ */
+    --color-accent-50:  var(--palette-accent-50);
+    --color-accent-100: var(--palette-accent-100);
+    --color-accent-200: var(--palette-accent-200);
+    --color-accent-300: var(--palette-accent-300);
+    --color-accent-400: var(--palette-accent-400);
+    --color-accent-500: var(--palette-accent-500);
+    --color-accent-600: var(--palette-accent-600);
+    --color-accent-700: var(--palette-accent-700);
+    --color-accent-800: var(--palette-accent-800);
+    --color-accent-900: var(--palette-accent-900);
+    --color-accent-950: var(--palette-accent-950);
+
+    /* ============================================================
+       SUCCESS (bg-success, text-success, bg-success-light)
+       ============================================================ */
+    --color-success:        var(--palette-success-600);
+    --color-success-light:  var(--palette-success-50);
+    --color-success-subtle: var(--palette-success-100);
+    --color-success-border: var(--palette-success-200);
+
+    /* ============================================================
+       DANGER (bg-danger, text-danger, bg-danger-light)
+       ============================================================ */
+    --color-danger:        var(--palette-danger-600);
+    --color-danger-light:  var(--palette-danger-50);
+    --color-danger-subtle: var(--palette-danger-100);
+    --color-danger-border: var(--palette-danger-200);
+
+    /* ============================================================
+       SEMANTIC BRAND TOKENS — utilitas cepat berbasis peran
+       (bg-brand, text-brand, border-brand, dst.)
+       ============================================================ */
+    --color-brand:          var(--token-brand);
+    --color-brand-hover:    var(--token-brand-hover);
+    --color-brand-active:   var(--token-brand-active);
+    --color-brand-subtle:   var(--token-brand-subtle);
+    --color-brand-border:   var(--token-brand-border);
+    --color-brand-text:     var(--token-brand-text);
+    --color-brand-muted:    var(--token-brand-muted);
+
+    --color-info:           var(--token-info);
+    --color-info-light:     var(--token-info-light);
+    --color-info-border:    var(--token-info-border);
+    --color-info-dark:      var(--token-info-dark);
+
+    --color-warning:        var(--token-warning);
+    --color-warning-light:  var(--token-warning-light);
+    --color-warning-border: var(--token-warning-border);
+    --color-warning-dark:   var(--token-warning-dark);
+
+    /* ============================================================
+       SURFACE & TEXT — digunakan untuk background dan tipografi
+       ============================================================ */
+    --color-surface:         var(--token-surface);
+    --color-surface-raised:  var(--token-surface-raised);
+    --color-surface-overlay: var(--token-surface-overlay);
+    --color-page-bg:         var(--token-page-bg);
+
+    --color-text-base:    var(--token-text-base);
+    --color-text-muted:   var(--token-text-muted);
+    --color-text-subtle:  var(--token-text-subtle);
+    --color-text-inverted:var(--token-text-inverted);
+
+    /* ============================================================
+       BORDER
+       ============================================================ */
+    --color-border:       var(--token-border);
+    --color-border-strong:var(--token-border-strong);
+    --color-focus-ring:   var(--token-focus-ring);
 }
