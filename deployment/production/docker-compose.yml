@@ -1,16 +1,16 @@
 # ===========================================
 # MER System - Production Docker Compose
+# VPS: Ubuntu 24.04 LTS | RAM 8GB | CPU 2 Core
 # ===========================================
-# Arsitektur: 4 services (app, web, db, redis)
 #
-# Prinsip Keamanan & Skalabilitas:
-# - Database hanya bisa diakses via loopback (127.0.0.1)
-#   → aman dari akses internet, bisa SSH Tunnel via pgAdmin
-# - Redis tidak expose port ke host (internal network only)
-# - Shared volume menggunakan staging path (/public-shared)
-#   agar public assets di image tidak ter-shadow oleh volume mount
-# - container_name TIDAK diset untuk app service
-#   agar mendukung horizontal scaling (replicas > 1)
+# ARSITEKTUR:
+# - 4 services: app (PHP-FPM + Worker + Scheduler),
+#               web (Nginx), db (PostgreSQL 16), redis (Redis 7)
+# - Network isolation: hanya port 80 milik 'web' yang terbuka ke host.
+#   db hanya bisa diakses via loopback (SSH Tunnel untuk pgAdmin).
+#   redis tidak expose port sama sekali (internal network only).
+# - 'unless-stopped' dipilih vs 'always' agar container tidak auto-start
+#   kembali jika di-stop manual oleh operator (misal: maintenance window).
 # ===========================================
 
 services:
@@ -27,7 +27,7 @@ services:
     build:
       context: ../..
       dockerfile: deployment/production/Dockerfile
-    restart: always
+    restart: unless-stopped   # Restart otomatis kecuali di-stop manual oleh operator
     environment:
       APP_NAME: ${APP_NAME:-MER System}
       APP_ENV: production
@@ -44,7 +44,9 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-null}
+      # REDIS_PASSWORD WAJIB diisi di .env jika Redis dikonfigurasi --requirepass.
+      # Nilai ini dikirim ke aplikasi Laravel & digunakan supervisord untuk restart worker.
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
       CACHE_STORE: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
@@ -63,17 +65,15 @@ services:
   # -------------------------------------------
   # Nginx Web Server (Production)
   #
-  # Membaca static files dari shared-public volume
-  # yang sudah di-sync oleh app container entrypoint.
-  #
-  # CATATAN: nginx.conf di-mount sebagai /etc/nginx/nginx.conf
-  # (bukan conf.d/) karena berisi full config block
-  # termasuk events{}, http{}, dan server{}.
+  # Satu-satunya service yang expose port ke host (port 80).
+  # nginx.conf di-mount read-only untuk keamanan.
+  # Static files dibaca dari shared-public volume yang di-sync
+  # oleh app container saat startup (via docker-entrypoint.sh).
   # -------------------------------------------
   web:
     image: nginx:1.27-alpine
     container_name: mer-web-prod
-    restart: always
+    restart: unless-stopped
     ports:
       - "${APP_PORT:-80}:80"
     volumes:
@@ -87,23 +87,14 @@ services:
   # -------------------------------------------
   # PostgreSQL 16 (Production)
   #
-  # KEAMANAN - Loopback Binding:
-  #   Port 5432 hanya di-bind ke 127.0.0.1 (loopback).
-  #   Ini berarti port TIDAK bisa diakses dari internet luar,
-  #   hanya dari host server itu sendiri.
-  #
-  #   Untuk mengakses database dari workstation lokal:
-  #   1. SSH Tunnel ke VPS: ssh -L 5432:127.0.0.1:5432 user@vps-ip
-  #   2. Buka pgAdmin, koneksi ke localhost:5432
-  #   3. Traffic di-encrypt oleh SSH, tidak ada port terbuka
-  #
-  #   Ini adalah best practice untuk database di production
-  #   yang tidak menggunakan managed database service.
+  # Port 5432 di-bind ke 127.0.0.1 (loopback host) BUKAN 0.0.0.0.
+  # Artinya port tidak bisa diakses dari internet, hanya dari server itu sendiri.
+  # Akses remote via SSH Tunnel: ssh -L 5432:127.0.0.1:5432 user@vps-ip
   # -------------------------------------------
   db:
     image: postgres:16-alpine
     container_name: mer-db-prod
-    restart: always
+    restart: unless-stopped
     ports:
       - "127.0.0.1:5432:5432"
     environment:
@@ -124,23 +115,29 @@ services:
   # -------------------------------------------
   # Redis 7 (Production)
   #
-  # TIDAK expose port ke host (internal only).
-  # Hanya bisa diakses oleh service dalam network yang sama.
-  # --appendonly yes: persistence mode untuk data safety
-  # --maxmemory: limit memory usage
-  # --maxmemory-policy: evict least recently used keys saat penuh
+  # Tidak expose port ke host sama sekali — akses hanya dari internal docker network.
+  # --requirepass: mewajibkan autentikasi meski Redis hanya internal,
+  #   sesuai defense-in-depth principle (jika network container bocor).
+  # --appendonly yes: persistence mode agar session/cache tidak hilang saat restart.
+  # --maxmemory 512mb: memberi headroom lebih besar mengingat VPS 8GB.
+  # --maxmemory-policy allkeys-lru: evict key terlama saat penuh (optimal untuk cache).
   # -------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: mer-redis-prod
-    restart: always
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD}
     volumes:
       - mer-redis-data:/data
     networks:
       - mer-prod-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -150,6 +147,8 @@ services:
 # ===========================================
 networks:
   mer-prod-network:
+    # bridge driver default dengan isolasi internal.
+    # Hanya service dalam network ini yang bisa saling berkomunikasi.
     driver: bridge
 
 # ===========================================
