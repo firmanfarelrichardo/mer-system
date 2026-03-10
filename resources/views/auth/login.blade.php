@@ -209,7 +209,7 @@
 
                 if (sisa === 0) {
                     clearInterval(interval);
-                    tampilkanKedaluwarsa();
+                    perbaruiCaptcha();
                 }
             }
 
@@ -221,22 +221,12 @@
                 interval = setInterval(perbarui, 1000);
             }
 
-            /** Tampilkan overlay & nonaktifkan input saat captcha kedaluwarsa. */
-            function tampilkanKedaluwarsa() {
-                elOverlay.style.display = 'flex';
-                elInput.disabled        = true;
-                elInput.value           = '';
-                elHitung.textContent    = 'Kedaluwarsa';
-                elHitung.className      = 'text-[11px] font-semibold text-red-600';
-            }
-
             /** Muat ulang gambar captcha dan reset hitung mundur. */
             function perbaruiCaptcha() {
-                elGambar.src          = '{{ url('captcha/default') }}?' + Date.now();
+                elGambar.src            = '{{ url('captcha/default') }}?' + Date.now();
                 elOverlay.style.display = 'none';
-                elInput.disabled      = false;
-                elInput.value         = '';
-                elInput.focus();
+                elInput.disabled        = false;
+                elInput.value           = '';
                 mulaiHitung();
             }
 
