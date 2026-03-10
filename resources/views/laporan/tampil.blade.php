@@ -273,7 +273,7 @@
         @endif
 
         {{-- ============================================================
-             HISTORI TINDAK LANJUT (timeline)
+             RIWAYAT TINDAK LANJUT (timeline)
              ============================================================ --}}
         <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 class="mb-4 flex items-center gap-2 text-base font-semibold text-slate-800">
@@ -282,7 +282,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round"
                           d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
-                Histori Tindak Lanjut
+                Riwayat Tindak Lanjut
             </h2>
 
             <div class="relative ml-3 border-l-2 border-slate-200 pl-6">

@@ -320,7 +320,7 @@
             @endif
         </p>
 
-        <div class="section-header mt-6">V. HISTORI TINDAK LANJUT</div>
+        <div class="section-header mt-6">V. RIWAYAT STATUS</div>
         <table width="100%" cellpadding="0" cellspacing="0" class="tbl-bordered" style="margin-top: 5px;">
             <thead>
                 <tr>
@@ -348,6 +348,15 @@
                     <td>{{ $tl->catatan ?? '-' }}</td>
                 </tr>
                 @endforeach
+                @if($insiden->is_eskalasi_direktur && $insiden->solusi_direktur)
+                <tr>
+                    <td class="text-center">{{ $insiden->tindakLanjut->count() + 2 }}.</td>
+                    <td class="text-center">{{ $insiden->waktu_solusi_direktur?->translatedFormat('d M Y, H:i') ?? '-' }}</td>
+                    <td class="text-center">Feedback Direktur</td>
+                    <td>Direktur</td>
+                    <td>{{ $insiden->solusi_direktur }}</td>
+                </tr>
+                @endif
             </tbody>
         </table>
 
