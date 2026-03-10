@@ -94,7 +94,7 @@ class AppServiceProvider extends ServiceProvider
         //     PENELITI_NIP=
         //   Untuk menonaktifkan permanen, hapus/comment seluruh blok ini.
         // ----------------------------------------------------------------
-        $nipPeneliti = env('PENELITI_NIP');
+        $nipPeneliti = config('app.peneliti_nip');
 
         if (! empty($nipPeneliti)) {
             Gate::before(function ($pengguna, string $ability) use ($nipPeneliti): ?bool {

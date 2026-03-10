@@ -26,7 +26,7 @@ class UnitKerjaRepository
      * @param  int                  $tenantId
      * @param  array<string, mixed> $filter   Kunci opsional: cari
      * @param  int                  $perHalaman
-     * @return LengthAwarePaginator<UnitKerja>
+     * @return LengthAwarePaginator<int, UnitKerja>
      */
     public function daftarDenganFilter(int $tenantId, array $filter = [], int $perHalaman = 15): LengthAwarePaginator
     {

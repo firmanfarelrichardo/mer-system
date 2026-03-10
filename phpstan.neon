@@ -1,0 +1,16 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+        - routes/
+
+    level: 5
+    
+    # Mencegah Larastan rewel jika error yang diabaikan tidak ditemukan
+    reportUnmatchedIgnoredErrors: false
+
+    ignoreErrors:
+        # Perhatikan penambahan backslash sebelum tanda kurung
+        - '#Unsafe usage of new static\(\)#'

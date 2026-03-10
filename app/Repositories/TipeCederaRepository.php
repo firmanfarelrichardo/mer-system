@@ -27,7 +27,7 @@ class TipeCederaRepository
      * @param  int                  $tenantId
      * @param  array<string, mixed> $filter   Kunci opsional: cari
      * @param  int                  $perHalaman
-     * @return LengthAwarePaginator<TipeCedera>
+     * @return LengthAwarePaginator<int, TipeCedera>
      */
     public function getPaginatedAdmin(int $tenantId, array $filter = [], int $perHalaman = 15): LengthAwarePaginator
     {

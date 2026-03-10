@@ -25,7 +25,7 @@ class SimpanPenggunaRequest extends FormRequest
      */
     public function rules(): array
     {
-        $tenantId = auth()->user()?->tenant_id ?? 1;
+        $tenantId = auth()->user()->tenant_id ?? 1;
 
         return [
             'nama_lengkap' => ['required', 'string', 'max:255'],

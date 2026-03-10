@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -96,6 +97,8 @@ class Pengguna extends Authenticatable
 
     /**
      * Peran yang dimiliki pengguna melalui tabel pivot.
+     *
+     * @return BelongsToMany<Peran, $this>
      */
     public function peran(): BelongsToMany
     {
@@ -109,6 +112,8 @@ class Pengguna extends Authenticatable
 
     /**
      * Tenant (organisasi) tempat pengguna terdaftar.
+     *
+     * @return BelongsTo<Organisasi, $this>
      */
     public function tenant(): BelongsTo
     {
@@ -117,6 +122,8 @@ class Pengguna extends Authenticatable
 
     /**
      * Unit kerja yang opsional untuk pengguna ini.
+     *
+     * @return BelongsTo<UnitKerja, $this>
      */
     public function unitKerja(): BelongsTo
     {
@@ -197,7 +204,7 @@ class Pengguna extends Authenticatable
      */
     public function isPeneliti(): bool
     {
-        $nipPeneliti = env('PENELITI_NIP');
+        $nipPeneliti = config('app.peneliti_nip');
 
         return ! empty($nipPeneliti) && $this->nomor_induk === $nipPeneliti;
     }
@@ -218,7 +225,7 @@ class Pengguna extends Authenticatable
             return session('active_role', Peran::PENELITI);
         }
 
-        return $this->peran->first()?->nama_peran ?? '—';
+        return $this->peran->first()->nama_peran ?? '—';
     }
 
     /* ------------------------------------------------------------------
@@ -229,8 +236,10 @@ class Pengguna extends Authenticatable
 
     /**
      * Dapatkan relasi notifications dari tabel akun.notifikasi.
+     *
+     * @return MorphMany<Notifikasi, $this>
      */
-    public function notifications(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function notifications(): MorphMany
     {
         return $this->morphMany(
             Notifikasi::class,

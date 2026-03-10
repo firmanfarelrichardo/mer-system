@@ -36,7 +36,7 @@ class PenggunaService
      * @param  int                  $tenantId
      * @param  array<string,mixed>  $filter
      * @param  int                  $perHalaman
-     * @return LengthAwarePaginator<Pengguna>
+     * @return LengthAwarePaginator<int, Pengguna>
      */
     public function daftar(int $tenantId, array $filter = [], int $perHalaman = 15): LengthAwarePaginator
     {
@@ -145,7 +145,7 @@ class PenggunaService
      * nomor_hp, jabatan, dan tanggal_bergabung_unit.
      * Field sensitif (nomor_induk, unit_id, peran) hanya bisa diubah Admin.
      *
-     * @param  array{nama_lengkap?: string, email?: string, nomor_hp?: string|null, jabatan?: string|null, tanggal_bergabung_unit?: string|null}  $data
+     * @param  array{nama_lengkap?: string, username?: string|null, email?: string, nomor_hp?: string|null, jabatan?: string|null, tanggal_bergabung_unit?: string|null}  $data
      */
     public function perbaruiProfil(Pengguna $pengguna, array $data): Pengguna
     {

@@ -407,15 +407,31 @@ class StatistikController extends Controller
      */
     private function barisTabel(string $namaUnit, ?object $row = null): array
     {
+        // Kembalikan baris kosong jika tidak ada data aktual untuk unit ini.
+        // Early return ini juga membuat PHPStan menyempitkan tipe $row menjadi
+        // object (non-null) di blok return di bawah, sehingga -> aman digunakan.
+        if ($row === null) {
+            return [
+                'unit'     => $namaUnit,
+                'total'    => 0,
+                'kpc'      => 0,
+                'knc'      => 0,
+                'ktc'      => 0,
+                'ktd'      => 0,
+                'sentinel' => 0,
+                'selesai'  => 0,
+            ];
+        }
+
         return [
             'unit'     => $namaUnit,
-            'total'    => (int) ($row?->total    ?? 0),
-            'kpc'      => (int) ($row?->kpc      ?? 0),
-            'knc'      => (int) ($row?->knc      ?? 0),
-            'ktc'      => (int) ($row?->ktc      ?? 0),
-            'ktd'      => (int) ($row?->ktd      ?? 0),
-            'sentinel' => (int) ($row?->sentinel  ?? 0),
-            'selesai'  => (int) ($row?->selesai   ?? 0),
+            'total'    => (int) ($row->total    ?? 0),
+            'kpc'      => (int) ($row->kpc      ?? 0),
+            'knc'      => (int) ($row->knc      ?? 0),
+            'ktc'      => (int) ($row->ktc      ?? 0),
+            'ktd'      => (int) ($row->ktd      ?? 0),
+            'sentinel' => (int) ($row->sentinel  ?? 0),
+            'selesai'  => (int) ($row->selesai   ?? 0),
         ];
     }
 
