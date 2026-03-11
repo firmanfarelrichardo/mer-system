@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('judul', 'Tunjuk Kepala Ruangan — Sistem MER')
+@section('judul', 'Pilih Kepala Ruangan — Sistem MER')
 
 @section('konten')
 
@@ -14,10 +14,10 @@
             Kembali ke Daftar
         </a>
         <h1 class="text-2xl font-bold text-slate-800">
-            {{ $karuSaatIni ? 'Ganti' : 'Tunjuk' }} Kepala Ruangan
+            {{ $karuSaatIni ? 'Ganti' : 'Pilih' }} Kepala Ruangan
         </h1>
         <p class="mt-1 text-sm text-slate-400">
-            Pilih tenaga kesehatan yang akan ditunjuk sebagai Kepala Ruangan
+            Pilih tenaga kesehatan yang akan dipilih sebagai Kepala Ruangan
             di <strong class="text-slate-600">{{ $unit->nama_unit }}</strong>.
         </p>
     </div>
@@ -73,7 +73,7 @@
 
                 @if ($daftarNakes->isEmpty())
                     <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                        Tidak ada Nakes yang tersedia untuk ditunjuk. Semua Nakes aktif sudah menjadi Kepala Ruangan.
+                        Tidak ada Nakes yang tersedia untuk dipilih. Semua Nakes aktif sudah menjadi Kepala Ruangan.
                     </div>
                 @else
                     {{-- Filter unit --}}
@@ -156,7 +156,7 @@
             @if ($daftarNakes->isNotEmpty())
                 <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-700">
                     <strong>Catatan:</strong>
-                    Nakes yang ditunjuk akan mendapatkan peran tambahan Kepala Ruangan dan unit kerjanya
+                    Nakes yang dipilih akan mendapatkan peran tambahan Kepala Ruangan dan unit kerjanya
                     akan diperbarui ke <strong>{{ $unit->nama_unit }}</strong>.
                     Pengguna dapat beralih antara peran Nakes dan Kepala Ruangan melalui menu di navbar.
                 </div>
@@ -170,7 +170,7 @@
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
                         </svg>
-                        {{ $karuSaatIni ? 'Ganti Kepala Ruangan' : 'Tunjuk sebagai Kepala Ruangan' }}
+                        {{ $karuSaatIni ? 'Ganti Kepala Ruangan' : 'Pilih sebagai Kepala Ruangan' }}
                     </button>
                     <a href="{{ route('admin.kepala-ruangan.index') }}"
                        class="rounded-lg border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-600
