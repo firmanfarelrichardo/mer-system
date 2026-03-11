@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # ===========================================
-# MER System - Production Deploy Script
+# MER System — Production Deploy Script
+# Fail-Safe Orchestrator (7 Steps)
 # ===========================================
-# Idempotent & fail-safe deployment script untuk VPS Ubuntu 24.04 LTS.
+# Idempotent & fail-safe deployment untuk VPS Ubuntu 24.04 LTS.
 #
 # PRINSIP:
-# - set -e: script berhenti SEGERA jika ada perintah yang gagal.
-#   Mencegah eksekusi lanjutan dalam keadaan sistem yang tidak konsisten.
-# - Setiap step memberikan output berwarna untuk monitoring progress.
-# - Script dijalankan dari dalam folder deployment/production/.
+# - set -e: berhenti SEGERA jika ada perintah yang gagal.
+# - Setiap step memberikan output berwarna untuk monitoring.
+# - Script dijalankan dari folder deployment/production/.
 #
 # PENGGUNAAN:
 #   cd /path/to/mer-system/deployment/production
@@ -18,7 +18,7 @@
 set -e
 
 # -------------------------------------------
-# Output helpers dengan ANSI color codes
+# Output helpers (ANSI color codes)
 # -------------------------------------------
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -26,7 +26,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
-NC='\033[0m' # No Color / Reset
+NC='\033[0m'
 
 step() {
     echo -e "\n${BOLD}${BLUE}══════════════════════════════════════${NC}"
@@ -34,32 +34,19 @@ step() {
     echo -e "${BOLD}${BLUE}══════════════════════════════════════${NC}"
 }
 
-success() {
-    echo -e "${GREEN}  ✓ $1${NC}"
-}
-
-warn() {
-    echo -e "${YELLOW}  ⚠ $1${NC}"
-}
-
-error() {
-    echo -e "${RED}  ✗ ERROR: $1${NC}" >&2
-    exit 1
-}
+success() { echo -e "${GREEN}  ✓ $1${NC}"; }
+warn()    { echo -e "${YELLOW}  ⚠ $1${NC}"; }
+error()   { echo -e "${RED}  ✗ ERROR: $1${NC}" >&2; exit 1; }
 
 # -------------------------------------------
-# Validasi environment: pastikan .env ada dan APP_KEY diisi
-# sebelum mulai deployment agar set -e tidak exit di tengah build.
+# Validasi environment
 # -------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 cd "$SCRIPT_DIR"
 
 if [ ! -f ".env" ]; then
     error ".env tidak ditemukan di ${SCRIPT_DIR}. Salin dari .env.example dan isi nilainya."
-fi
-
-if ! grep -q "APP_KEY=base64:" .env 2>/dev/null; then
-    warn "APP_KEY belum di-set atau tidak dalam format base64. Pastikan sudah diisi."
 fi
 
 echo -e "\n${BOLD}${GREEN}╔══════════════════════════════════════╗${NC}"
@@ -69,70 +56,80 @@ echo -e "  Direktori  : ${SCRIPT_DIR}"
 echo -e "  Timestamp  : $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
 # -------------------------------------------
-# STEP 1: Pull latest code
-# Pastikan kode di VPS selalu sinkron dengan branch main.
-# git pull akan gagal jika ada untracked changes (set -e menangkap ini).
+# STEP 1: Pull latest code dari branch main
 # -------------------------------------------
-step "Step 1/6 — git pull origin main"
-# cd ke root project (2 level di atas deployment/production/)
-cd "$(dirname "$(dirname "$SCRIPT_DIR")")"
+step "Step 1/7 — git pull origin main"
+cd "$PROJECT_ROOT"
 git pull origin main
 success "Kode berhasil diperbarui dari branch main"
-
-# Kembali ke direktori deployment/production untuk docker compose commands
 cd "$SCRIPT_DIR"
 
 # -------------------------------------------
-# STEP 2: Build Docker images
-# --pull: selalu download base image versi terbaru (patch security update).
-# Tidak menggunakan --no-cache agar build lebih cepat dengan layer cache,
-# tapi --pull memastikan base image (php:8.2-fpm-alpine) selalu terbaru.
+# STEP 2: Build & start containers
+# -d: detached mode (background).
+# --build: rebuild image dengan kode terbaru.
+# --remove-orphans: hapus container service yang sudah dihapus.
+# --wait: tunggu semua healthcheck PASS sebelum lanjut.
 # -------------------------------------------
-step "Step 2/6 — docker compose build"
-docker compose build --pull
-success "Docker images berhasil dibangun"
+step "Step 2/7 — docker compose up -d --build"
+docker compose up -d --build --remove-orphans --wait
+success "Semua services berjalan dan healthcheck passed"
 
 # -------------------------------------------
-# STEP 3: Start services
-# -d (detached mode): container berjalan di background.
-# --remove-orphans: hapus container service yang sudah dihapus dari compose file.
-# --wait: tunggu sampai semua healthcheck PASS sebelum lanjut.
-#   Ini memastikan db dan redis sudah ready sebelum migration dijalankan.
+# STEP 3: Cek APP_KEY — generate jika belum ada
+# Jika APP_KEY di .env kosong/belum diset, generate otomatis.
+# --force: skip confirmation prompt di production.
 # -------------------------------------------
-step "Step 3/6 — docker compose up -d"
-docker compose up -d --remove-orphans --wait
-success "Semua services berhasil dijalankan dan healthcheck passed"
+step "Step 3/7 — Cek APP_KEY"
+if ! grep -q "APP_KEY=base64:" .env 2>/dev/null; then
+    warn "APP_KEY belum di-set. Generating..."
+    docker compose exec -T app php artisan key:generate --force
+    success "APP_KEY berhasil di-generate"
+else
+    success "APP_KEY sudah terisi, skip generate"
+fi
 
 # -------------------------------------------
 # STEP 4: Database migration
-# --force wajib di environment production karena Laravel akan menolak
-# migration tanpa flag ini sebagai proteksi dari eksekusi tidak sengaja.
-# Jalankan di dalam container 'app' yang sudah pasti running.
+# --force: wajib di production (Laravel menolak tanpa flag ini).
+# -T: disable pseudo-TTY (agar skrip bisa berjalan non-interactive).
 # -------------------------------------------
-step "Step 4/6 — php artisan migrate --force"
-docker compose exec app php artisan migrate --force
+step "Step 4/7 — php artisan migrate --force"
+docker compose exec -T app php artisan migrate --force
 success "Database migration selesai"
 
 # -------------------------------------------
-# STEP 5: Clear & rebuild application cache
-# optimize:clear: hapus semua cache lama (config, route, view, event).
-# optimize: rebuild config cache, route cache, dan view cache sekaligus.
-# Urutan ini penting—clear dulu, baru rebuild—agar tidak ada stale cache.
-# OPcache juga di-clear secara implisit melalui restart proses PHP-FPM.
+# STEP 5: Optimasi performa
+# optimize:clear → hapus semua cache lama.
+# optimize → rebuild config + route cache.
+# view:cache → compile semua Blade templates.
+# event:cache → cache event-listener mapping.
+# Urutan clear→rebuild PENTING agar tidak ada stale cache.
 # -------------------------------------------
-step "Step 5/6 — optimize:clear → optimize"
-docker compose exec app php artisan optimize:clear
-docker compose exec app php artisan optimize
+step "Step 5/7 — Optimasi (clear → cache)"
+docker compose exec -T app php artisan optimize:clear
+docker compose exec -T app php artisan optimize
+docker compose exec -T app php artisan view:cache
+docker compose exec -T app php artisan event:cache
 success "Application cache berhasil di-rebuild"
 
 # -------------------------------------------
-# STEP 6: Restart queue worker
-# queue:restart mengirim sinyal SIGTERM graceful ke worker yang sedang berjalan.
-# Worker akan menyelesaikan job aktif dulu (grace period = stopwaitsecs di supervisord),
-# lalu supervisord otomatis respawn worker baru dengan kode terbaru.
+# STEP 6: Perbaikan permission sisi server
+# Memastikan storage & bootstrap/cache dimiliki www-data
+# walaupun ada volume mount yang mungkin berubah ownership.
 # -------------------------------------------
-step "Step 6/6 — php artisan queue:restart"
-docker compose exec app php artisan queue:restart
+step "Step 6/7 — Fix permissions (storage & bootstrap/cache)"
+docker compose exec -T app chown -R www-data:www-data storage bootstrap/cache
+success "Permissions diperbaiki"
+
+# -------------------------------------------
+# STEP 7: Restart queue worker
+# queue:restart mengirim SIGTERM graceful ke worker aktif.
+# Worker menyelesaikan job yang sedang berjalan (grace period =
+# stopwaitsecs di supervisord), lalu supervisord respawn worker baru.
+# -------------------------------------------
+step "Step 7/7 — php artisan queue:restart"
+docker compose exec -T app php artisan queue:restart
 success "Queue worker restart signal terkirim"
 
 # -------------------------------------------

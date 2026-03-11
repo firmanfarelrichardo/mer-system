@@ -1,33 +1,32 @@
 # ===========================================
-# MER System - Production Docker Compose
+# MER System — Production Docker Compose
 # VPS: Ubuntu 24.04 LTS | RAM 8GB | CPU 2 Core
 # ===========================================
 #
-# ARSITEKTUR:
-# - 4 services: app (PHP-FPM + Worker + Scheduler),
-#               web (Nginx), db (PostgreSQL 16), redis (Redis 7)
-# - Network isolation: hanya port 80 milik 'web' yang terbuka ke host.
-#   db hanya bisa diakses via loopback (SSH Tunnel untuk pgAdmin).
-#   redis tidak expose port sama sekali (internal network only).
-# - 'unless-stopped' dipilih vs 'always' agar container tidak auto-start
-#   kembali jika di-stop manual oleh operator (misal: maintenance window).
+# ARSITEKTUR (4 services):
+#   app  → PHP-FPM + Queue Worker + Scheduler (via Supervisord)
+#   web  → Nginx reverse proxy (SATU-SATUNYA yang expose port ke host)
+#   db   → PostgreSQL 16 (TIDAK expose port — internal only)
+#   redis→ Redis 7 (TIDAK expose port — internal only)
+#
+# SECURITY ISOLATION:
+#   DILARANG mengekspos port db (5432) dan redis (6379) ke host.
+#   Akses DB remote: gunakan SSH Tunnel → ssh -L 5432:db:5432 user@vps
+#
+# RESTART POLICY:
+#   'unless-stopped' → container restart otomatis kecuali di-stop manual
+#   oleh operator (misal: maintenance window).
 # ===========================================
 
 services:
   # -------------------------------------------
-  # PHP-FPM Application (Production)
-  #
-  # VOLUME STRATEGY:
-  #   shared-public di-mount ke /public-shared (bukan /var/www/html/public)
-  #   agar file public bawaan image tetap utuh.
-  #   Entrypoint akan meng-copy /var/www/html/public → /public-shared
-  #   menggunakan mekanisme lock untuk keamanan multi-replica.
+  # PHP-FPM Application + Queue Worker + Scheduler
   # -------------------------------------------
   app:
     build:
       context: ../..
       dockerfile: deployment/production/Dockerfile
-    restart: unless-stopped   # Restart otomatis kecuali di-stop manual oleh operator
+    restart: unless-stopped
     environment:
       APP_NAME: ${APP_NAME:-MER System}
       APP_ENV: production
@@ -44,14 +43,16 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      # REDIS_PASSWORD WAJIB diisi di .env jika Redis dikonfigurasi --requirepass.
-      # Nilai ini dikirim ke aplikasi Laravel & digunakan supervisord untuk restart worker.
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       CACHE_STORE: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
     volumes:
+      # Public assets shared dengan Nginx via named volume.
+      # Entrypoint sync /var/www/html/public → /public-shared.
       - shared-public:/public-shared
+      # Storage & logs di-mount agar data file upload dan log
+      # TIDAK hilang saat container di-rebuild.
       - app-storage:/var/www/html/storage/app
       - app-logs:/var/www/html/storage/logs
     networks:
@@ -63,12 +64,7 @@ services:
         condition: service_healthy
 
   # -------------------------------------------
-  # Nginx Web Server (Production)
-  #
-  # Satu-satunya service yang expose port ke host (port 80).
-  # nginx.conf di-mount read-only untuk keamanan.
-  # Static files dibaca dari shared-public volume yang di-sync
-  # oleh app container saat startup (via docker-entrypoint.sh).
+  # Nginx Web Server — SATU-SATUNYA port yang terbuka ke host
   # -------------------------------------------
   web:
     image: nginx:1.27-alpine
@@ -85,18 +81,14 @@ services:
       - mer-prod-network
 
   # -------------------------------------------
-  # PostgreSQL 16 (Production)
-  #
-  # Port 5432 di-bind ke 127.0.0.1 (loopback host) BUKAN 0.0.0.0.
-  # Artinya port tidak bisa diakses dari internet, hanya dari server itu sendiri.
-  # Akses remote via SSH Tunnel: ssh -L 5432:127.0.0.1:5432 user@vps-ip
+  # PostgreSQL 16 — TIDAK expose port ke host (internal only)
+  # Akses remote: SSH Tunnel → ssh -L 5432:localhost:5432 user@vps
   # -------------------------------------------
   db:
     image: postgres:16-alpine
     container_name: mer-db-prod
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:5432:5432"
+    # SECURITY: Tidak ada 'ports:' — DB hanya bisa diakses dari internal network.
     environment:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
@@ -113,19 +105,17 @@ services:
       retries: 5
 
   # -------------------------------------------
-  # Redis 7 (Production)
-  #
-  # Tidak expose port ke host sama sekali — akses hanya dari internal docker network.
-  # --requirepass: mewajibkan autentikasi meski Redis hanya internal,
-  #   sesuai defense-in-depth principle (jika network container bocor).
-  # --appendonly yes: persistence mode agar session/cache tidak hilang saat restart.
-  # --maxmemory 512mb: memberi headroom lebih besar mengingat VPS 8GB.
-  # --maxmemory-policy allkeys-lru: evict key terlama saat penuh (optimal untuk cache).
+  # Redis 7 — TIDAK expose port ke host (internal only)
+  # --requirepass: defense-in-depth (autentikasi meski internal).
+  # --appendonly yes: persistence agar session/cache tidak hilang saat restart.
+  # --maxmemory 512mb: headroom cukup untuk VPS 8GB.
+  # --maxmemory-policy allkeys-lru: evict key terlama saat penuh.
   # -------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: mer-redis-prod
     restart: unless-stopped
+    # SECURITY: Tidak ada 'ports:' — Redis hanya bisa diakses dari internal network.
     command: >
       redis-server
       --appendonly yes
@@ -143,16 +133,14 @@ services:
       retries: 3
 
 # ===========================================
-# Networks
+# Networks — isolasi internal via bridge
 # ===========================================
 networks:
   mer-prod-network:
-    # bridge driver default dengan isolasi internal.
-    # Hanya service dalam network ini yang bisa saling berkomunikasi.
     driver: bridge
 
 # ===========================================
-# Volumes
+# Volumes — persistent data
 # ===========================================
 volumes:
   shared-public:
