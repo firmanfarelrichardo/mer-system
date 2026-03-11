@@ -7,6 +7,7 @@
 #
 # PRINSIP:
 # - set -e: berhenti SEGERA jika ada perintah yang gagal.
+# - git pull --ff-only: tolak divergent branches, wajib fast-forward.
 # - Setiap step memberikan output berwarna untuk monitoring.
 # - Script dijalankan dari folder deployment/production/.
 #
@@ -56,12 +57,17 @@ echo -e "  Direktori  : ${SCRIPT_DIR}"
 echo -e "  Timestamp  : $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
 # -------------------------------------------
-# STEP 1: Pull latest code dari branch main
+# STEP 1: Pull latest code dari branch production
+# --ff-only: hanya izinkan fast-forward. Jika ada divergent branches,
+# skrip berhenti (set -e) daripada membuat merge commit otomatis
+# yang bisa mengacaukan state production secara tidak terduga.
 # -------------------------------------------
-step "Step 1/7 — git pull origin main"
+step "Step 1/7 — git pull origin production (--ff-only)"
 cd "$PROJECT_ROOT"
-git pull origin main
-success "Kode berhasil diperbarui dari branch main"
+git fetch origin production
+git checkout production
+git pull --ff-only origin production
+success "Kode berhasil diperbarui dari branch production"
 cd "$SCRIPT_DIR"
 
 # -------------------------------------------
