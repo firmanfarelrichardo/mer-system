@@ -1,0 +1,158 @@
+# ===========================================
+# Promtail — Agen Pembaca & Pengirim Log ke Loki
+# ===========================================
+#
+# ARSITEKTUR:
+#   Promtail membaca file log dari disk (via tail -f semantik),
+#   mem-parsing setiap baris menggunakan regex/pipeline, menambahkan
+#   label metadata, lalu mengirim (push) ke Loki via HTTP POST.
+#
+#   File log → Promtail (parse + label) → HTTP POST → Loki:3100
+#
+# LOG YANG DIPANTAU:
+#   1. Nginx access.log  — request HTTP (IP, status, response time)
+#   2. Nginx error.log   — error Nginx (connection refused, timeout)
+#   3. Laravel laravel.log — exception, error, warning dari aplikasi
+#
+# POSISI FILE:
+#   Promtail menyimpan posisi baca terakhir di /tmp/positions.yaml.
+#   Jika container restart, Promtail melanjutkan dari posisi terakhir
+#   — TIDAK membaca ulang seluruh file dari awal (idempotent).
+# ===========================================
+
+server:
+  # Port HTTP untuk health check dan debug endpoint.
+  # Bisa diakses internal: http://promtail:9080/ready
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+# Posisi baca terakhir — dipersistensikan via volume mount.
+positions:
+  filename: /tmp/positions.yaml
+
+# -------------------------------------------
+# Client — tujuan pengiriman log
+# -------------------------------------------
+clients:
+  # URL Loki menggunakan Docker DNS (nama service).
+  - url: http://mer-loki:3100/loki/api/v1/push
+    # Batched send: tunggu hingga 1 detik atau 1MB sebelum kirim.
+    # Mengurangi jumlah HTTP request ke Loki.
+    batchwait: 1s
+    batchsize: 1048576
+
+# ===========================================
+# Scrape Configs — definisi sumber log
+# ===========================================
+scrape_configs:
+  # -------------------------------------------
+  # 1. NGINX ACCESS LOG
+  #
+  # Format log sesuai konfigurasi nginx.conf (log_format main):
+  #   $remote_addr - $remote_user [$time_local] "$request"
+  #   $status $body_bytes_sent "$http_referer"
+  #   "$http_user_agent" "$http_x_forwarded_for"
+  #
+  # Regex men-capture setiap field menjadi label terpisah agar
+  # bisa di-query di Grafana: {job="nginx"} |= "500"
+  # -------------------------------------------
+  - job_name: nginx-access
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          source: access
+          # Path di dalam container Promtail (sesuai volume mount).
+          __path__: /var/log/nginx/access.log
+
+    pipeline_stages:
+      # Regex parser: men-extract field dari setiap baris log Nginx.
+      # Setiap named group (?P<name>...) menjadi label/field di Loki.
+      - regex:
+          expression: '^(?P<remote_addr>[\w.]+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<request>[^"]*)" (?P<status>\d{3}) (?P<body_bytes>\d+) "(?P<referer>[^"]*)" "(?P<user_agent>[^"]*)"'
+
+      # Ekstrak label yang berguna untuk filtering di Grafana.
+      # Label yang terlalu banyak (high cardinality) akan membebani
+      # Loki, maka hanya status dan method yang dijadikan label.
+      - labels:
+          status:
+          remote_addr:
+
+      # Timestamp: parse waktu dari log Nginx agar timeline di Grafana
+      # sesuai waktu asli event, bukan waktu Promtail membaca file.
+      - timestamp:
+          source: time_local
+          format: "02/Jan/2006:15:04:05 -0700"
+
+  # -------------------------------------------
+  # 2. NGINX ERROR LOG
+  #
+  # Format default Nginx error log:
+  #   YYYY/MM/DD HH:MM:SS [level] PID#TID: *CID message
+  #
+  # Level severity: debug, info, notice, warn, error, crit, alert, emerg.
+  # Di Grafana: filter dengan {job="nginx", source="error"} |= "crit"
+  # -------------------------------------------
+  - job_name: nginx-error
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          source: error
+          __path__: /var/log/nginx/error.log
+
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}) \[(?P<level>\w+)\] (?P<message>.+)$'
+      - labels:
+          level:
+      - timestamp:
+          source: timestamp
+          format: "2006/01/02 15:04:05"
+
+  # -------------------------------------------
+  # 3. LARAVEL APPLICATION LOG
+  #
+  # Format log Laravel (Monolog single/stack channel):
+  #   [YYYY-MM-DD HH:MM:SS] environment.LEVEL: message
+  #   {"context":{...}}     ← opsional, multiline JSON
+  #   #0 /path/to/file.php  ← opsional, stack trace
+  #
+  # MULTILINE HANDLING:
+  #   Exception stack trace di Laravel bisa 50+ baris.
+  #   multiline stage men-gabungkan semua baris yang TIDAK dimulai
+  #   dengan "[" (pattern timestamp) ke entri sebelumnya.
+  #   Tanpa ini, setiap baris stack trace menjadi entri terpisah
+  #   di Loki — membuat log tidak terbaca.
+  # -------------------------------------------
+  - job_name: laravel
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: laravel
+          source: app
+          __path__: /var/log/laravel/laravel.log
+
+    pipeline_stages:
+      # Multiline: gabungkan baris stack trace ke entri sebelumnya.
+      # firstline: regex yang menandai AWAL entri log baru.
+      # Semua baris setelahnya yang tidak match firstline akan
+      # digabung ke entri tersebut sebagai satu blok.
+      - multiline:
+          firstline: '^\[\d{4}-\d{2}-\d{2}'
+          max_wait_time: 3s
+          max_lines: 128
+
+      # Parse timestamp dan severity level dari header log Laravel.
+      - regex:
+          expression: '^\[(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \w+\.(?P<level>\w+):'
+
+      - labels:
+          level:
+
+      - timestamp:
+          source: timestamp
+          format: "2006-01-02 15:04:05"

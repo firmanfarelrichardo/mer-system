@@ -47,22 +47,22 @@ class StatistikController extends Controller
     // ----------------------------------------------------------------
 
     /**
-     * Warna RGBA tiap tipe insiden — Semantic by severity.
+     * Warna RGBA tiap tipe insiden — ISO/ANSI K3 risk color standard.
      *
-     * KPC (Potensial Cedera) → Biru     — Informasi
-     * KNC (Nyaris Cedera)    → Kuning   — Waspada
-     * KTC (Tidak Cedera)     → Oranye   — Peringatan
-     * KTD (Tidak Diharapkan) → Merah    — Kritis
-     * SENTINEL               → Merah Gelap — Sangat Kritis
+     * KPC (Potensial Cedera) → Hijau   — Aman
+     * KNC (Nyaris Cedera)    → Biru    — Informasi
+     * KTC (Tidak Cedera)     → Amber   — Perhatian
+     * KTD (Tidak Diharapkan) → Oranye  — Bahaya
+     * SENTINEL               → Merah   — Kritis/Darurat
      *
      * @var array<string, string>
      */
     private const WARNA_TIPE = [
-        'KPC'      => 'rgba(59,  130, 246, 0.85)',  // blue-500   — Informasi/Potensial
-        'KNC'      => 'rgba(234, 179,   8, 0.85)',  // yellow-500 — Waspada
-        'KTC'      => 'rgba(249, 115,  22, 0.85)',  // orange-500 — Peringatan
-        'KTD'      => 'rgba(220,  38,  38, 0.85)',  // red-600    — Kritis
-        'SENTINEL' => 'rgba(127,  29,  29, 0.92)',  // red-900    — Sangat Kritis
+        'KPC'      => 'rgba(34,  197,  94, 0.85)',  // green-500  — Aman
+        'KNC'      => 'rgba(59,  130, 246, 0.85)',  // blue-500   — Informasi
+        'KTC'      => 'rgba(245, 158,  11, 0.85)',  // amber-500  — Perhatian
+        'KTD'      => 'rgba(249, 115,  22, 0.85)',  // orange-500 — Bahaya
+        'SENTINEL' => 'rgba(239,  68,  68, 0.85)',  // red-500    — Kritis
     ];
 
     /**

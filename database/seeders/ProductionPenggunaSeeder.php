@@ -156,8 +156,8 @@ class ProductionPenggunaSeeder extends Seeder
         $peranKaru     = Peran::where(['tenant_id' => $tenant->id, 'nama_peran' => Peran::KEPALA_RUANGAN])->firstOrFail();
 
         // ── Step 1: Akun khusus ───────────────────────────────────────────
-        $this->command->info('  ▶ Membuat akun khusus (Admin, Direktur, 3 Komite, Peneliti)...');
-        $this->seedSpecialAccounts($tenant->id, $peranAdmin, $peranDirektur, $peranKomite, $peranPeneliti);
+        $this->command->info('  ▶ Membuat akun khusus (Admin, Direktur, 3 Komite, Peneliti, Nakes Demo)...');
+        $this->seedSpecialAccounts($tenant->id, $peranAdmin, $peranDirektur, $peranKomite, $peranPeneliti, $peranNakes);
 
         // ── Step 2: Nakes PIC ─────────────────────────────────────────────
         $this->command->info('  ▶ Membuat 25 akun Nakes (PIC per Unit) ...');
@@ -167,7 +167,7 @@ class ProductionPenggunaSeeder extends Seeder
         $this->command->info('  ▶ Membuat 28 akun Kepala Ruangan (Validator per Unit) ...');
         $this->seedStaff($tenant->id, self::KARU_DATA, $peranKaru);
 
-        $this->command->info('  ✔ ProductionPenggunaSeeder selesai: 59 akun production diproses.');
+        $this->command->info('  ✔ ProductionPenggunaSeeder selesai: 60 akun production diproses.');
         $this->command->warn('  ⚠ Semua akun non-Admin diwajibkan ganti sandi pada login pertama.');
     }
 
@@ -195,6 +195,7 @@ class ProductionPenggunaSeeder extends Seeder
         Peran $peranDirektur,
         Peran $peranKomite,
         Peran $peranPeneliti,
+        Peran $peranNakes,
     ): void {
         $entries = [
             // ── Admin ──────────────────────────────────────────────────────
@@ -204,13 +205,13 @@ class ProductionPenggunaSeeder extends Seeder
                 'data'  => [
                     'tenant_id'         => $tenantId,
                     'nomor_induk'       => 'ADM001',
-                    'username'          => 'admin.rsud',
+                    'username'          => 'admin',
                     'nama_lengkap'      => 'Administrator Sistem RSUD HM. Ryacudu',
                     'jabatan'           => 'Administrator Sistem',
                     'email'             => 'admin@rsudryacudu.go.id',
                     'nomor_hp'          => '082100000001',
                     'alamat'            => self::ALAMAT_RS,
-                    'kata_sandi'        => 'Admin@Rsud2025!',
+                    'kata_sandi'        => 'password',
                     'is_aktif'          => true,
                     'wajib_ganti_sandi' => false,
                 ],
@@ -222,13 +223,13 @@ class ProductionPenggunaSeeder extends Seeder
                 'data'  => [
                     'tenant_id'         => $tenantId,
                     'nomor_induk'       => 'DIR001',
-                    'username'          => 'direktur.rsud',
+                    'username'          => 'direktur',
                     'nama_lengkap'      => 'Direktur RSUD HM. Ryacudu',
                     'jabatan'           => 'Direktur',
                     'email'             => 'direktur@rsudryacudu.go.id',
                     'nomor_hp'          => '082100000002',
                     'alamat'            => self::ALAMAT_RS,
-                    'kata_sandi'        => 'Direktur@Rsud2025!',
+                    'kata_sandi'        => 'password',
                     'is_aktif'          => true,
                     'wajib_ganti_sandi' => true,
                 ],
@@ -240,13 +241,13 @@ class ProductionPenggunaSeeder extends Seeder
                 'data'  => [
                     'tenant_id'         => $tenantId,
                     'nomor_induk'       => 'KOM001',
-                    'username'          => 'komite.keselamatan',
+                    'username'          => 'komite',
                     'nama_lengkap'      => 'Ketua Komite Keselamatan Pasien',
                     'jabatan'           => 'Ketua Komite Keselamatan Pasien',
                     'email'             => 'komite.keselamatan@rsudryacudu.go.id',
                     'nomor_hp'          => '082100000003',
                     'alamat'            => self::ALAMAT_RS,
-                    'kata_sandi'        => 'Komite@Rsud2025!',
+                    'kata_sandi'        => 'password',
                     'is_aktif'          => true,
                     'wajib_ganti_sandi' => true,
                 ],
@@ -303,11 +304,30 @@ class ProductionPenggunaSeeder extends Seeder
                     'email'             => 'peneliti.mer@universitas.ac.id',
                     'nomor_hp'          => '082100000099',
                     'alamat'            => 'Kampus Universitas, Gedung Kesehatan',
-                    'kata_sandi'        => 'Peneliti@2026!',
+                    'kata_sandi'        => 'password',
                     'is_aktif'          => true,
                     'wajib_ganti_sandi' => false,
                 ],
                 'peran' => $peranPeneliti,
+            ],
+
+            // ── Nakes Demo ────────────────────────────────────────────────
+            // Akun nakes generik untuk keperluan demo / uji coba alur pelaporan.
+            [
+                'data'  => [
+                    'tenant_id'         => $tenantId,
+                    'nomor_induk'       => 'NK000',
+                    'username'          => 'nakes',
+                    'nama_lengkap'      => 'Tenaga Kesehatan',
+                    'jabatan'           => 'Perawat Pelaksana',
+                    'email'             => 'nakes@rsudryacudu.go.id',
+                    'nomor_hp'          => '082100000010',
+                    'alamat'            => self::ALAMAT_RS,
+                    'kata_sandi'        => 'password',
+                    'is_aktif'          => true,
+                    'wajib_ganti_sandi' => false,
+                ],
+                'peran' => $peranNakes,
             ],
         ];
 

@@ -21,6 +21,7 @@ use App\Policies\InsidenPolicy;
 use App\Repositories\InsidenRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -39,6 +40,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ----------------------------------------------------------------
+        // Force HTTPS — paksa semua URL yang digenerate Laravel ke HTTPS.
+        //
+        // Di production, Cloudflare melakukan SSL termination dan meneruskan
+        // request ke Nginx via HTTP:80. Tanpa pengaturan ini, route(),
+        // url(), asset(), redirect() akan menghasilkan URL http://...
+        // yang menyebabkan mixed-content warning di browser.
+        //
+        // Hanya aktif di production & staging karena:
+        // - Local dev (APP_ENV=local) menggunakan HTTP biasa via Vite.
+        // - Testing (APP_ENV=testing) juga tidak perlu HTTPS.
+        // ----------------------------------------------------------------
+        if ($this->app->environment('production', 'staging')) {
+            URL::forceScheme('https');
+        }
+
         // ----------------------------------------------------------------
         // Timezone & Locale: Asia/Jakarta (WIB), Bahasa Indonesia
         // Memastikan Carbon menggunakan bahasa Indonesia untuk semua output
