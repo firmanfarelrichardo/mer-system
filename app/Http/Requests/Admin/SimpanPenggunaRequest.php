@@ -30,9 +30,15 @@ class SimpanPenggunaRequest extends FormRequest
         return [
             'nama_lengkap' => ['required', 'string', 'max:255'],
             'nomor_induk'  => [
-                'required', 'string', 'max:100',
+                'nullable', 'string', 'max:100',
+                'required_without:username',
                 Rule::unique(Pengguna::class, 'nomor_induk')
                     ->where('tenant_id', $tenantId),
+            ],
+            'username' => [
+                'nullable', 'string', 'max:50', 'regex:/^[a-zA-Z0-9._-]+$/',
+                'required_without:nomor_induk',
+                Rule::unique(Pengguna::class, 'username'),
             ],
             'email' => [
                 'required', 'email', 'max:255',
@@ -56,8 +62,11 @@ class SimpanPenggunaRequest extends FormRequest
     {
         return [
             'nama_lengkap.required' => 'Nama lengkap wajib diisi.',
-            'nomor_induk.required'  => 'Nomor induk wajib diisi.',
+            'nomor_induk.required_without' => 'Nomor induk wajib diisi jika username tidak diisi.',
             'nomor_induk.unique'    => 'Nomor induk sudah terdaftar.',
+            'username.required_without' => 'Username wajib diisi jika nomor induk tidak diisi.',
+            'username.regex'        => 'Username hanya boleh menggunakan huruf, angka, titik, atau garis bawah.',
+            'username.unique'       => 'Username sudah digunakan.',
             'email.required'        => 'Email wajib diisi.',
             'email.email'           => 'Format email tidak valid.',
             'email.unique'          => 'Email sudah terdaftar.',

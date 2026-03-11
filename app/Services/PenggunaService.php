@@ -65,6 +65,7 @@ class PenggunaService
                 'tenant_id'    => $dto->tenant_id,
                 'unit_id'      => $dto->unit_id,
                 'nomor_induk'  => $dto->nomor_induk,
+                'username'     => $dto->username ?: null,
                 'email'        => $dto->email,
                 'nomor_hp'     => $dto->nomor_hp,
                 'alamat'       => $dto->alamat,

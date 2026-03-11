@@ -31,7 +31,8 @@ class PerbaruiPenggunaRequest extends FormRequest
         return [
             'nama_lengkap' => ['required', 'string', 'max:255'],
             'nomor_induk'  => [
-                'required', 'string', 'max:100',
+                'nullable', 'string', 'max:100',
+                'required_without:username',
                 Rule::unique(Pengguna::class, 'nomor_induk')
                     ->where('tenant_id', $tenantId)
                     ->ignore($penggunaId),
@@ -47,6 +48,7 @@ class PerbaruiPenggunaRequest extends FormRequest
             'unit_id'       => ['nullable', 'integer', Rule::exists(UnitKerja::class, 'id')],
             'username'      => [
                 'nullable', 'string', 'max:50', 'regex:/^[a-zA-Z0-9._-]+$/',
+                'required_without:nomor_induk',
                 Rule::unique(Pengguna::class, 'username')->ignore($penggunaId),
             ],
             'kata_sandi'    => ['nullable', 'string', 'min:8', 'confirmed'],
@@ -63,7 +65,7 @@ class PerbaruiPenggunaRequest extends FormRequest
     {
         return [
             'nama_lengkap.required'     => 'Nama lengkap wajib diisi.',
-            'nomor_induk.required'      => 'Nomor induk wajib diisi.',
+            'nomor_induk.required_without' => 'Nomor induk wajib diisi jika username tidak diisi.',
             'nomor_induk.unique'        => 'Nomor induk sudah terdaftar.',
             'email.email'               => 'Format email tidak valid.',
             'email.unique'              => 'Email sudah terdaftar.',

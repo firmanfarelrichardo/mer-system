@@ -15,7 +15,7 @@ final readonly class PenggunaData
 {
     public function __construct(
         public string  $nama_lengkap,
-        public string  $nomor_induk,
+        public ?string $nomor_induk,
         public ?string $email,
         public ?string $nomor_hp,
         public string  $alamat,
