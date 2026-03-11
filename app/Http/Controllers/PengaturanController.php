@@ -11,7 +11,7 @@ use Illuminate\View\View;
  * PengaturanController — menangani halaman pengaturan akun.
  *
  * Menyediakan antarmuka untuk pengguna mengelola pengaturan akunnya,
- * seperti mengubah kata sandi dan preferensi notifikasi.
+ * seperti mengubah kata sandi.
  * Tersedia untuk semua peran yang terautentikasi.
  */
 class PengaturanController extends Controller
