@@ -86,9 +86,17 @@ class PenggunaController extends Controller
      */
     public function buat(): View
     {
-        $tenantId   = auth()->user()->tenant_id;
-        $daftarPeran = Peran::where('tenant_id', $tenantId)->orderBy('nama_peran')->get();
-        $daftarUnit  = UnitKerja::where('tenant_id', $tenantId)->orderBy('nama_unit')->get();
+        $tenantId = auth()->user()->tenant_id;
+
+        // Filter peran: hilangkan Peneliti dan Kepala Ruangan
+        // - Peneliti: ditambahkan via sistem (env PENELITI_NIP)
+        // - Kepala Ruangan: diberikan via fitur "Tambah Peran Karu" di edit
+        $daftarPeran = Peran::where('tenant_id', $tenantId)
+            ->whereNotIn('nama_peran', [Peran::PENELITI, Peran::KEPALA_RUANGAN])
+            ->orderBy('nama_peran')
+            ->get();
+
+        $daftarUnit = UnitKerja::where('tenant_id', $tenantId)->orderBy('nama_unit')->get();
 
         return view('admin.pengguna.buat', compact('daftarPeran', 'daftarUnit'));
     }
@@ -121,15 +129,26 @@ class PenggunaController extends Controller
      */
     public function edit(int $pengguna): View
     {
-        $tenantId    = auth()->user()->tenant_id;
+        $tenantId     = auth()->user()->tenant_id;
         $dataPengguna = $this->penggunaService->cariBerdasarkanId($pengguna);
 
         abort_if(! $dataPengguna || $dataPengguna->tenant_id !== $tenantId, 404);
 
-        $daftarPeran = Peran::where('tenant_id', $tenantId)->orderBy('nama_peran')->get();
-        $daftarUnit  = UnitKerja::where('tenant_id', $tenantId)->orderBy('nama_unit')->get();
+        // Filter peran: hilangkan Peneliti dan Kepala Ruangan dari pilihan utama
+        // - Peneliti: ditambahkan via sistem (env PENELITI_NIP)
+        // - Kepala Ruangan: diberikan via fitur terpisah "Tambah Peran Karu"
+        $daftarPeran = Peran::where('tenant_id', $tenantId)
+            ->whereNotIn('nama_peran', [Peran::PENELITI, Peran::KEPALA_RUANGAN])
+            ->orderBy('nama_peran')
+            ->get();
 
-        return view('admin.pengguna.edit', compact('dataPengguna', 'daftarPeran', 'daftarUnit'));
+        $daftarUnit = UnitKerja::where('tenant_id', $tenantId)->orderBy('nama_unit')->get();
+
+        return view('admin.pengguna.edit', compact(
+            'dataPengguna',
+            'daftarPeran',
+            'daftarUnit',
+        ));
     }
 
     /* ------------------------------------------------------------------

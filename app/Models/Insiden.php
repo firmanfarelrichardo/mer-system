@@ -85,6 +85,8 @@ class Insiden extends Model
 
     /**
      * Pelapor — pengguna yang membuat laporan.
+     *
+     * @return BelongsTo<Pengguna, $this>
      */
     public function pelapor(): BelongsTo
     {
@@ -93,6 +95,8 @@ class Insiden extends Model
 
     /**
      * Tenant (organisasi) tempat insiden terdaftar.
+     *
+     * @return BelongsTo<Organisasi, $this>
      */
     public function tenant(): BelongsTo
     {
@@ -101,6 +105,8 @@ class Insiden extends Model
 
     /**
      * Unit kerja tempat kejadian insiden.
+     *
+     * @return BelongsTo<UnitKerja, $this>
      */
     public function unitKerja(): BelongsTo
     {
@@ -109,6 +115,8 @@ class Insiden extends Model
 
     /**
      * Detail pasien yang terlibat dalam insiden.
+     *
+     * @return HasOne<DetailPasien, $this>
      */
     public function detailPasien(): HasOne
     {
@@ -117,6 +125,8 @@ class Insiden extends Model
 
     /**
      * Riwayat tindak lanjut / umpan balik dari Karu/Komite.
+     *
+     * @return HasMany<TindakLanjut, $this>
      */
     public function tindakLanjut(): HasMany
     {
@@ -126,6 +136,8 @@ class Insiden extends Model
 
     /**
      * Kategori kesalahan yang terkait dengan insiden ini (pivot: pelaporan.insiden_kategori).
+     *
+     * @return BelongsToMany<KategoriKesalahan, $this>
      */
     public function kategoriKesalahans(): BelongsToMany
     {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckForcePasswordChange;
+use App\Http\Middleware\EnsurePeranAktif;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -40,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // -----------------------------------------------------------------
         $middleware->alias([
             'force.password.change' => CheckForcePasswordChange::class,
+            'peran.aktif'           => EnsurePeranAktif::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

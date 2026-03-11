@@ -34,7 +34,7 @@ class TipeCederaService
      * @param  int                  $tenantId
      * @param  array<string, mixed> $filter
      * @param  int                  $perHalaman
-     * @return LengthAwarePaginator<TipeCedera>
+     * @return LengthAwarePaginator<int, TipeCedera>
      */
     public function daftar(int $tenantId, array $filter = [], int $perHalaman = 15): LengthAwarePaginator
     {

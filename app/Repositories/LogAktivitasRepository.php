@@ -9,6 +9,7 @@ use App\Models\LogAktivitas;
 use App\Models\Peran;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
  * Repository LogAktivitas — akses data ke tabel `audit.log_aktivitas`.
@@ -24,12 +25,18 @@ class LogAktivitasRepository
      *
      * Filter peran menggunakan `whereHas` pada relasi pengguna → peran.
      *
-     * @return LengthAwarePaginator<LogAktivitas>
+     * @return LengthAwarePaginator<int, LogAktivitas>
+     * @phpstan-return LengthAwarePaginator<int, LogAktivitas>
      */
     public function getPaginatedLogs(LogAktivitasFilterDTO $dto, int $perHalaman = 20): LengthAwarePaginator
     {
+        // @phpstan-ignore return.type
         return LogAktivitas::query()
-            ->with(['pengguna' => fn ($q) => $q->withTrashed()->with('peran')])
+            // @phpstan-ignore argument.type
+            ->with(['pengguna' => function (Relation $q): void {
+                // @phpstan-ignore method.notFound
+                $q->withTrashed()->with('peran');
+            }])
             ->where('tenant_id', $dto->tenantId)
             ->when(true, fn (Builder $q) => $this->filterPeran($q, $dto->tipePeran))
             ->when($dto->dariTanggal, fn (Builder $q, string $tgl) => $q->whereDate('created_at', '>=', $tgl))
@@ -38,7 +45,10 @@ class LogAktivitasRepository
                 $q->where(function (Builder $sub) use ($cari): void {
                     $sub->where('nama_tabel', 'ilike', "%{$cari}%")
                         ->orWhere('aksi', 'ilike', "%{$cari}%")
-                        ->orWhereHas('pengguna', fn (Builder $p) => $p->withTrashed()->where('nama_lengkap', 'ilike', "%{$cari}%"));
+                        ->orWhereHas('pengguna', function (Builder $p) use ($cari): void {
+                            // @phpstan-ignore method.notFound
+                            $p->withTrashed()->where('nama_lengkap', 'ilike', "%{$cari}%");
+                        });
                 });
             })
             ->orderByDesc('created_at')
@@ -57,7 +67,13 @@ class LogAktivitasRepository
         $constraint = fn (Builder $q) => $q->where('nama_peran', Peran::ADMIN);
 
         return $tipePeran === 'admin'
-            ? $query->whereHas('pengguna', fn (Builder $q) => $q->withTrashed()->whereHas('peran', $constraint))
-            : $query->whereHas('pengguna', fn (Builder $q) => $q->withTrashed()->whereDoesntHave('peran', $constraint));
+            ? $query->whereHas('pengguna', function (Builder $q) use ($constraint): Builder {
+                // @phpstan-ignore method.notFound
+                return $q->withTrashed()->whereHas('peran', $constraint);
+            })
+            : $query->whereHas('pengguna', function (Builder $q) use ($constraint): Builder {
+                // @phpstan-ignore method.notFound
+                return $q->withTrashed()->whereDoesntHave('peran', $constraint);
+            });
     }
 }

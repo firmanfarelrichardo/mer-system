@@ -59,7 +59,8 @@
                 {{-- Nomor Induk --}}
                 <div>
                     <label for="nomor_induk" class="mb-1 block text-sm font-medium text-slate-700">
-                        Nomor Induk <span class="text-red-500">*</span>
+                        Nomor Induk
+                        <span class="ml-1 text-xs font-normal text-slate-400">(wajib jika tanpa username)</span>
                     </label>
                     <input type="text" id="nomor_induk" name="nomor_induk"
                            value="{{ old('nomor_induk') }}"
@@ -68,6 +69,24 @@
                                   focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30
                                   @error('nomor_induk') border-red-300 focus:border-red-400 focus:ring-red-200 @enderror">
                     @error('nomor_induk')
+                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Username --}}
+                <div>
+                    <label for="username" class="mb-1 block text-sm font-medium text-slate-700">
+                        Username
+                        <span class="ml-1 text-xs font-normal text-slate-400">(wajib jika tanpa nomor induk)</span>
+                    </label>
+                    <input type="text" id="username" name="username"
+                           value="{{ old('username') }}"
+                           placeholder="Contoh: budi.santoso"
+                           autocomplete="off"
+                           class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm placeholder-slate-400
+                                  focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30
+                                  @error('username') border-red-300 focus:border-red-400 focus:ring-red-200 @enderror">
+                    @error('username')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
                 </div>
@@ -145,11 +164,14 @@
                     @enderror
                 </div>
 
-                {{-- Peran (single radio — satu peran per pengguna) --}}
+                {{-- Peran (radio — satu peran per pengguna) --}}
                 <div>
                     <label class="mb-1 block text-sm font-medium text-slate-700">
                         Peran <span class="text-red-500">*</span>
                     </label>
+                    <p class="mb-2 text-xs text-slate-400">
+                        Pilih satu peran untuk pengguna ini.
+                    </p>
                     <div class="rounded-lg border border-slate-200 px-3 py-2.5 @error('peran_ids') border-red-300 @enderror">
                         @foreach ($daftarPeran as $peran)
                             <label class="flex items-center gap-2 py-1 text-sm text-slate-700">

@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -96,6 +97,8 @@ class Pengguna extends Authenticatable
 
     /**
      * Peran yang dimiliki pengguna melalui tabel pivot.
+     *
+     * @return BelongsToMany<Peran, $this>
      */
     public function peran(): BelongsToMany
     {
@@ -109,6 +112,8 @@ class Pengguna extends Authenticatable
 
     /**
      * Tenant (organisasi) tempat pengguna terdaftar.
+     *
+     * @return BelongsTo<Organisasi, $this>
      */
     public function tenant(): BelongsTo
     {
@@ -117,6 +122,8 @@ class Pengguna extends Authenticatable
 
     /**
      * Unit kerja yang opsional untuk pengguna ini.
+     *
+     * @return BelongsTo<UnitKerja, $this>
      */
     public function unitKerja(): BelongsTo
     {
@@ -130,22 +137,91 @@ class Pengguna extends Authenticatable
     /**
      * Periksa apakah pengguna memiliki peran tertentu berdasarkan nama.
      *
-     * Untuk peneliti dalam mode simulasi (session 'active_role' diset):
-     *   → kembalikan true HANYA jika $namaPeran sesuai peran aktif di sesi.
-     *   Ini memastikan semua controller yang sudah ada (DashboardController,
-     *   LaporanController, dll.) otomatis bereaksi terhadap switch peran
-     *   tanpa perlu dimodifikasi satu per satu.
+     * Untuk pengguna yang bisa ganti peran (peneliti atau dual-role), gunakan
+     * peranAktif() sebagai satu-satunya acuan agar konsisten di seluruh app.
+     * peranAktif() sudah menangani: sesi aktif, mode penuh peneliti, dan default DB.
      *
-     * Untuk peneliti mode penuh (belum memilih simulasi) dan semua pengguna
-     * biasa: cek berdasarkan peran di database.
+     * Untuk pengguna biasa (1 peran): cek langsung ke koleksi DB.
      */
     public function memilikiPeran(string $namaPeran): bool
     {
-        if ($this->isPeneliti() && session()->has('active_role')) {
-            return session('active_role') === $namaPeran;
+        if ($this->bisaGantiPeran()) {
+            return $this->peranAktif() === $namaPeran;
         }
 
         return $this->peran->contains('nama_peran', $namaPeran);
+    }
+
+    /**
+     * Periksa apakah pengguna memiliki peran di database (tanpa memperhatikan sesi).
+     *
+     * Berguna saat perlu cek kepemilikan peran riil, misalnya untuk
+     * menampilkan tombol "Ganti Peran" di navbar.
+     */
+    public function punyaPeranDiDb(string $namaPeran): bool
+    {
+        return $this->peran->contains('nama_peran', $namaPeran);
+    }
+
+    /**
+     * Periksa apakah pengguna ini adalah Kepala Ruangan (Karu).
+     *
+     * Cek berdasarkan peran di database, bukan sesi aktif.
+     * Digunakan untuk menentukan apakah tombol switch peran ditampilkan.
+     */
+    public function adalahKaru(): bool
+    {
+        return $this->punyaPeranDiDb(Peran::KEPALA_RUANGAN);
+    }
+
+    /**
+     * Periksa apakah pengguna ini adalah Nakes.
+     *
+     * Cek berdasarkan peran di database, bukan sesi aktif.
+     */
+    public function adalahNakes(): bool
+    {
+        return $this->punyaPeranDiDb(Peran::NAKES);
+    }
+
+    /**
+     * Periksa apakah pengguna dapat mengganti peran aktif.
+     *
+     * True jika:
+     * - Akun peneliti (dapat simulasi semua peran), ATAU
+     * - Pengguna memiliki >1 peran di database (dual-role, misal Nakes + Karu)
+     */
+    public function bisaGantiPeran(): bool
+    {
+        if ($this->isPeneliti()) {
+            return true;
+        }
+
+        return $this->peran->count() > 1;
+    }
+
+    /**
+     * Kembalikan daftar peran yang dapat dipilih pengguna untuk switch.
+     *
+     * - Untuk peneliti: semua peran tersedia (simulasi penuh).
+     * - Untuk dual-role: hanya peran yang dimiliki di database.
+     *
+     * @return list<string>
+     */
+    public function peranYangDapatDipilih(): array
+    {
+        if ($this->isPeneliti()) {
+            return [
+                Peran::NAKES,
+                Peran::KEPALA_RUANGAN,
+                Peran::KOMITE,
+                Peran::ADMIN,
+                Peran::DIREKTUR,
+                Peran::PENELITI,
+            ];
+        }
+
+        return $this->peran->pluck('nama_peran')->all();
     }
 
     /**
@@ -197,7 +273,7 @@ class Pengguna extends Authenticatable
      */
     public function isPeneliti(): bool
     {
-        $nipPeneliti = env('PENELITI_NIP');
+        $nipPeneliti = config('app.peneliti_nip');
 
         return ! empty($nipPeneliti) && $this->nomor_induk === $nipPeneliti;
     }
@@ -205,20 +281,69 @@ class Pengguna extends Authenticatable
     /**
      * Kembalikan nama peran yang sedang aktif untuk pengguna ini.
      *
-     * - Untuk peneliti: kembalikan peran yang dipilih via dropdown "Ganti Peran"
-     *   (disimpan di sesi), atau Peran::PENELITI jika belum ada pilihan aktif.
-     * - Untuk pengguna biasa: kembalikan peran pertama dari database.
+     * Prioritas:
+     * 1. Jika ada session 'active_role' DAN pengguna bisa ganti peran → gunakan sesi.
+     * 2. Untuk peneliti tanpa sesi → kembalikan Peran::PENELITI.
+     * 3. Untuk pengguna biasa → kembalikan peran pertama dari database.
      *
      * Digunakan oleh navbar (label peran), sidebar composer (routing &
      * filter menu), dan dasbor hub untuk menentukan redirect yang tepat.
      */
     public function peranAktif(): string
     {
-        if ($this->isPeneliti()) {
-            return session('active_role', Peran::PENELITI);
+        // Jika ada active_role di sesi DAN pengguna berhak switch
+        if (session()->has('active_role') && $this->bisaGantiPeran()) {
+            return session('active_role');
         }
 
+        // Peneliti tanpa sesi aktif → mode penuh (Peneliti view)
+        if ($this->isPeneliti()) {
+            return Peran::PENELITI;
+        }
+
+        // Pengguna dual-role tanpa sesi → gunakan peran utama (bukan Karu).
+        // Karu adalah peran tambahan yang harus diaktifkan secara eksplisit
+        // via dropdown "Ganti Peran" di navbar.
+        if ($this->bisaGantiPeran()) {
+            return $this->peran
+                ->first(fn (Peran $p) => $p->nama_peran !== Peran::KEPALA_RUANGAN)
+                ?->nama_peran
+                ?? $this->peran->first()?->nama_peran
+                ?? '—';
+        }
+
+        // Pengguna biasa (1 peran) → peran dari database
         return $this->peran->first()?->nama_peran ?? '—';
+    }
+
+    /**
+     * Set peran aktif di sesi untuk pengguna ini.
+     *
+     * Validasi: peran harus ada di daftar peran yang dapat dipilih.
+     * Jika peran tidak valid, metode tidak melakukan apa-apa.
+     */
+    public function setPeranAktif(string $namaPeran): void
+    {
+        if (! in_array($namaPeran, $this->peranYangDapatDipilih(), true)) {
+            return;
+        }
+
+        // Khusus peneliti: memilih Peran::PENELITI = kembali ke mode penuh
+        if ($this->isPeneliti() && $namaPeran === Peran::PENELITI) {
+            session()->forget('active_role');
+
+            return;
+        }
+
+        session()->put('active_role', $namaPeran);
+    }
+
+    /**
+     * Hapus peran aktif dari sesi (kembali ke peran default).
+     */
+    public function resetPeranAktif(): void
+    {
+        session()->forget('active_role');
     }
 
     /* ------------------------------------------------------------------
@@ -229,8 +354,10 @@ class Pengguna extends Authenticatable
 
     /**
      * Dapatkan relasi notifications dari tabel akun.notifikasi.
+     *
+     * @return MorphMany<Notifikasi, $this>
      */
-    public function notifications(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    public function notifications(): MorphMany
     {
         return $this->morphMany(
             Notifikasi::class,

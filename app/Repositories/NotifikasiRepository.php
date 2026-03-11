@@ -19,7 +19,7 @@ class NotifikasiRepository
     /**
      * Ambil notifikasi pengguna dengan paginasi, sudah di-mapping ke DTO.
      *
-     * @return LengthAwarePaginator<NotifikasiData>
+     * @return LengthAwarePaginator<int, mixed>
      */
     public function daftarNotifikasi(Pengguna $pengguna, int $perHalaman = 15): LengthAwarePaginator
     {

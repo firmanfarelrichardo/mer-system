@@ -63,6 +63,8 @@ class TindakLanjut extends Model
 
     /**
      * Insiden yang ditindaklanjuti.
+     *
+     * @return BelongsTo<Insiden, $this>
      */
     public function insiden(): BelongsTo
     {
@@ -71,6 +73,8 @@ class TindakLanjut extends Model
 
     /**
      * Pengguna (Karu/Komite) yang memberikan tindak lanjut.
+     *
+     * @return BelongsTo<Pengguna, $this>
      */
     public function pengguna(): BelongsTo
     {

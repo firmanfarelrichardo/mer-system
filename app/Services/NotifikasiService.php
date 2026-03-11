@@ -24,7 +24,7 @@ class NotifikasiService
     /**
      * Dapatkan daftar notifikasi pengguna (paginasi).
      *
-     * @return LengthAwarePaginator<NotifikasiData>
+     * @return LengthAwarePaginator<int, mixed>
      */
     public function daftarNotifikasi(Pengguna $pengguna, int $perHalaman = 15): LengthAwarePaginator
     {

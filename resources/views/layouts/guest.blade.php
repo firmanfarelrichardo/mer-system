@@ -141,5 +141,8 @@
          ============================================================ --}}
     @include('layouts.footer', ['footerGelap' => true])
 
+    {{-- Script yang di-push oleh child view (mis. countdown captcha) --}}
+    @stack('scripts')
+
 </body>
 </html>

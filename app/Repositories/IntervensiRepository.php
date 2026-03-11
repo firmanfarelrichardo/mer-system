@@ -27,7 +27,7 @@ class IntervensiRepository
      * @param  int                  $tenantId
      * @param  array<string, mixed> $filter   Kunci opsional: cari
      * @param  int                  $perHalaman
-     * @return LengthAwarePaginator<TindakanIntervensi>
+     * @return LengthAwarePaginator<int, TindakanIntervensi>
      */
     public function getPaginatedAdmin(int $tenantId, array $filter = [], int $perHalaman = 15): LengthAwarePaginator
     {
