@@ -82,15 +82,62 @@ docker compose up -d --build --remove-orphans --wait
 success "Semua services berjalan dan healthcheck passed"
 
 # -------------------------------------------
-# STEP 3: Cek APP_KEY — generate jika belum ada
-# Jika APP_KEY di .env kosong/belum diset, generate otomatis.
-# --force: skip confirmation prompt di production.
+# STEP 3: Cek APP_KEY — generate & inject ke Host jika belum ada
+#
+# PRINSIP IMMUTABLE INFRASTRUCTURE:
+# Container TIDAK BOLEH memanipulasi konfigurasinya sendiri.
+# .env tidak di-mount sebagai file ke dalam container — ia hanya
+# dibaca sebagai env_file oleh Docker Compose pada saat container
+# dibuat. Perintah `key:generate --force` gagal karena mencoba
+# membuka /var/www/html/.env yang tidak ada di filesystem container.
+# Pada skenario multi-replica, membiarkan tiap container generate
+# kunci sendiri akan menghasilkan APP_KEY yang berbeda-beda,
+# menyebabkan kerusakan pada session, cookie, dan enkripsi data.
+#
+# SOLUSI: Host sebagai single source of truth.
+# `--show` → Artisan hanya mencetak key ke stdout, TIDAK menulis .env.
+# Host menangkap output, memvalidasi format, menyuntikkan ke .env Host.
+# Container kemudian di-rekonstruksi agar env var baru dimuat ke
+# memori sebelum migrasi database berjalan di Step 4.
 # -------------------------------------------
 step "Step 3/7 — Cek APP_KEY"
-if ! grep -q "APP_KEY=base64:" .env 2>/dev/null; then
+if ! grep -q "^APP_KEY=base64:" .env 2>/dev/null; then
     warn "APP_KEY belum di-set. Generating..."
-    docker compose exec -T app php artisan key:generate --force
-    success "APP_KEY berhasil di-generate"
+
+    # `key:generate --show`: cetak key baru ke stdout, TIDAK menulis ke .env.
+    # `tr -d '\r\n'`: buang carriage return (\r) dan newline (\n) yang bisa
+    # muncul di output `docker compose exec`, agar string bersih untuk sed.
+    APP_KEY=$(docker compose exec -T app php artisan key:generate --show | tr -d '\r\n')
+
+    # Guard: pastikan format key yang ditangkap valid (harus: base64:<string>).
+    # Tolak nilai kosong atau format tidak dikenal sebelum memodifikasi .env Host.
+    if [[ ! "$APP_KEY" =~ ^base64:.+$ ]]; then
+        error "APP_KEY yang dihasilkan tidak valid: '${APP_KEY}'. Cek output container."
+    fi
+
+    # `sed -i`: edit .env Host secara in-place (tanpa file backup sementara).
+    # Delimiter `|` dipilih karena nilai base64 mengandung karakter `/`
+    # yang akan konflik dengan delimiter default `/` pada perintah sed.
+    # Pola `^APP_KEY=.*` mencocokkan dari awal baris hingga akhir nilai lama.
+    if grep -q "^APP_KEY=" .env; then
+        # Baris APP_KEY sudah ada (nilai kosong) — timpa dengan nilai baru.
+        sed -i "s|^APP_KEY=.*|APP_KEY=${APP_KEY}|" .env
+    else
+        # Edge case: baris APP_KEY belum ada sama sekali di .env — tambahkan.
+        echo "APP_KEY=${APP_KEY}" >> .env
+    fi
+
+    # Tampilkan 20 karakter pertama — cukup untuk konfirmasi visual tanpa
+    # mengekspos kunci penuh di log deployment yang mungkin direkam/disimpan.
+    success "APP_KEY disuntikkan ke .env Host: ${APP_KEY:0:20}..."
+
+    # Re-create container app agar Docker Compose membaca ulang .env Host
+    # dan memuat APP_KEY baru sebagai environment variable ke memori container.
+    # --no-deps : hanya rekonstruksi service 'app', bukan db/redis.
+    # --wait    : block sampai healthcheck PASS sebelum lanjut ke Step 4.
+    warn "Merestart container app untuk memuat APP_KEY baru..."
+    docker compose up -d --no-deps --wait app
+    success "Container app berhasil di-rekonstruksi dengan APP_KEY baru"
 else
     success "APP_KEY sudah terisi, skip generate"
 fi
