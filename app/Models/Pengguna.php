@@ -265,17 +265,17 @@ class Pengguna extends Authenticatable
     }
 
     /**
-     * Apakah pengguna ini adalah akun peneliti sementara?
+     * Apakah pengguna ini memiliki peran Peneliti di database?
      *
-     * Cek dilakukan terhadap env PENELITI_NIP — satu-satunya sumber
-     * kebenaran untuk identitas peneliti — bukan terhadap peran database.
-     * Dengan demikian, metode ini tetap benar meski peran database diubah.
+     * Sumber kebenaran tunggal: peran di database.
+     * Untuk mencabut akses, cukup hapus akun atau cabut peran Peneliti
+     * melalui UI Admin — tanpa perlu mengubah .env atau kode.
      */
     public function isPeneliti(): bool
     {
-        $nipPeneliti = config('app.peneliti_nip');
-
-        return ! empty($nipPeneliti) && $this->nomor_induk === $nipPeneliti;
+        return $this->peran->contains(function ($peran) {
+         return strtolower($peran->nama_peran) === strtolower(Peran::PENELITI);
+            });
     }
 
     /**
