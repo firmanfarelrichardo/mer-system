@@ -63,30 +63,23 @@ class KepalaRuanganController extends Controller
         // Karu yang saat ini menjabat (null jika belum ada)
         $karuSaatIni = $unit->kepalaRuangan();
 
-        // Ambil daftar Nakes aktif yang belum menjadi Karu di unit manapun
+        // Hanya Nakes aktif yang terdaftar di unit ini dan belum menjadi Karu
         $daftarNakes = Pengguna::where('tenant_id', $tenantId)
+            ->where('unit_id', $unit->id)
             ->where('is_aktif', true)
             ->whereHas('peran', fn ($q) => $q->where('nama_peran', Peran::NAKES))
             ->whereDoesntHave('peran', fn ($q) => $q->where('nama_peran', Peran::KEPALA_RUANGAN))
-            ->with('unitKerja')
             ->orderBy('nama_lengkap')
             ->get();
 
-        // Daftar unit untuk filter dropdown
-        $daftarUnit = UnitKerja::where('tenant_id', $tenantId)
-            ->orderBy('nama_unit')
-            ->get(['id', 'nama_unit']);
-
         // Data yang di-serialize ke JavaScript (hindari multi-line @json di Blade)
         $nakesUntukJs = $daftarNakes->map(fn (Pengguna $n) => [
-            'id'     => $n->id,
-            'nama'   => $n->nama_lengkap,
-            'nip'    => $n->nomor_induk,
-            'unit'   => $n->unitKerja->nama_unit ?? '',
-            'unitId' => $n->unit_id,
+            'id'   => $n->id,
+            'nama' => $n->nama_lengkap,
+            'nip'  => $n->nomor_induk ?? '',
         ])->values()->all();
 
-        return view('admin.kepala-ruangan.tunjuk', compact('unit', 'daftarNakes', 'daftarUnit', 'karuSaatIni', 'nakesUntukJs'));
+        return view('admin.kepala-ruangan.tunjuk', compact('unit', 'daftarNakes', 'karuSaatIni', 'nakesUntukJs'));
     }
 
     /* ------------------------------------------------------------------

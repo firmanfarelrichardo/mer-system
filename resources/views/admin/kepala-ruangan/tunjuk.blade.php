@@ -68,30 +68,15 @@
                     Pilih Nakes <span class="text-red-500">*</span>
                 </label>
                 <p class="mb-3 text-xs text-slate-400">
-                    Hanya menampilkan Nakes aktif yang belum menjadi Kepala Ruangan di unit lain.
+                    Hanya menampilkan Nakes aktif dari unit <strong>{{ $unit->nama_unit }}</strong> yang belum menjadi Kepala Ruangan.
                 </p>
 
                 @if ($daftarNakes->isEmpty())
                     <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                        Tidak ada Nakes yang tersedia untuk dipilih. Semua Nakes aktif sudah menjadi Kepala Ruangan.
+                        Tidak ada Nakes dari unit ini yang tersedia untuk dipilih.
+                        Pastikan Nakes sudah terdaftar di unit <strong>{{ $unit->nama_unit }}</strong>.
                     </div>
                 @else
-                    {{-- Filter unit --}}
-                    <div class="mb-3">
-                        <label for="filterUnit" class="mb-1 block text-xs font-medium text-slate-500">
-                            Filter berdasarkan unit kerja
-                        </label>
-                        <select id="filterUnit"
-                                x-model="filterUnit"
-                                class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700
-                                       focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
-                            <option value="">Semua Unit</option>
-                            @foreach ($daftarUnit as $u)
-                                <option value="{{ $u->id }}">{{ $u->nama_unit }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
                     {{-- Pencarian nama/NIP --}}
                     <div class="relative mb-3">
                         <label for="cariNakes" class="mb-1 block text-xs font-medium text-slate-500">
@@ -126,11 +111,7 @@
                                        x-model.number="terpilihId">
                                 <div class="min-w-0 flex-1">
                                     <p class="text-sm font-medium text-slate-700" x-text="nakes.nama"></p>
-                                    <p class="text-xs text-slate-400">
-                                        <span x-text="nakes.nip"></span>
-                                        <span x-show="nakes.unit" class="ml-1 text-slate-300">&middot;</span>
-                                        <span x-show="nakes.unit" x-text="nakes.unit" class="ml-1"></span>
-                                    </p>
+                                    <p class="text-xs text-slate-400" x-text="nakes.nip"></p>
                                 </div>
                             </label>
                         </template>
@@ -188,29 +169,22 @@
             return {
                 semuaNakes: @json($nakesUntukJs),
                 cari: '',
-                filterUnit: '',
                 terpilihId: {{ (int) old('pengguna_id', 0) }},
                 hasError: {{ $errors->has('pengguna_id') ? 'true' : 'false' }},
 
                 init() {},
 
                 get hasilFilter() {
-                    let hasil = this.semuaNakes;
-
-                    if (this.filterUnit) {
-                        const unitId = parseInt(this.filterUnit);
-                        hasil = hasil.filter(n => n.unitId === unitId);
+                    if (! this.cari.trim()) {
+                        return this.semuaNakes;
                     }
 
-                    if (this.cari.trim()) {
-                        const kata = this.cari.trim().toLowerCase();
-                        hasil = hasil.filter(n =>
-                            n.nama.toLowerCase().includes(kata) ||
-                            n.nip.toLowerCase().includes(kata)
-                        );
-                    }
+                    const kata = this.cari.trim().toLowerCase();
 
-                    return hasil;
+                    return this.semuaNakes.filter(n =>
+                        n.nama.toLowerCase().includes(kata) ||
+                        n.nip.toLowerCase().includes(kata)
+                    );
                 },
             };
         }
