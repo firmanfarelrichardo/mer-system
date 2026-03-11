@@ -3,13 +3,18 @@
 # VPS: Ubuntu 24.04 LTS | RAM 8GB | CPU 2 Core
 # ===========================================
 #
-# ARSITEKTUR (6 services):
+# ARSITEKTUR (4 services aktif):
 #   app    → PHP-FPM + Queue Worker + Scheduler (via Supervisord)
-#   web    → Nginx reverse proxy (SATU-SATUNYA yang expose port ke host)
+#   web    → Nginx reverse proxy (pintu masuk langsung, port APP_PORT)
 #   db     → PostgreSQL 16 (TIDAK expose port — internal only)
 #   redis  → Redis 7 (TIDAK expose port — internal only)
-#   crowdsec       → Engine analisis log (deteksi intrusi)
+#
+# DINONAKTIFKAN SEMENTARA (profile: security):
+#   crowdsec         → Engine analisis log (deteksi intrusi)
 #   crowdsec-bouncer → Firewall Nginx yang menolak IP berbahaya
+#
+# Untuk mengaktifkan kembali:
+#   docker compose --profile security up -d
 #
 # SECURITY ISOLATION:
 #   DILARANG mengekspos port db (5432) dan redis (6379) ke host.
@@ -148,6 +153,14 @@ services:
   #   TIDAK ada ports: yang terekspos ke host.
   # -------------------------------------------
   crowdsec:
+    # =======================================================================
+    # DINONAKTIFKAN SEMENTARA
+    # Image bouncer (fbonalair/crowdsec-nginx-bouncer-standalone) tidak
+    # tersedia di Docker Hub. Service ini di-hold sampai image bouncer
+    # pengganti ditemukan dan diuji.
+    # Untuk mengaktifkan: docker compose --profile security up -d
+    # =======================================================================
+    profiles: ["security"]
     image: crowdsecurity/crowdsec:latest
     container_name: mer-crowdsec
     restart: unless-stopped
@@ -204,6 +217,14 @@ services:
   #   dan di-rollback secara independen tanpa menyentuh Nginx.
   # -------------------------------------------
   crowdsec-bouncer:
+    # =======================================================================
+    # DINONAKTIFKAN SEMENTARA
+    # Image fbonalair/crowdsec-nginx-bouncer-standalone telah dihapus dari
+    # Docker Hub. Perlu diganti dengan image bouncer yang aktif sebelum
+    # service ini dapat dijalankan kembali.
+    # Untuk mengaktifkan: docker compose --profile security up -d
+    # =======================================================================
+    profiles: ["security"]
     image: fbonalair/crowdsec-nginx-bouncer-standalone:latest
     container_name: mer-crowdsec-bouncer
     restart: unless-stopped

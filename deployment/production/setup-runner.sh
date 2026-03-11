@@ -67,7 +67,10 @@ print_divider() { echo -e "${BOLD}  ──────────────�
 # -----------------------------------------------------------------------------
 # Parse argumen CLI
 # -----------------------------------------------------------------------------
-SKIP_MONITORING=false
+# SEMENTARA DINONAKTIFKAN: monitoring stack (Prometheus, Loki, Grafana, CrowdSec)
+# di-skip sampai image CrowdSec bouncer pengganti tersedia dan diuji.
+# Untuk mengaktifkan kembali: ubah ke SKIP_MONITORING=false
+SKIP_MONITORING=true
 
 for arg in "$@"; do
     case "$arg" in
