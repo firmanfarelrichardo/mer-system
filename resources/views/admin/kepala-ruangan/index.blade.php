@@ -33,7 +33,7 @@
                     {{ $jumlahTanpaKaru }} unit belum memiliki Kepala Ruangan
                 </p>
                 <p class="mt-0.5 text-xs text-amber-700">
-                    Segera tunjuk Kepala Ruangan agar laporan insiden dari unit tersebut dapat ditindaklanjuti.
+                    Segera pilih Kepala Ruangan agar laporan insiden dari unit tersebut dapat ditindaklanjuti.
                 </p>
             </div>
         </div>
@@ -99,7 +99,7 @@
                             <td class="px-5 py-3 text-center">
                                 @if ($unit->karu)
                                     <div class="flex items-center justify-center gap-1">
-                                        {{-- Ganti Karu: cabut lalu arahkan ke tunjuk baru --}}
+                                        {{-- Ganti Karu: cabut lalu arahkan ke pilihan baru --}}
                                         <a href="{{ route('admin.kepala-ruangan.tunjuk', $unit->id) }}"
                                            title="Ganti Kepala Ruangan"
                                            class="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600">
@@ -133,7 +133,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                   d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z"/>
                                         </svg>
-                                        Tunjuk
+                                        Pilih Kepala Ruangan
                                     </a>
                                 @endif
                             </td>
