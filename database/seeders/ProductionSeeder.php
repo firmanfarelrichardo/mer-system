@@ -25,8 +25,12 @@ class ProductionSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            ProductionPenggunaSeeder::class,  // 1. Akun pengguna nyata production
-            ProductionInsidenSeeder::class,   // 2. Data insiden awal production
+            OrganisasiSeeder::class,          // 1. Tenant — FK root untuk semua tabel
+            PeranSeeder::class,               // 2. Hierarki peran (role)
+            UnitKerjaSeeder::class,           // 3. Master unit kerja
+            MasterFormSeeder::class,          // 4. Master data formulir (kategori, intervensi, dll)
+            ProductionPenggunaSeeder::class,  // 5. Akun pengguna resmi production
+            ProductionInsidenSeeder::class,   // 6. Data insiden awal production
         ]);
     }
 }
