@@ -273,7 +273,9 @@ class Pengguna extends Authenticatable
      */
     public function isPeneliti(): bool
     {
-        return $this->peran->contains('nama_peran', Peran::PENELITI);
+        return $this->peran->contains(function ($peran) {
+         return strtolower($peran->nama_peran) === strtolower(Peran::PENELITI);
+            });
     }
 
     /**
