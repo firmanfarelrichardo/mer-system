@@ -235,7 +235,7 @@ services:
         max-file: "3"
     environment:
       # URL ke CrowdSec Local API — menggunakan Docker DNS.
-      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_BOUNCER_API_KEY}
+      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_BOUNCER_API_KEY:-}
       CROWDSEC_AGENT_HOST: "crowdsec:8080"
       # Upstream: arahkan traffic bersih ke Nginx di port internal.
       UPSTREAM_URL: "http://web:80"
