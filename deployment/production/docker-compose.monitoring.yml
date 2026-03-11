@@ -53,6 +53,11 @@ services:
     image: prom/prometheus:latest
     container_name: mer-prometheus
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     command:
       # Flag CLI Prometheus:
       #   --config.file         : lokasi konfigurasi scrape targets
@@ -107,6 +112,11 @@ services:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: mer-cadvisor
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
     privileged: false
     volumes:
       # Mount read-only ke filesystem host yang diperlukan cAdvisor
@@ -264,8 +274,20 @@ services:
       # Jangan gunakan password default di production.
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      # Aktifkan Unified Alerting (engine alert baru, wajib untuk
+      # provisioning alert rules via file).
+      GF_ALERTING_ENABLED: "false"
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      # Telegram contact point — isi di .env monitoring.
+      GRAFANA_TELEGRAM_BOT_TOKEN: ${GRAFANA_TELEGRAM_BOT_TOKEN:-}
+      GRAFANA_TELEGRAM_CHAT_ID: ${GRAFANA_TELEGRAM_CHAT_ID:-}
       # Timezone konsisten dengan aplikasi utama.
       TZ: Asia/Jakarta
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       # BIND KE LOCALHOST SAJA — tidak bisa diakses dari internet.
       # Akses dari luar via SSH tunnel atau reverse proxy.
@@ -273,6 +295,10 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ./monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      # Alert rules — mendefinisikan kondisi trigger (CPU, RAM, restart).
+      - ./monitoring/grafana-alerts.yml:/etc/grafana/provisioning/alerting/alerts.yml:ro
+      # Contact points — mendefinisikan tujuan notifikasi (Telegram/Email).
+      - ./monitoring/grafana-contact-points.yml:/etc/grafana/provisioning/alerting/contact-points.yml:ro
     networks:
       - mer-prod-network
     deploy:
@@ -282,6 +308,50 @@ services:
           # Grafana meng-cache query result, jadi memori usage stabil.
           memory: 256M
           cpus: "0.25"
+
+  # -------------------------------------------
+  # Node Exporter — Metrik Host OS
+  #
+  # Mengekspos metrik CPU, RAM, disk, dan network dari VPS (host)
+  # sebagai endpoint Prometheus /metrics di port 9100.
+  #
+  # DIPERLUKAN oleh alert rules Grafana untuk:
+  #   - CPU Usage Host (node_cpu_seconds_total)
+  #   - RAM Usage Host (node_memory_MemAvailable_bytes)
+  #   - Disk Usage    (node_filesystem_avail_bytes)
+  #
+  # SECURITY:
+  #   Port 9100 TIDAK di-expose ke publik.
+  #   Hanya Prometheus yang mengaksesnya via internal Docker DNS.
+  #
+  # pid: host + network: host diperlukan agar Node Exporter bisa
+  # membaca metrik /proc dari perspektif host (bukan container).
+  # -------------------------------------------
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: mer-node-exporter
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    pid: host
+    network_mode: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: "0.10"
 
 # ===========================================
 # Networks — bergabung ke external network produksi

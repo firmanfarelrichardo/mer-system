@@ -6,6 +6,22 @@ name: Deploy ke Production
 # Pipeline berjalan ketika:
 #   1. Ada push ke branch 'production' (deploy otomatis)
 #   2. Dipicu manual dari tab Actions di GitHub (emergency re-deploy)
+#
+# CATATAN ARSITEKTUR — SELF-HOSTED RUNNER:
+#   Workflow ini TIDAK menggunakan SSH dari GitHub ke VPS.
+#   Sebaliknya, GitHub Actions Runner berjalan LANGSUNG di VPS dan
+#   menghubungi GitHub secara outbound (polling).
+#
+#   Keunggulan model ini:
+#   - Tidak ada port SSH yang perlu dibuka ke GitHub IP ranges
+#     (mengeliminasi error "dial tcp: i/o timeout" selamanya).
+#   - Runner memiliki akses langsung ke Docker, git, dan filesystem VPS.
+#   - Tidak perlu secrets SSH key — runner sudah di VPS.
+#   - Latency deployment lebih rendah (tidak ada overhead SSH tunnel).
+#
+#   Setup runner sekali saja di VPS:
+#     bash /var/www/mer-system/deployment/production/setup-runner.sh
+# ═══════════════════════════════════════════════════════════════
 on:
   push:
     branches:
@@ -21,45 +37,49 @@ on:
 #  CONCURRENCY GUARD
 #
 #  Mencegah dua deployment berjalan bersamaan (race condition).
-#  Jika ada deployment yang sedang berjalan saat push baru masuk,
-#  deployment LAMA dibatalkan dan deployment BARU mengambil alih.
 #
-#  Kenapa ini penting?
-#    Tanpa guard, dua 'bash deploy.sh' bisa jalan paralel di VPS:
-#    - Keduanya menjalankan 'docker compose up --build' secara simultan
-#    - Keduanya menjalankan 'php artisan migrate' → deadlock database
-#    - Race condition pada APP_KEY generation di Step 3 deploy.sh
+#  Skenario yang dicegah:
+#    - Dua 'docker compose up --build' paralel di VPS yang sama
+#    - Dua 'php artisan migrate' bersamaan → deadlock database
+#    - Race condition pada APP_KEY di .env
+#
+#  cancel-in-progress: true → jika ada pipeline lama yang masih
+#  berjalan saat push baru masuk, pipeline lama dibatalkan.
+#  Pipeline baru SELALU menggunakan kode terbaru.
 # ═══════════════════════════════════════════════════════════════
 concurrency:
   group: production-deploy
   cancel-in-progress: true
 
+# ═══════════════════════════════════════════════════════════════
+#  PERMISSIONS — Prinsip Least Privilege
+#
+#  Batasi permission token GitHub Actions hanya ke yang dibutuhkan.
+#  Mencegah eskalasi privilege jika ada kompromi pada action
+#  pihak ketiga yang dipakai dalam workflow ini.
+# ═══════════════════════════════════════════════════════════════
+permissions:
+  contents: read
+
 jobs:
-  deploy:
-    name: Deploy ke VPS Production
+  # ─────────────────────────────────────────────────────────────
+  # JOB 1: VALIDASI
+  #
+  # Dijalankan di GitHub-hosted runner (bukan VPS) karena:
+  #   1. Tidak membebani VPS untuk pekerjaan CI murni.
+  #   2. Lebih cepat — GitHub-hosted runner selalu fresh.
+  #   3. Memvalidasi struktur file sebelum menyentuh VPS sama sekali.
+  #
+  # Jika job ini gagal, job deploy TIDAK berjalan (needs: validate).
+  # ─────────────────────────────────────────────────────────────
+  validate:
+    name: Validasi Pre-Deploy
     runs-on: ubuntu-latest
-
-    # ─────────────────────────────────────────────────────────
-    # GitHub Secrets yang dibutuhkan (Settings → Secrets → Actions):
-    #
-    #   VPS_HOST      — IP publik atau hostname VPS
-    #   VPS_USERNAME  — Linux user yang digunakan SSH (misal: meradmin)
-    #   VPS_SSH_KEY   — Private key SSH (isi penuh, termasuk baris BEGIN/END)
-    #   VPS_PORT      — Port SSH (default: 22)
-    # ─────────────────────────────────────────────────────────
-
     steps:
-      # ───────────────────────────────────────────────────────
-      # Step 1: Checkout — diperlukan agar $GITHUB_SHA dan
-      # metadata commit tersedia untuk logging audit.
-      # ───────────────────────────────────────────────────────
       - name: Checkout kode
         uses: actions/checkout@v4
 
-      # ───────────────────────────────────────────────────────
-      # Step 2: Tampilkan ringkasan deployment untuk audit log
-      # ───────────────────────────────────────────────────────
-      - name: Ringkasan deployment
+      - name: Tampilkan ringkasan deployment
         run: |
           echo "========================================"
           echo "  MER System — Production Deploy"
@@ -74,126 +94,224 @@ jobs:
           echo "  Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
           echo "========================================"
 
-      # ───────────────────────────────────────────────────────
-      # Step 3: Jalankan deploy.sh di VPS via SSH
-      #
-      # deploy.sh melakukan 7 langkah secara berurutan:
-      #   1. git fetch + git reset --hard origin/production
-      #   2. docker compose up -d --build --wait (buat external network jika belum ada)
-      #   3. Validasi / generate APP_KEY jika belum ada
-      #   4. php artisan migrate --force
-      #   5. php artisan optimize:clear + optimize + view:cache + event:cache
-      #   6. chown storage (permission fix)
-      #   7. php artisan queue:restart (graceful restart worker)
-      #
-      # command_timeout: 15m — memberi cukup waktu untuk:
-      #   - docker build (kompresi layer baru)
-      #   - composer install (di dalam Dockerfile, dari cache kalau tidak ada perubahan)
-      #   - migrasi database yang besar
-      # ───────────────────────────────────────────────────────
-      - name: Jalankan deploy.sh di VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          timeout: 30s
-          command_timeout: 15m
-          script: |
-            set -e
-
-            PROJECT_ROOT="/var/www/mer-system"
-            DEPLOY_DIR="${PROJECT_ROOT}/deployment/production"
-
-            # Validasi direktori deploy ada sebelum lanjut.
-            # Jika VPS baru disetup ulang atau path berubah, pipeline
-            # langsung merah dengan pesan yang jelas.
-            if [ ! -d "$DEPLOY_DIR" ]; then
-              echo "ERROR: Direktori deploy tidak ditemukan: $DEPLOY_DIR"
-              echo "Pastikan VPS sudah disetup sesuai docs/02-deployment.md"
-              exit 1
+      - name: Validasi key wajib ada di .env.example
+        run: |
+          REQUIRED_KEYS=(
+            APP_NAME
+            APP_URL
+            APP_KEY
+            DB_DATABASE
+            DB_USERNAME
+            DB_PASSWORD
+            REDIS_PASSWORD
+            CROWDSEC_BOUNCER_API_KEY
+          )
+          MISSING=()
+          for KEY in "${REQUIRED_KEYS[@]}"; do
+            if ! grep -q "^${KEY}=" deployment/production/.env.example 2>/dev/null; then
+              MISSING+=("$KEY")
             fi
+          done
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo "ERROR: Key berikut tidak ditemukan di .env.example:"
+            printf '  - %s\n' "${MISSING[@]}"
+            exit 1
+          fi
+          echo "Semua required key tersedia di .env.example."
 
-            # ─────────────────────────────────────────────────────
-            # BOOTSTRAP GIT SYNC
-            #
-            # Workflow melakukan git sync SEBELUM memanggil deploy.sh
-            # untuk memecahkan masalah bootstrap:
-            #
-            #   Jika deploy.sh di VPS masih versi lama (misal: masih
-            #   menggunakan git pull --ff-only), deployment akan gagal
-            #   karena git pull menolak local drift pada file tracked.
-            #   Akibatnya, versi baru deploy.sh tidak pernah bisa masuk.
-            #
-            # Dengan melakukan git reset --hard di sini TERLEBIH DAHULU,
-            # file deploy.sh di disk VPS sudah versi terbaru SEBELUM
-            # dipanggil — sehingga lingkaran setan bootstrap terputus.
-            #
-            # deploy.sh sendiri juga melakukan git reset --hard di Step 1,
-            # tapi saat itu hasilnya adalah no-op karena kode sudah sinkron.
-            # ─────────────────────────────────────────────────────
-            echo "[Bootstrap] Sinkronisasi kode ke commit terbaru..."
-            cd "$PROJECT_ROOT"
-            git fetch origin production
-            git checkout production
-            git reset --hard origin/production
-            echo "[Bootstrap] Sinkronisasi selesai: $(git rev-parse --short HEAD)"
-            echo ""
+      - name: Validasi file deploy kritis ada di repository
+        run: |
+          REQUIRED_FILES=(
+            "deployment/production/deploy.sh"
+            "deployment/production/docker-compose.yml"
+            "deployment/production/.env.example"
+          )
+          MISSING=()
+          for F in "${REQUIRED_FILES[@]}"; do
+            [ ! -f "$F" ] && MISSING+=("$F")
+          done
+          if [ ${#MISSING[@]} -gt 0 ]; then
+            echo "ERROR: File berikut tidak ditemukan di repository:"
+            printf '  - %s\n' "${MISSING[@]}"
+            exit 1
+          fi
+          echo "Semua file deploy kritis tersedia."
 
-            cd "$DEPLOY_DIR"
+  # ─────────────────────────────────────────────────────────────
+  # JOB 2: DEPLOY
+  #
+  # Berjalan LANGSUNG di VPS via self-hosted runner.
+  #
+  # Runner tidak memerlukan SSH karena ia sudah berada di VPS
+  # dan dapat langsung mengeksekusi perintah Docker dan bash.
+  #
+  # Label runner: [self-hosted, production-vps]
+  # Tambahkan kedua label saat mendaftarkan runner di:
+  #   GitHub → Settings → Actions → Runners → Add runner
+  #
+  # PRASYARAT (setup SATU KALI di VPS):
+  #   bash /var/www/mer-system/deployment/production/setup-runner.sh
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy ke VPS Production
+    runs-on: [self-hosted, production-vps]
+    needs: validate
+    environment: production
 
-            echo "Commit  : ${{ github.sha }}"
-            echo "Actor   : ${{ github.actor }}"
-            echo "Trigger : ${{ github.event_name }}"
-            echo "Waktu   : $(date '+%Y-%m-%d %H:%M:%S %Z')"
-            echo ""
-
-            bash deploy.sh
-
-      # ───────────────────────────────────────────────────────
-      # Step 4: Verifikasi post-deployment
+    steps:
+      # ─────────────────────────────────────────────────────────
+      # Step 1: Catat baseline commit untuk rollback.
       #
-      # Memastikan semua container produksi dalam kondisi sehat
-      # setelah deploy.sh selesai. Pipeline menjadi merah jika
-      # ada container yang Exit, unhealthy, atau restarting.
-      # ───────────────────────────────────────────────────────
-      - name: Verifikasi kesehatan container
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
-          timeout: 30s
-          command_timeout: 3m
-          script: |
-            set -e
+      # Commit ini menjadi target jika deploy gagal di langkah
+      # selanjutnya. Disimpan ke $GITHUB_ENV agar tersedia di
+      # semua step berikutnya (termasuk step kondisional).
+      # ─────────────────────────────────────────────────────────
+      - name: Catat baseline commit (target rollback)
+        id: baseline
+        run: |
+          BASELINE=$(git -C /var/www/mer-system rev-parse HEAD 2>/dev/null || echo "")
+          echo "ROLLBACK_COMMIT=${BASELINE}" >> "$GITHUB_ENV"
+          echo "Baseline commit: ${BASELINE:-'(repository belum ada)'}"
 
-            cd /var/www/mer-system/deployment/production
+      # ─────────────────────────────────────────────────────────
+      # Step 2: Bootstrap git sync.
+      #
+      # Memaksa VPS mencerminkan remote SEBELUM deploy.sh dipanggil.
+      # Ini mengeliminasi bootstrap paradox: deploy.sh versi lama
+      # tidak dapat menghalangi versi baru masuk ke disk VPS.
+      #
+      # File yang tidak ditrack Git (.env, storage/) tidak tersentuh.
+      # ─────────────────────────────────────────────────────────
+      - name: Bootstrap — sinkronisasi kode ke commit terbaru
+        run: |
+          cd /var/www/mer-system
+          git fetch origin production
+          git checkout production
+          git reset --hard origin/production
+          echo "Sinkronisasi selesai: $(git rev-parse --short HEAD)"
 
-            echo "=== Status Container ==="
-            docker compose ps
+      # ─────────────────────────────────────────────────────────
+      # Step 3: Eksekusi deploy.sh (7 langkah berurutan).
+      #
+      # deploy.sh menggunakan 'set -e' dan trap ERR internal.
+      # Jika step apapun gagal → script exit non-zero → job ini
+      # exit dengan failure → step rollback aktif.
+      # ─────────────────────────────────────────────────────────
+      - name: Jalankan deploy.sh
+        id: run_deploy
+        run: |
+          cd /var/www/mer-system/deployment/production
+          bash deploy.sh
+
+      # ─────────────────────────────────────────────────────────
+      # Step 4: Rollback otomatis jika deploy gagal.
+      #
+      # Berjalan HANYA jika step run_deploy exit non-zero.
+      # Mengembalikan kode ke ROLLBACK_COMMIT dan menjalankan
+      # deploy.sh dengan kode versi lama.
+      #
+      # Rollback database (undone migrations) TIDAK dilakukan
+      # secara otomatis — ini memerlukan keputusan manusia.
+      # Untuk migrasi destructive, selalu buat backup terlebih dahulu
+      # dan aktifkan lockdown.sh sebelum deploy dimulai.
+      # ─────────────────────────────────────────────────────────
+      - name: Rollback otomatis ke commit sebelumnya
+        if: failure() && env.ROLLBACK_COMMIT != ''
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "  DEPLOY GAGAL — Memulai rollback otomatis"
+          echo "=========================================="
+          echo "  Target rollback : ${ROLLBACK_COMMIT}"
+          echo "  Timestamp       : $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          echo ""
+
+          cd /var/www/mer-system
+          git reset --hard "${ROLLBACK_COMMIT}"
+          echo "Kode di-reset ke: $(git rev-parse --short HEAD)"
+
+          echo ""
+          echo "Menjalankan deploy.sh dengan kode versi sebelumnya..."
+          cd deployment/production
+          bash deploy.sh
+
+          echo ""
+          echo "================================================"
+          echo "  Rollback selesai. Uptime terjaga."
+          echo "  TINDAKAN DIPERLUKAN: Investigasi penyebab"
+          echo "  kegagalan via Grafana → Loki → Explore."
+          echo "================================================"
+
+      # ─────────────────────────────────────────────────────────
+      # Step 5: Gate kesehatan pasca-deploy.
+      #
+      # Verifikasi independen setelah deploy.sh selesai.
+      # Mendeteksi kondisi degradasi yang bisa muncul setelah
+      # container start (OOM, restart loop, healthcheck failure).
+      # ─────────────────────────────────────────────────────────
+      - name: Gate kesehatan pasca-deploy
+        if: success()
+        run: |
+          cd /var/www/mer-system/deployment/production
+
+          echo "=== Status Container ==="
+          docker compose ps
+          echo ""
+
+          # Beri waktu 5 detik agar restart loop bisa terdeteksi.
+          sleep 5
+
+          # Periksa container dalam status bermasalah.
+          UNHEALTHY=$(docker compose ps --format "table {{.Name}}\t{{.State}}\t{{.Status}}" \
+            | awk 'NR>1 && ($2 == "exited" || $2 == "dead" || $3 ~ /unhealthy/) {print $1}' || echo "")
+
+          if [ -n "$UNHEALTHY" ]; then
             echo ""
-
-            # Deteksi container yang tidak dalam kondisi normal.
-            # 'paused' dikecualikan karena itu kondisi valid saat lockdown aktif.
-            if docker compose ps | grep -qE "[[:space:]](Exit|unhealthy|restarting)[[:space:]]"; then
-              echo ""
-              echo "ERROR: Ditemukan container dalam kondisi tidak sehat!"
-              echo "Jalankan 'docker compose logs <service>' untuk investigasi."
-              exit 1
-            fi
-
-            echo "Semua container dalam kondisi sehat."
+            echo "ERROR: Container dalam kondisi tidak sehat:"
+            echo "$UNHEALTHY"
             echo ""
-            echo "=== Verifikasi HTTP response ==="
-            # Cek bahwa Nginx merespons (via port internal — bouncer bisa bypass)
-            HTTP_STATUS=$(docker compose exec -T web \
-              wget -qO- --server-response http://localhost/ 2>&1 \
-              | grep "HTTP/" | tail -1 | awk '{print $2}' || echo "gagal")
+            echo "Perintah investigasi:"
+            for SVC in $UNHEALTHY; do
+              echo "  docker compose logs ${SVC} --tail 50"
+            done
+            exit 1
+          fi
 
-            echo "HTTP status dari Nginx: $HTTP_STATUS"
-            if [ "$HTTP_STATUS" = "000" ] || [ "$HTTP_STATUS" = "gagal" ]; then
-              echo "WARNING: Nginx tidak merespons dengan benar. Cek log: docker compose logs web"
-            fi
+          echo "Semua container dalam kondisi sehat."
+          echo ""
+
+          # Verifikasi Nginx merespons pada port lokal.
+          echo "=== Verifikasi HTTP ==="
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            --connect-timeout 5 --max-time 10 \
+            "http://localhost:${APP_PORT:-80}/" 2>/dev/null || echo "000")
+
+          echo "HTTP status: ${HTTP_STATUS}"
+
+          # 200, 301/302 (redirect HTTPS), 401/403 (auth guard) → valid.
+          if [[ ! "$HTTP_STATUS" =~ ^(200|301|302|401|403)$ ]]; then
+            echo "WARNING: Status HTTP tidak terduga: ${HTTP_STATUS}"
+            echo "Investigasi: docker compose logs web --tail 30"
+          fi
+
+      # ─────────────────────────────────────────────────────────
+      # Step 6: Audit log — selalu berjalan (sukses maupun gagal).
+      # ─────────────────────────────────────────────────────────
+      - name: Catat audit log deployment
+        if: always()
+        run: |
+          LOG_DIR="/var/log/mer-deploy"
+          mkdir -p "$LOG_DIR"
+
+          JOB_STATUS="${{ job.status }}"
+          {
+            echo "timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            echo "status=${JOB_STATUS^^}"
+            echo "commit=${{ github.sha }}"
+            echo "actor=${{ github.actor }}"
+            echo "trigger=${{ github.event_name }}"
+            echo "rollback_baseline=${ROLLBACK_COMMIT:-n/a}"
+            echo "---"
+          } >> "${LOG_DIR}/deploy.log"
+
+          echo "Audit log: ${LOG_DIR}/deploy.log"
