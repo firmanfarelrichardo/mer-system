@@ -123,17 +123,4 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | NIP Akun Peneliti / Auditor
-    |--------------------------------------------------------------------------
-    |
-    | Nomor induk pengguna yang diberikan akses baca-penuh sementara sebagai
-    | peneliti/auditor. Kosongkan untuk menonaktifkan fitur ini sepenuhnya.
-    | Nilai diambil dari env agar bisa diubah tanpa deploy ulang kode.
-    |
-    */
-
-    'peneliti_nip' => env('PENELITI_NIP'),
-
 ];
