@@ -322,6 +322,94 @@ ssh -L 3000:localhost:3000 username@<ip-vps>
 
 ---
 
+## Setup CI/CD (GitHub Actions)
+
+Pipeline deploy otomatis dikonfigurasi di `.github/workflows/production-deploy.yml`. Setiap push ke branch `production` akan memicu deployment ke VPS.
+
+### GitHub Secrets yang Wajib Dikonfigurasi
+
+Buka: GitHub Repository → Settings → Secrets and variables → Actions → New repository secret
+
+| Secret | Nilai | Cara mendapatkan |
+|--------|-------|-----------------|
+| `VPS_HOST` | IP publik VPS (contoh: `103.x.x.x`) | Panel cloud provider atau `curl ifconfig.me` di VPS |
+| `VPS_USERNAME` | Linux user SSH (contoh: `meradmin`) | User yang kamu pakai untuk SSH ke VPS |
+| `VPS_SSH_KEY` | Isi penuh private key SSH | Baca dengan: `cat ~/.ssh/id_ed25519` (dari komputer yang sudah bisa SSH ke VPS) |
+| `VPS_PORT` | Port SSH (biasanya `22`) | `grep Port /etc/ssh/sshd_config` di VPS |
+
+### Cara Menambahkan SSH Key untuk GitHub Actions
+
+Jika belum ada kunci SSH khusus untuk CI/CD, buat kunci baru:
+
+```bash
+# Di komputer lokal (bukan VPS)
+ssh-keygen -t ed25519 -C "github-actions-mer-system" -f ~/.ssh/mer_actions
+
+# Daftarkan public key ke VPS
+ssh-copy-id -i ~/.ssh/mer_actions.pub username@<ip-vps>
+
+# Isi VPS_SSH_KEY di GitHub Secrets dengan isi file ini:
+cat ~/.ssh/mer_actions
+```
+
+### Alur Pipeline
+
+```
+Push ke branch 'production'
+    │
+    ▼
+Step 1: Checkout kode (metadata commit untuk audit log)
+    │
+    ▼
+Step 2: Tampilkan ringkasan deployment (commit SHA, author, timestamp)
+    │
+    ▼
+Step 3: SSH ke VPS → jalankan deploy.sh
+    │   (validasi path → git pull → docker build → migrate → cache → worker restart)
+    │
+    ▼
+Step 4: Verifikasi kesehatan container (docker compose ps)
+    │
+    └── PASS → Pipeline hijau
+    └── FAIL → Pipeline merah (ada container Exit/unhealthy)
+```
+
+### Deploy Manual (Emergency)
+
+Jika perlu deploy ulang tanpa push kode baru:
+
+1. Buka GitHub Repository → tab **Actions**
+2. Pilih workflow **"Deploy ke Production"**
+3. Klik **"Run workflow"** → isi alasan deploy → **"Run workflow"**
+
+### Troubleshooting Pipeline
+
+**Error: `No such file or directory: /var/www/mer-system/...`**
+
+VPS belum disetup. Jalankan prosedur deploy pertama kali secara manual (lihat bagian atas dokumen ini).
+
+**Error: `Permission denied (publickey)`**
+
+Public key GitHub Actions belum terdaftar di VPS:
+```bash
+# Di VPS, tambahkan public key ke authorized_keys
+echo "ssh-ed25519 AAAA... github-actions-mer-system" >> ~/.ssh/authorized_keys
+```
+
+**Error: `Host key verification failed`**
+
+Tambahkan host VPS ke known_hosts GitHub Actions atau gunakan `ssh-keyscan`:
+```bash
+# Tambahkan ke VPS_SSH_KNOWN_HOSTS secret (jika diperlukan)
+ssh-keyscan -p <VPS_PORT> <VPS_HOST>
+```
+
+**Pipeline timeout (>15 menit)**
+
+Biasanya terjadi saat `docker build` harus mengunduh semua layer dari scratch. Pastikan image base (`php:8.2-fpm-alpine`, `node:22-alpine`) sudah ter-cache di VPS dari deployment sebelumnya.
+
+---
+
 ## Checklist Deploy Production
 
 Gunakan checklist ini sebelum setiap deploy ke production:

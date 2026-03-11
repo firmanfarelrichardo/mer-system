@@ -1,29 +1,178 @@
-name: Production Deployment
+name: Deploy ke Production
 
-# Memicu pipeline HANYA ketika ada kode baru yang di-push ke branch "production"
+# ═══════════════════════════════════════════════════════════════
+#  TRIGGER
+# ═══════════════════════════════════════════════════════════════
+# Pipeline berjalan ketika:
+#   1. Ada push ke branch 'production' (deploy otomatis)
+#   2. Dipicu manual dari tab Actions di GitHub (emergency re-deploy)
 on:
   push:
     branches:
       - production
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Alasan deploy manual (untuk audit log)"
+        required: true
+        default: "Manual re-deploy oleh operator"
+
+# ═══════════════════════════════════════════════════════════════
+#  CONCURRENCY GUARD
+#
+#  Mencegah dua deployment berjalan bersamaan (race condition).
+#  Jika ada deployment yang sedang berjalan saat push baru masuk,
+#  deployment LAMA dibatalkan dan deployment BARU mengambil alih.
+#
+#  Kenapa ini penting?
+#    Tanpa guard, dua 'bash deploy.sh' bisa jalan paralel di VPS:
+#    - Keduanya menjalankan 'docker compose up --build' secara simultan
+#    - Keduanya menjalankan 'php artisan migrate' → deadlock database
+#    - Race condition pada APP_KEY generation di Step 3 deploy.sh
+# ═══════════════════════════════════════════════════════════════
+concurrency:
+  group: production-deploy
+  cancel-in-progress: true
 
 jobs:
   deploy:
-    name: Execute Remote Deployment
+    name: Deploy ke VPS Production
     runs-on: ubuntu-latest
-    
+
+    # ─────────────────────────────────────────────────────────
+    # GitHub Secrets yang dibutuhkan (Settings → Secrets → Actions):
+    #
+    #   VPS_HOST      — IP publik atau hostname VPS
+    #   VPS_USERNAME  — Linux user yang digunakan SSH (misal: meradmin)
+    #   VPS_SSH_KEY   — Private key SSH (isi penuh, termasuk baris BEGIN/END)
+    #   VPS_PORT      — Port SSH (default: 22)
+    # ─────────────────────────────────────────────────────────
+
     steps:
-      - name: SSH into VPS and Trigger deploy.sh
+      # ───────────────────────────────────────────────────────
+      # Step 1: Checkout — diperlukan agar $GITHUB_SHA dan
+      # metadata commit tersedia untuk logging audit.
+      # ───────────────────────────────────────────────────────
+      - name: Checkout kode
+        uses: actions/checkout@v4
+
+      # ───────────────────────────────────────────────────────
+      # Step 2: Tampilkan ringkasan deployment untuk audit log
+      # ───────────────────────────────────────────────────────
+      - name: Ringkasan deployment
+        run: |
+          echo "========================================"
+          echo "  MER System — Production Deploy"
+          echo "========================================"
+          echo "  Commit   : ${{ github.sha }}"
+          echo "  Author   : ${{ github.actor }}"
+          echo "  Branch   : ${{ github.ref_name }}"
+          echo "  Trigger  : ${{ github.event_name }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "  Alasan   : ${{ github.event.inputs.reason }}"
+          fi
+          echo "  Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          echo "========================================"
+
+      # ───────────────────────────────────────────────────────
+      # Step 3: Jalankan deploy.sh di VPS via SSH
+      #
+      # deploy.sh melakukan 7 langkah secara berurutan:
+      #   1. git pull --ff-only origin production
+      #   2. docker compose up -d --build --wait (buat external network jika belum ada)
+      #   3. Validasi / generate APP_KEY jika belum ada
+      #   4. php artisan migrate --force
+      #   5. php artisan optimize:clear + optimize + view:cache + event:cache
+      #   6. chown storage (permission fix)
+      #   7. php artisan queue:restart (graceful restart worker)
+      #
+      # command_timeout: 15m — memberi cukup waktu untuk:
+      #   - docker build (kompresi layer baru)
+      #   - composer install (di dalam Dockerfile, dari cache kalau tidak ada perubahan)
+      #   - migrasi database yang besar
+      # ───────────────────────────────────────────────────────
+      - name: Jalankan deploy.sh di VPS
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT }}
-          # Menerapkan best practice error handling:
-          # set -e memastikan pipeline langsung gagal/merah jika ada error di script
+          timeout: 30s
+          command_timeout: 15m
           script: |
             set -e
-            echo "Memulai proses remote deployment..."
-            cd /home/meradmin/mer-system/deployment/production
+
+            DEPLOY_DIR="/var/www/mer-system/deployment/production"
+
+            # Validasi direktori deploy ada sebelum lanjut.
+            # Jika VPS baru disetup ulang atau path berubah, pipeline
+            # langsung merah dengan pesan yang jelas — bukan error
+            # yang membingungkan dari perintah git/docker di bawahnya.
+            if [ ! -d "$DEPLOY_DIR" ]; then
+              echo "ERROR: Direktori deploy tidak ditemukan: $DEPLOY_DIR"
+              echo "Pastikan VPS sudah disetup sesuai docs/02-deployment.md"
+              exit 1
+            fi
+
+            if [ ! -f "$DEPLOY_DIR/deploy.sh" ]; then
+              echo "ERROR: deploy.sh tidak ditemukan di $DEPLOY_DIR"
+              exit 1
+            fi
+
+            cd "$DEPLOY_DIR"
+
+            echo "Commit  : ${{ github.sha }}"
+            echo "Actor   : ${{ github.actor }}"
+            echo "Trigger : ${{ github.event_name }}"
+            echo "Waktu   : $(date '+%Y-%m-%d %H:%M:%S %Z')"
+            echo ""
+
             bash deploy.sh
-            echo "Deployment berhasil dieksekusi oleh GitHub Actions!"
+
+      # ───────────────────────────────────────────────────────
+      # Step 4: Verifikasi post-deployment
+      #
+      # Memastikan semua container produksi dalam kondisi sehat
+      # setelah deploy.sh selesai. Pipeline menjadi merah jika
+      # ada container yang Exit, unhealthy, atau restarting.
+      # ───────────────────────────────────────────────────────
+      - name: Verifikasi kesehatan container
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          timeout: 30s
+          command_timeout: 3m
+          script: |
+            set -e
+
+            cd /var/www/mer-system/deployment/production
+
+            echo "=== Status Container ==="
+            docker compose ps
+            echo ""
+
+            # Deteksi container yang tidak dalam kondisi normal.
+            # 'paused' dikecualikan karena itu kondisi valid saat lockdown aktif.
+            if docker compose ps | grep -qE "[[:space:]](Exit|unhealthy|restarting)[[:space:]]"; then
+              echo ""
+              echo "ERROR: Ditemukan container dalam kondisi tidak sehat!"
+              echo "Jalankan 'docker compose logs <service>' untuk investigasi."
+              exit 1
+            fi
+
+            echo "Semua container dalam kondisi sehat."
+            echo ""
+            echo "=== Verifikasi HTTP response ==="
+            # Cek bahwa Nginx merespons (via port internal — bouncer bisa bypass)
+            HTTP_STATUS=$(docker compose exec -T web \
+              wget -qO- --server-response http://localhost/ 2>&1 \
+              | grep "HTTP/" | tail -1 | awk '{print $2}' || echo "gagal")
+
+            echo "HTTP status dari Nginx: $HTTP_STATUS"
+            if [ "$HTTP_STATUS" = "000" ] || [ "$HTTP_STATUS" = "gagal" ]; then
+              echo "WARNING: Nginx tidak merespons dengan benar. Cek log: docker compose logs web"
+            fi
