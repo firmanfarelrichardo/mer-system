@@ -78,7 +78,7 @@ jobs:
       # Step 3: Jalankan deploy.sh di VPS via SSH
       #
       # deploy.sh melakukan 7 langkah secara berurutan:
-      #   1. git pull --ff-only origin production
+      #   1. git fetch + git reset --hard origin/production
       #   2. docker compose up -d --build --wait (buat external network jika belum ada)
       #   3. Validasi / generate APP_KEY jika belum ada
       #   4. php artisan migrate --force
@@ -103,22 +103,43 @@ jobs:
           script: |
             set -e
 
-            DEPLOY_DIR="/var/www/mer-system/deployment/production"
+            PROJECT_ROOT="/var/www/mer-system"
+            DEPLOY_DIR="${PROJECT_ROOT}/deployment/production"
 
             # Validasi direktori deploy ada sebelum lanjut.
             # Jika VPS baru disetup ulang atau path berubah, pipeline
-            # langsung merah dengan pesan yang jelas — bukan error
-            # yang membingungkan dari perintah git/docker di bawahnya.
+            # langsung merah dengan pesan yang jelas.
             if [ ! -d "$DEPLOY_DIR" ]; then
               echo "ERROR: Direktori deploy tidak ditemukan: $DEPLOY_DIR"
               echo "Pastikan VPS sudah disetup sesuai docs/02-deployment.md"
               exit 1
             fi
 
-            if [ ! -f "$DEPLOY_DIR/deploy.sh" ]; then
-              echo "ERROR: deploy.sh tidak ditemukan di $DEPLOY_DIR"
-              exit 1
-            fi
+            # ─────────────────────────────────────────────────────
+            # BOOTSTRAP GIT SYNC
+            #
+            # Workflow melakukan git sync SEBELUM memanggil deploy.sh
+            # untuk memecahkan masalah bootstrap:
+            #
+            #   Jika deploy.sh di VPS masih versi lama (misal: masih
+            #   menggunakan git pull --ff-only), deployment akan gagal
+            #   karena git pull menolak local drift pada file tracked.
+            #   Akibatnya, versi baru deploy.sh tidak pernah bisa masuk.
+            #
+            # Dengan melakukan git reset --hard di sini TERLEBIH DAHULU,
+            # file deploy.sh di disk VPS sudah versi terbaru SEBELUM
+            # dipanggil — sehingga lingkaran setan bootstrap terputus.
+            #
+            # deploy.sh sendiri juga melakukan git reset --hard di Step 1,
+            # tapi saat itu hasilnya adalah no-op karena kode sudah sinkron.
+            # ─────────────────────────────────────────────────────
+            echo "[Bootstrap] Sinkronisasi kode ke commit terbaru..."
+            cd "$PROJECT_ROOT"
+            git fetch origin production
+            git checkout production
+            git reset --hard origin/production
+            echo "[Bootstrap] Sinkronisasi selesai: $(git rev-parse --short HEAD)"
+            echo ""
 
             cd "$DEPLOY_DIR"
 
