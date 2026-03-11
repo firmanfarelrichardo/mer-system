@@ -7,20 +7,16 @@ name: Deploy ke Production
 #   1. Ada push ke branch 'production' (deploy otomatis)
 #   2. Dipicu manual dari tab Actions di GitHub (emergency re-deploy)
 #
-# CATATAN ARSITEKTUR — SELF-HOSTED RUNNER:
-#   Workflow ini TIDAK menggunakan SSH dari GitHub ke VPS.
-#   Sebaliknya, GitHub Actions Runner berjalan LANGSUNG di VPS dan
-#   menghubungi GitHub secara outbound (polling).
+# CATATAN ARSITEKTUR — SSH DEPLOYMENT:
+#   Workflow ini menggunakan GitHub-hosted runner (ubuntu-latest) dan
+#   terhubung ke VPS via SSH menggunakan secrets:
+#     VPS_HOST     → IP atau domain VPS
+#     VPS_PORT     → Port SSH (default 22)
+#     VPS_USERNAME → User SSH di VPS (misal: meradmin)
+#     VPS_SSH_KEY  → Private key SSH (tanpa passphrase)
 #
-#   Keunggulan model ini:
-#   - Tidak ada port SSH yang perlu dibuka ke GitHub IP ranges
-#     (mengeliminasi error "dial tcp: i/o timeout" selamanya).
-#   - Runner memiliki akses langsung ke Docker, git, dan filesystem VPS.
-#   - Tidak perlu secrets SSH key — runner sudah di VPS.
-#   - Latency deployment lebih rendah (tidak ada overhead SSH tunnel).
-#
-#   Setup runner sekali saja di VPS:
-#     bash /var/www/mer-system/deployment/production/setup-runner.sh
+#   GitHub memanggil VPS secara outbound via SSH.
+#   deploy.sh dijalankan langsung di VPS.
 # ═══════════════════════════════════════════════════════════════
 on:
   push:
@@ -137,62 +133,80 @@ jobs:
           echo "Semua file deploy kritis tersedia."
 
   # ─────────────────────────────────────────────────────────────
-  # JOB 2: DEPLOY
+  # JOB 2: DEPLOY via SSH
   #
-  # Berjalan LANGSUNG di VPS via self-hosted runner.
-  # Runner label: [self-hosted, production-vps]
+  # Berjalan di GitHub-hosted runner, lalu SSH ke VPS.
+  # Secrets yang dipakai: VPS_HOST, VPS_PORT, VPS_USERNAME, VPS_SSH_KEY
   # ─────────────────────────────────────────────────────────────
   deploy:
     name: Deploy ke VPS Production
-    runs-on: [self-hosted, production-vps]
+    runs-on: ubuntu-latest
     needs: validate
     environment: production
 
     steps:
+      - name: Setup SSH key & known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.VPS_PORT }} -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
       - name: Catat baseline commit (target rollback)
         run: |
-          BASELINE=$(git -C /var/www/mer-system rev-parse HEAD 2>/dev/null || echo "")
+          BASELINE=$(ssh -i ~/.ssh/deploy_key \
+            -p ${{ secrets.VPS_PORT }} \
+            ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
+            "git -C /var/www/mer-system rev-parse HEAD 2>/dev/null || echo ''")
           echo "ROLLBACK_COMMIT=${BASELINE}" >> "$GITHUB_ENV"
           echo "Baseline: ${BASELINE:-'(belum ada)'}"
 
-      - name: Sinkronisasi kode dari branch production
+      - name: Sinkronisasi kode & jalankan deploy
+        id: run_deploy
         run: |
+          ssh -i ~/.ssh/deploy_key \
+            -p ${{ secrets.VPS_PORT }} \
+            ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
+            'bash -s' << 'REMOTE'
+          set -e
           cd /var/www/mer-system
           git fetch origin production
           git checkout production
           git reset --hard origin/production
           echo "HEAD sekarang: $(git rev-parse --short HEAD)"
-
-      - name: Build dan jalankan Docker
-        id: run_deploy
-        run: |
-          cd /var/www/mer-system/deployment/production
+          cd deployment/production
           bash deploy.sh
+          REMOTE
 
-      - name: Rollback otomatis jika build gagal
+      - name: Rollback otomatis jika deploy gagal
         if: failure() && env.ROLLBACK_COMMIT != ''
         run: |
           echo "DEPLOY GAGAL — rollback ke ${ROLLBACK_COMMIT}"
-          cd /var/www/mer-system
-          git reset --hard "${ROLLBACK_COMMIT}"
-          cd deployment/production
-          bash deploy.sh
-          echo "Rollback selesai. Investigasi: docker compose logs --tail 50"
+          ssh -i ~/.ssh/deploy_key \
+            -p ${{ secrets.VPS_PORT }} \
+            ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
+            "cd /var/www/mer-system && \
+             git reset --hard ${ROLLBACK_COMMIT} && \
+             cd deployment/production && \
+             bash deploy.sh"
+          echo "Rollback selesai."
 
       - name: Verifikasi container dan HTTP
         if: success()
         run: |
+          ssh -i ~/.ssh/deploy_key \
+            -p ${{ secrets.VPS_PORT }} \
+            ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
+            'bash -s' << 'REMOTE'
           cd /var/www/mer-system/deployment/production
           docker compose ps
           sleep 5
-
           UNHEALTHY=$(docker compose ps --format "table {{.Name}}\t{{.State}}\t{{.Status}}" \
             | awk 'NR>1 && ($2 == "exited" || $2 == "dead" || $3 ~ /unhealthy/) {print $1}' || echo "")
           if [ -n "$UNHEALTHY" ]; then
             echo "Container tidak sehat: $UNHEALTHY"
             exit 1
           fi
-
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             --connect-timeout 5 --max-time 10 \
             "http://localhost:${APP_PORT:-80}/" 2>/dev/null || echo "000")
@@ -200,17 +214,18 @@ jobs:
           if [[ ! "$HTTP_STATUS" =~ ^(200|301|302|401|403)$ ]]; then
             echo "WARNING: status tidak terduga — cek: docker compose logs web --tail 30"
           fi
+          REMOTE
 
       - name: Catat audit log
         if: always()
         run: |
-          mkdir -p /var/log/mer-deploy
-          {
-            echo "timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-            echo "status=${{ job.status }}"
-            echo "commit=${{ github.sha }}"
-            echo "actor=${{ github.actor }}"
-            echo "trigger=${{ github.event_name }}"
-            echo "---"
-          } >> /var/log/mer-deploy/deploy.log
-          echo "Log: /var/log/mer-deploy/deploy.log"
+          ssh -i ~/.ssh/deploy_key \
+            -p ${{ secrets.VPS_PORT }} \
+            ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
+            "mkdir -p /var/log/mer-deploy && \
+             echo 'timestamp=\$(date -u \"+%Y-%m-%dT%H:%M:%SZ\")' >> /var/log/mer-deploy/deploy.log && \
+             echo 'status=${{ job.status }}' >> /var/log/mer-deploy/deploy.log && \
+             echo 'commit=${{ github.sha }}' >> /var/log/mer-deploy/deploy.log && \
+             echo 'actor=${{ github.actor }}' >> /var/log/mer-deploy/deploy.log && \
+             echo 'trigger=${{ github.event_name }}' >> /var/log/mer-deploy/deploy.log && \
+             echo '---' >> /var/log/mer-deploy/deploy.log"
