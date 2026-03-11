@@ -7,7 +7,7 @@
 #
 # PRINSIP:
 # - set -e: berhenti SEGERA jika ada perintah yang gagal.
-# - git pull --ff-only: tolak divergent branches, wajib fast-forward.
+# - git reset --hard: VPS selalu mencerminkan remote, local drift dibuang.
 # - Setiap step memberikan output berwarna untuk monitoring.
 # - Script dijalankan dari folder deployment/production/.
 #
@@ -57,17 +57,36 @@ echo -e "  Direktori  : ${SCRIPT_DIR}"
 echo -e "  Timestamp  : $(date '+%Y-%m-%d %H:%M:%S %Z')"
 
 # -------------------------------------------
-# STEP 1: Pull latest code dari branch production
-# --ff-only: hanya izinkan fast-forward. Jika ada divergent branches,
-# skrip berhenti (set -e) daripada membuat merge commit otomatis
-# yang bisa mengacaukan state production secara tidak terduga.
+# STEP 1: Sinkronisasi kode dari branch production
+#
+# STRATEGI: git fetch + git reset --hard (bukan git pull)
+#
+# Kenapa reset --hard dan bukan pull --ff-only?
+#
+#   VPS production adalah immutable deployment target — ia harus
+#   SELALU mencerminkan state remote secara tepat. Tidak boleh ada
+#   perubahan lokal yang sengaja disimpan di sini:
+#   - File konfigurasi runtime (nginx, supervisord) diedit via Git
+#   - Secrets ada di .env yang di-gitignore (aman dari reset)
+#   - File yang digenerate runtime (storage/*, bootstrap/cache/*)
+#     juga di-gitignore (aman dari reset)
+#
+#   git pull --ff-only GAGAL jika ada file tracked yang dimodifikasi
+#   secara lokal — sebagaimana terjadi ketika file seperti deploy.sh
+#   diedit langsung di filesystem VPS tanpa melalui Git.
+#
+#   git reset --hard origin/production:
+#   - Mengambil semua commit terbaru dari remote
+#   - Memaksa working directory PERSIS sama dengan remote
+#   - Membuang semua local drift pada file tracked
+#   - TIDAK menyentuh file yang di-gitignore (termasuk .env)
 # -------------------------------------------
-step "Step 1/7 — git pull origin production (--ff-only)"
+step "Step 1/7 — git fetch + reset --hard origin/production"
 cd "$PROJECT_ROOT"
 git fetch origin production
 git checkout production
-git pull --ff-only origin production
-success "Kode berhasil diperbarui dari branch production"
+git reset --hard origin/production
+success "Kode berhasil disinkronisasi ke commit: $(git rev-parse --short HEAD)"
 cd "$SCRIPT_DIR"
 
 # -------------------------------------------
