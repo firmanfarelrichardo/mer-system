@@ -1,0 +1,29 @@
+name: Production Deployment
+
+# Memicu pipeline HANYA ketika ada kode baru yang di-push ke branch "production"
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  deploy:
+    name: Execute Remote Deployment
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: SSH into VPS and Trigger deploy.sh
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          # Menerapkan best practice error handling:
+          # set -e memastikan pipeline langsung gagal/merah jika ada error di script
+          script: |
+            set -e
+            echo "Memulai proses remote deployment..."
+            cd /home/meradmin/mer-system/deployment/production
+            bash deploy.sh
+            echo "Deployment berhasil dieksekusi oleh GitHub Actions!"
