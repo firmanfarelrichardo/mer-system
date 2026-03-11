@@ -222,10 +222,15 @@ jobs:
           ssh -i ~/.ssh/deploy_key \
             -p ${{ secrets.VPS_PORT }} \
             ${{ secrets.VPS_USERNAME }}@${{ secrets.VPS_HOST }} \
-            "mkdir -p /var/log/mer-deploy && \
-             echo 'timestamp=\$(date -u \"+%Y-%m-%dT%H:%M:%SZ\")' >> /var/log/mer-deploy/deploy.log && \
-             echo 'status=${{ job.status }}' >> /var/log/mer-deploy/deploy.log && \
-             echo 'commit=${{ github.sha }}' >> /var/log/mer-deploy/deploy.log && \
-             echo 'actor=${{ github.actor }}' >> /var/log/mer-deploy/deploy.log && \
-             echo 'trigger=${{ github.event_name }}' >> /var/log/mer-deploy/deploy.log && \
-             echo '---' >> /var/log/mer-deploy/deploy.log"
+            'bash -s' << 'REMOTE'
+          LOG_FILE="/var/www/mer-system/storage/logs/deploy-audit.log"
+          mkdir -p "$(dirname "$LOG_FILE")"
+          {
+            echo "timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            echo "status=${{ job.status }}"
+            echo "commit=${{ github.sha }}"
+            echo "actor=${{ github.actor }}"
+            echo "trigger=${{ github.event_name }}"
+            echo "---"
+          } >> "$LOG_FILE"
+          REMOTE
