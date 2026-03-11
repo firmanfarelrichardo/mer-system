@@ -104,7 +104,6 @@ jobs:
             DB_USERNAME
             DB_PASSWORD
             REDIS_PASSWORD
-            CROWDSEC_BOUNCER_API_KEY
           )
           MISSING=()
           for KEY in "${REQUIRED_KEYS[@]}"; do
@@ -141,16 +140,7 @@ jobs:
   # JOB 2: DEPLOY
   #
   # Berjalan LANGSUNG di VPS via self-hosted runner.
-  #
-  # Runner tidak memerlukan SSH karena ia sudah berada di VPS
-  # dan dapat langsung mengeksekusi perintah Docker dan bash.
-  #
-  # Label runner: [self-hosted, production-vps]
-  # Tambahkan kedua label saat mendaftarkan runner di:
-  #   GitHub → Settings → Actions → Runners → Add runner
-  #
-  # PRASYARAT (setup SATU KALI di VPS):
-  #   bash /var/www/mer-system/deployment/production/setup-runner.sh
+  # Runner label: [self-hosted, production-vps]
   # ─────────────────────────────────────────────────────────────
   deploy:
     name: Deploy ke VPS Production
@@ -159,159 +149,68 @@ jobs:
     environment: production
 
     steps:
-      # ─────────────────────────────────────────────────────────
-      # Step 1: Catat baseline commit untuk rollback.
-      #
-      # Commit ini menjadi target jika deploy gagal di langkah
-      # selanjutnya. Disimpan ke $GITHUB_ENV agar tersedia di
-      # semua step berikutnya (termasuk step kondisional).
-      # ─────────────────────────────────────────────────────────
       - name: Catat baseline commit (target rollback)
-        id: baseline
         run: |
           BASELINE=$(git -C /var/www/mer-system rev-parse HEAD 2>/dev/null || echo "")
           echo "ROLLBACK_COMMIT=${BASELINE}" >> "$GITHUB_ENV"
-          echo "Baseline commit: ${BASELINE:-'(repository belum ada)'}"
+          echo "Baseline: ${BASELINE:-'(belum ada)'}"
 
-      # ─────────────────────────────────────────────────────────
-      # Step 2: Bootstrap git sync.
-      #
-      # Memaksa VPS mencerminkan remote SEBELUM deploy.sh dipanggil.
-      # Ini mengeliminasi bootstrap paradox: deploy.sh versi lama
-      # tidak dapat menghalangi versi baru masuk ke disk VPS.
-      #
-      # File yang tidak ditrack Git (.env, storage/) tidak tersentuh.
-      # ─────────────────────────────────────────────────────────
-      - name: Bootstrap — sinkronisasi kode ke commit terbaru
+      - name: Sinkronisasi kode dari branch production
         run: |
           cd /var/www/mer-system
           git fetch origin production
           git checkout production
           git reset --hard origin/production
-          echo "Sinkronisasi selesai: $(git rev-parse --short HEAD)"
+          echo "HEAD sekarang: $(git rev-parse --short HEAD)"
 
-      # ─────────────────────────────────────────────────────────
-      # Step 3: Eksekusi deploy.sh (7 langkah berurutan).
-      #
-      # deploy.sh menggunakan 'set -e' dan trap ERR internal.
-      # Jika step apapun gagal → script exit non-zero → job ini
-      # exit dengan failure → step rollback aktif.
-      # ─────────────────────────────────────────────────────────
-      - name: Jalankan deploy.sh
+      - name: Build dan jalankan Docker
         id: run_deploy
         run: |
           cd /var/www/mer-system/deployment/production
           bash deploy.sh
 
-      # ─────────────────────────────────────────────────────────
-      # Step 4: Rollback otomatis jika deploy gagal.
-      #
-      # Berjalan HANYA jika step run_deploy exit non-zero.
-      # Mengembalikan kode ke ROLLBACK_COMMIT dan menjalankan
-      # deploy.sh dengan kode versi lama.
-      #
-      # Rollback database (undone migrations) TIDAK dilakukan
-      # secara otomatis — ini memerlukan keputusan manusia.
-      # Untuk migrasi destructive, selalu buat backup terlebih dahulu
-      # dan aktifkan lockdown.sh sebelum deploy dimulai.
-      # ─────────────────────────────────────────────────────────
-      - name: Rollback otomatis ke commit sebelumnya
+      - name: Rollback otomatis jika build gagal
         if: failure() && env.ROLLBACK_COMMIT != ''
         run: |
-          echo ""
-          echo "=========================================="
-          echo "  DEPLOY GAGAL — Memulai rollback otomatis"
-          echo "=========================================="
-          echo "  Target rollback : ${ROLLBACK_COMMIT}"
-          echo "  Timestamp       : $(date '+%Y-%m-%d %H:%M:%S %Z')"
-          echo ""
-
+          echo "DEPLOY GAGAL — rollback ke ${ROLLBACK_COMMIT}"
           cd /var/www/mer-system
           git reset --hard "${ROLLBACK_COMMIT}"
-          echo "Kode di-reset ke: $(git rev-parse --short HEAD)"
-
-          echo ""
-          echo "Menjalankan deploy.sh dengan kode versi sebelumnya..."
           cd deployment/production
           bash deploy.sh
+          echo "Rollback selesai. Investigasi: docker compose logs --tail 50"
 
-          echo ""
-          echo "================================================"
-          echo "  Rollback selesai. Uptime terjaga."
-          echo "  TINDAKAN DIPERLUKAN: Investigasi penyebab"
-          echo "  kegagalan via Grafana → Loki → Explore."
-          echo "================================================"
-
-      # ─────────────────────────────────────────────────────────
-      # Step 5: Gate kesehatan pasca-deploy.
-      #
-      # Verifikasi independen setelah deploy.sh selesai.
-      # Mendeteksi kondisi degradasi yang bisa muncul setelah
-      # container start (OOM, restart loop, healthcheck failure).
-      # ─────────────────────────────────────────────────────────
-      - name: Gate kesehatan pasca-deploy
+      - name: Verifikasi container dan HTTP
         if: success()
         run: |
           cd /var/www/mer-system/deployment/production
-
-          echo "=== Status Container ==="
           docker compose ps
-          echo ""
-
-          # Beri waktu 5 detik agar restart loop bisa terdeteksi.
           sleep 5
 
-          # Periksa container dalam status bermasalah.
           UNHEALTHY=$(docker compose ps --format "table {{.Name}}\t{{.State}}\t{{.Status}}" \
             | awk 'NR>1 && ($2 == "exited" || $2 == "dead" || $3 ~ /unhealthy/) {print $1}' || echo "")
-
           if [ -n "$UNHEALTHY" ]; then
-            echo ""
-            echo "ERROR: Container dalam kondisi tidak sehat:"
-            echo "$UNHEALTHY"
-            echo ""
-            echo "Perintah investigasi:"
-            for SVC in $UNHEALTHY; do
-              echo "  docker compose logs ${SVC} --tail 50"
-            done
+            echo "Container tidak sehat: $UNHEALTHY"
             exit 1
           fi
 
-          echo "Semua container dalam kondisi sehat."
-          echo ""
-
-          # Verifikasi Nginx merespons pada port lokal.
-          echo "=== Verifikasi HTTP ==="
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             --connect-timeout 5 --max-time 10 \
             "http://localhost:${APP_PORT:-80}/" 2>/dev/null || echo "000")
-
           echo "HTTP status: ${HTTP_STATUS}"
-
-          # 200, 301/302 (redirect HTTPS), 401/403 (auth guard) → valid.
           if [[ ! "$HTTP_STATUS" =~ ^(200|301|302|401|403)$ ]]; then
-            echo "WARNING: Status HTTP tidak terduga: ${HTTP_STATUS}"
-            echo "Investigasi: docker compose logs web --tail 30"
+            echo "WARNING: status tidak terduga — cek: docker compose logs web --tail 30"
           fi
 
-      # ─────────────────────────────────────────────────────────
-      # Step 6: Audit log — selalu berjalan (sukses maupun gagal).
-      # ─────────────────────────────────────────────────────────
-      - name: Catat audit log deployment
+      - name: Catat audit log
         if: always()
         run: |
-          LOG_DIR="/var/log/mer-deploy"
-          mkdir -p "$LOG_DIR"
-
-          JOB_STATUS="${{ job.status }}"
+          mkdir -p /var/log/mer-deploy
           {
             echo "timestamp=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-            echo "status=${JOB_STATUS^^}"
+            echo "status=${{ job.status }}"
             echo "commit=${{ github.sha }}"
             echo "actor=${{ github.actor }}"
             echo "trigger=${{ github.event_name }}"
-            echo "rollback_baseline=${ROLLBACK_COMMIT:-n/a}"
             echo "---"
-          } >> "${LOG_DIR}/deploy.log"
-
-          echo "Audit log: ${LOG_DIR}/deploy.log"
+          } >> /var/log/mer-deploy/deploy.log
+          echo "Log: /var/log/mer-deploy/deploy.log"
