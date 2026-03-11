@@ -46,6 +46,8 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       CACHE_STORE: redis
       SESSION_DRIVER: redis
+      SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}
+      SESSION_SAME_SITE: ${SESSION_SAME_SITE:-lax}
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
     volumes:
       # Public assets shared dengan Nginx via named volume.
