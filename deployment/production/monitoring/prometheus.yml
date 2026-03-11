@@ -1,0 +1,92 @@
+# ===========================================
+# Prometheus — Konfigurasi Scraping Metrik
+# ===========================================
+#
+# ARSITEKTUR (Pull-based):
+#   Prometheus secara AKTIF mengambil (scrape) metrik dari target
+#   pada interval yang ditentukan. Target tidak perlu "mengirim" data.
+#
+#   Prometheus ──GET /metrics──> cAdvisor    (metrik kontainer)
+#   Prometheus ──GET /metrics──> Node Exporter (metrik VPS/Host OS)
+#
+# KENAPA Pull-based (bukan Push)?
+#   1. Prometheus yang mengontrol kapan data diambil — jika target mati,
+#      Prometheus langsung tahu (scrape gagal = alert bisa dikirim).
+#   2. Tidak perlu konfigurasi di sisi target untuk "mengirim ke mana."
+#   3. Lebih mudah di-debug: buka browser ke target:port/metrics
+#      untuk melihat apa yang di-scrape.
+# ===========================================
+
+global:
+  # Interval default antar scrape. 15 detik cukup untuk monitoring
+  # infrastruktur tanpa membebani target. Menurunkan ke 5s akan
+  # meningkatkan konsumsi disk dan CPU Prometheus secara signifikan.
+  scrape_interval: 15s
+
+  # Timeout per scrape. Jika target tidak merespons dalam 10 detik,
+  # Prometheus menandai scrape sebagai gagal (metric "up" = 0).
+  scrape_timeout: 10s
+
+  # Interval evaluasi alerting rules. Prometheus mengevaluasi semua
+  # alerting rules setiap 15 detik untuk mendeteksi kondisi anomali.
+  evaluation_interval: 15s
+
+# ===========================================
+# Scrape Configs — Daftar target metrik
+# ===========================================
+scrape_configs:
+  # -------------------------------------------
+  # Self-monitoring: Prometheus mengambil metriknya sendiri.
+  # Berguna untuk memantau kesehatan Prometheus itu sendiri
+  # (penggunaan memori, jumlah time-series aktif, scrape duration).
+  # -------------------------------------------
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+        labels:
+          instance: "prometheus"
+
+  # -------------------------------------------
+  # cAdvisor — metrik per-container Docker
+  #
+  # Menyediakan metrik CPU, memori, jaringan, dan disk I/O
+  # untuk SETIAP container yang berjalan di Docker Engine.
+  # Target menggunakan Docker DNS: cadvisor (nama service
+  # di docker-compose.monitoring.yml).
+  #
+  # Metrik penting yang di-scrape:
+  #   container_cpu_usage_seconds_total  — konsumsi CPU kumulatif
+  #   container_memory_usage_bytes       — penggunaan RAM saat ini
+  #   container_network_receive_bytes    — traffic masuk per-container
+  #   container_fs_usage_bytes           — penggunaan disk per-container
+  # -------------------------------------------
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["mer-cadvisor:8080"]
+        labels:
+          instance: "mer-vps"
+
+  # -------------------------------------------
+  # Node Exporter — metrik Host OS (VPS fisik)
+  #
+  # Membaca metrik CPU, RAM, disk, dan jaringan dari VPS host.
+  # Target menggunakan IP gateway Docker bridge ke host:
+  #   host.docker.internal:9100 (Docker Desktop)
+  #   172.17.0.1:9100           (Linux Docker default gateway)
+  #
+  # Node Exporter diinstal LANGSUNG di Host OS (bukan container)
+  # karena container memiliki view filesystem/proc yang terisolasi.
+  # Container tidak bisa membaca /proc host secara akurat untuk
+  # metrik disk I/O dan network interfaces yang sebenarnya.
+  #
+  # Metrik penting yang di-scrape:
+  #   node_cpu_seconds_total        — penggunaan CPU per-core
+  #   node_memory_MemAvailable_bytes — RAM tersedia
+  #   node_filesystem_avail_bytes   — ruang disk tersisa
+  #   node_load1, node_load5        — load average 1 & 5 menit
+  # -------------------------------------------
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["172.17.0.1:9100"]
+        labels:
+          instance: "mer-vps-host"

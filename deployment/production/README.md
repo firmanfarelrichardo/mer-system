@@ -1,325 +1,90 @@
-# SI Project TIK - Production Deployment
+# MER System — Production Infrastructure
 
-Panduan untuk deploy SI Project TIK ke environment production menggunakan Docker.
+Direktori ini berisi seluruh konfigurasi infrastruktur production untuk MER System (Manajemen Event & Risiko). Dibangun di atas Docker dengan prinsip isolasi, immutable infrastructure, dan defense-in-depth.
 
-## Prerequisites
+**Spesifikasi VPS:** Ubuntu 24.04 LTS | 8 GB RAM | 2 CPU Core  
+**Domain:** mers-rsryacudu.com via Cloudflare (Full Strict SSL)
 
-- Docker Engine 20.10+
-- Docker Compose 2.0+
-- PostgreSQL database (external atau dalam Docker)
-- Domain dengan SSL certificate (recommended)
+---
 
-## Struktur File
+## Struktur Direktori
 
 ```
 deployment/production/
-├── docker-compose.yml    # Konfigurasi Docker services
-├── Dockerfile            # Multi-stage build (optimized)
-├── docker-entrypoint.sh  # Script inisialisasi container
-├── nginx.conf            # Konfigurasi Nginx
-├── supervisord.conf      # Konfigurasi Supervisor
-├── php.ini               # Konfigurasi PHP production
-├── .env.example          # Template environment variables
-└── README.md             # Dokumentasi ini
+├── README.md                       # File ini — indeks dokumentasi
+│
+├── docker-compose.yml              # Stack produksi (6 services)
+├── docker-compose.monitoring.yml   # Stack monitoring (5 services, terpisah)
+├── Dockerfile                      # Multi-stage build (composer→node→php-fpm)
+├── docker-entrypoint.sh            # Inisialisasi container saat startup
+├── nginx.conf                      # Reverse proxy + security headers
+├── supervisord.conf                # Process manager (FPM + worker + scheduler)
+├── php.ini                         # Konfigurasi PHP production
+│
+├── deploy.sh                       # Script deploy otomatis (7 langkah)
+├── lockdown.sh                     # Aktivasi mode darurat (freeze backend)
+├── unlock.sh                       # Pemulihan dari mode darurat
+│
+├── .env.example                    # Template environment variables
+├── .env                            # Nilai aktual (TIDAK di-commit ke Git)
+│
+├── lockdown/
+│   └── maintenance.html            # Halaman 503 statis (zero-dependency)
+│
+└── monitoring/
+    ├── prometheus.yml              # Konfigurasi scrape targets Prometheus
+    ├── loki-config.yml             # Konfigurasi log aggregation Loki
+    ├── promtail-config.yml         # Konfigurasi log collection agent
+    └── grafana-datasources.yml     # Auto-provisioning datasource Grafana
 ```
 
-## Quick Start
+---
 
-### 1. Clone Repository
+## Indeks Dokumentasi
+
+| Dokumen | Konteks |
+|---------|---------|
+| [docs/01-arsitektur.md](docs/01-arsitektur.md) | Arsitektur sistem, diagram traffic flow, relasi antar service, alokasi resource |
+| [docs/02-deployment.md](docs/02-deployment.md) | Panduan deploy pertama kali, update via deploy.sh, rollback, backup database |
+| [docs/03-keamanan.md](docs/03-keamanan.md) | Nginx security headers, HTTPS Cloudflare, CrowdSec IDS, Laravel middleware |
+| [docs/04-monitoring.md](docs/04-monitoring.md) | Stack observability: Prometheus, Grafana, Loki, Promtail, cAdvisor, Sentry |
+| [docs/05-kill-switch.md](docs/05-kill-switch.md) | Level 3 Kill Switch: prosedur lockdown dan pemulihan sistem darurat |
+| [docs/06-operasional.md](docs/06-operasional.md) | Runbook operasi sehari-hari, troubleshooting, perintah penting |
+
+---
+
+## Quick Start (Deploy Pertama Kali)
 
 ```bash
-git clone https://github.com/your-org/si-project-tik.git
-cd si-project-tik
-```
+# 1. Masuk ke direktori ini
+cd /var/www/mer-system/deployment/production
 
-### 2. Setup Environment
+# 2. Buat external network (satu kali saja)
+docker network create mer-prod-network
 
-```bash
-cd deployment/production
-
-# Copy dan edit environment file
+# 3. Salin dan isi environment file
 cp .env.example .env
-nano .env
+nano .env   # Isi semua nilai yang wajib diisi
+
+# 4. Jalankan deploy script
+bash deploy.sh
+
+# 5. (Opsional) Jalankan stack monitoring
+docker compose -f docker-compose.monitoring.yml up -d
 ```
 
-**PENTING:** Pastikan mengisi:
-- `APP_KEY` - Generate dengan: `php artisan key:generate --show`
-- `APP_URL` - URL production
-- `DB_*` - Credentials database
-- `MAIL_*` - Konfigurasi email (jika diperlukan)
+Panduan lengkap: [docs/02-deployment.md](docs/02-deployment.md)
 
-### 3. Build & Deploy
+---
+
+## Perintah Darurat
 
 ```bash
-# Build image
-docker-compose build
+# Bekukan seluruh backend (tampilkan halaman maintenance)
+bash lockdown.sh
 
-# Start container
-docker-compose up -d
-
-# Cek logs
-docker-compose logs -f
+# Pulihkan sistem ke operasi normal
+bash unlock.sh
 ```
 
-### 4. Verifikasi
-
-```bash
-# Cek status
-docker-compose ps
-
-# Test endpoint
-curl http://localhost/health
-```
-
-## Environment Variables
-
-### Required
-
-| Variable | Keterangan |
-|----------|------------|
-| `APP_KEY` | Encryption key (generate dengan artisan) |
-| `APP_URL` | URL aplikasi production |
-| `DB_HOST` | Host database PostgreSQL |
-| `DB_DATABASE` | Nama database |
-| `DB_USERNAME` | Username database |
-| `DB_PASSWORD` | Password database |
-
-### Optional
-
-| Variable | Default | Keterangan |
-|----------|---------|------------|
-| `APP_PORT` | 80 | Port expose |
-| `DB_PORT` | 5432 | Port PostgreSQL |
-| `CACHE_STORE` | database | Driver cache |
-| `SESSION_DRIVER` | database | Driver session |
-| `QUEUE_CONNECTION` | database | Driver queue |
-
-## Deployment Commands
-
-### Basic Operations
-
-```bash
-# Start
-docker-compose up -d
-
-# Stop
-docker-compose down
-
-# Restart
-docker-compose restart
-
-# Rebuild & restart
-docker-compose up -d --build
-
-# View logs
-docker-compose logs -f app
-```
-
-### Maintenance
-
-```bash
-# Run migrations
-docker-compose exec app php artisan migrate --force
-
-# Clear cache
-docker-compose exec app php artisan optimize:clear
-
-# Re-cache config
-docker-compose exec app php artisan config:cache
-docker-compose exec app php artisan route:cache
-docker-compose exec app php artisan view:cache
-
-# Access shell
-docker-compose exec app sh
-```
-
-## Production Optimizations
-
-### Image Features
-
-- **Multi-stage build** - Image size ~150MB (vs ~500MB single stage)
-- **OPcache enabled** - PHP bytecode caching
-- **Gzip compression** - Nginx response compression
-- **Static file caching** - 1 year cache untuk assets
-- **Security headers** - X-Frame-Options, X-Content-Type-Options, etc.
-
-### PHP Configuration
-
-| Setting | Value | Keterangan |
-|---------|-------|------------|
-| `memory_limit` | 256M | Memory per request |
-| `max_execution_time` | 60s | Max execution time |
-| `upload_max_filesize` | 64M | Max upload size |
-| `opcache.enable` | 1 | OPcache enabled |
-| `display_errors` | Off | No error display |
-
-## SSL/HTTPS Setup
-
-### Option 1: Reverse Proxy (Recommended)
-
-Gunakan reverse proxy seperti Nginx, Traefik, atau Caddy di depan container:
-
-```nginx
-# /etc/nginx/sites-available/si-project-tik
-server {
-    listen 443 ssl http2;
-    server_name si-project-tik.example.com;
-
-    ssl_certificate /path/to/cert.pem;
-    ssl_certificate_key /path/to/key.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-### Option 2: Traefik (Docker)
-
-```yaml
-# docker-compose.yml
-services:
-  app:
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.app.rule=Host(`si-project-tik.example.com`)"
-      - "traefik.http.routers.app.tls.certresolver=letsencrypt"
-```
-
-## Health Check
-
-Container memiliki built-in health check:
-
-```bash
-# Manual check
-curl http://localhost/health
-
-# Docker health status
-docker inspect --format='{{.State.Health.Status}}' si-project-tik-app
-```
-
-## Scaling (Optional)
-
-Untuk load yang tinggi, pertimbangkan:
-
-1. **Horizontal scaling** dengan Docker Swarm atau Kubernetes
-2. **Redis** untuk cache & session (uncomment di docker-compose.yml)
-3. **Queue workers** untuk background jobs (uncomment di supervisord.conf)
-4. **CDN** untuk static assets
-
-## Backup
-
-### Database
-
-```bash
-# Backup
-docker-compose exec db pg_dump -U postgres si_project_tik > backup.sql
-
-# Restore
-cat backup.sql | docker-compose exec -T db psql -U postgres si_project_tik
-```
-
-### Storage
-
-```bash
-# Backup storage volume
-docker run --rm -v si-project-tik_app-storage:/data -v $(pwd):/backup alpine \
-    tar cvf /backup/storage-backup.tar /data
-
-# Restore
-docker run --rm -v si-project-tik_app-storage:/data -v $(pwd):/backup alpine \
-    tar xvf /backup/storage-backup.tar -C /
-```
-
-## Troubleshooting
-
-### Container tidak start
-
-```bash
-# Cek logs
-docker-compose logs app
-
-# Cek health
-docker inspect si-project-tik-app | grep -A 10 Health
-```
-
-### Database connection failed
-
-1. Pastikan database accessible dari container
-2. Cek credentials di `.env`
-3. Jika database di host, gunakan `host.docker.internal` (Docker Desktop) atau IP host
-
-### 502 Bad Gateway
-
-```bash
-# Restart PHP-FPM
-docker-compose exec app supervisorctl restart php-fpm
-```
-
-### Permission denied
-
-```bash
-docker-compose exec app chown -R www-data:www-data /var/www/html/storage
-docker-compose exec app chmod -R 775 /var/www/html/storage
-```
-
-## CI/CD Integration
-
-### GitHub Actions Example
-
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build & Push Image
-        run: |
-          docker build -f deployment/production/Dockerfile -t your-registry/si-project-tik:${{ github.sha }} .
-          docker push your-registry/si-project-tik:${{ github.sha }}
-
-      - name: Deploy to Server
-        run: |
-          ssh user@server "cd /app && docker-compose pull && docker-compose up -d"
-```
-
-## Architecture
-
-```
-                         ┌─────────────────┐
-                         │   Load Balancer │
-                         │   (Optional)    │
-                         └────────┬────────┘
-                                  │
-                                  ▼
-┌─────────────────────────────────────────────────────────┐
-│                    Docker Container                      │
-│                  si-project-tik-app                      │
-│  ┌─────────────────────────────────────────────────┐    │
-│  │                  Supervisor                      │    │
-│  │  ┌──────────────┐      ┌──────────────┐        │    │
-│  │  │    Nginx     │      │   PHP-FPM    │        │    │
-│  │  │   Port 80    │─────▶│   Port 9000  │        │    │
-│  │  └──────────────┘      └──────────────┘        │    │
-│  └─────────────────────────────────────────────────┘    │
-│                           │                              │
-└───────────────────────────┼──────────────────────────────┘
-                            │
-                            ▼
-              ┌─────────────────────────────┐
-              │         PostgreSQL          │
-              │     (External/Docker)       │
-              └─────────────────────────────┘
-```
+Prosedur lengkap: [docs/05-kill-switch.md](docs/05-kill-switch.md)

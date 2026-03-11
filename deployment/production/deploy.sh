@@ -76,8 +76,12 @@ cd "$SCRIPT_DIR"
 # --build: rebuild image dengan kode terbaru.
 # --remove-orphans: hapus container service yang sudah dihapus.
 # --wait: tunggu semua healthcheck PASS sebelum lanjut.
+#
+# External network 'mer-prod-network' harus ada sebelum compose up.
+# `2>/dev/null || true` → abaikan error jika network sudah ada.
 # -------------------------------------------
 step "Step 2/7 — docker compose up -d --build"
+docker network create mer-prod-network 2>/dev/null || true
 docker compose up -d --build --remove-orphans --wait
 success "Semua services berjalan dan healthcheck passed"
 

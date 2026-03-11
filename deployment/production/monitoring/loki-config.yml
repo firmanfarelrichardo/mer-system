@@ -1,0 +1,119 @@
+# ===========================================
+# Loki — Konfigurasi Log Aggregation Engine
+# ===========================================
+#
+# ARSITEKTUR (Push-based):
+#   Promtail (agen) MEMBACA file log dari disk, lalu MENDORONG
+#   (push via HTTP POST) entri log ke Loki API (:3100/loki/api/v1/push).
+#   Loki menyimpan log terindeks di filesystem lokal.
+#
+#   Promtail ──POST──> Loki:3100 ──query──> Grafana
+#
+# KENAPA Push-based (bukan Pull seperti Prometheus)?
+#   Log bersifat event-driven dan streaming — tidak ada endpoint
+#   /logs yang bisa di-scrape secara periodik. File log terus
+#   bertambah secara asinkron. Agen (Promtail) memantau file secara
+#   real-time dan langsung mengirim baris baru ke Loki.
+#
+# DESAIN SINGLE-NODE:
+#   Konfigurasi ini menggunakan mode monolithic (all-in-one) karena
+#   VPS hanya 1 server. Mode microservices (distributor, ingester,
+#   querier terpisah) hanya diperlukan untuk cluster multi-node.
+# ===========================================
+
+# Autentikasi dimatikan karena Loki hanya diakses dari internal
+# Docker network — tidak ada port yang terekspos ke publik.
+auth_enabled: false
+
+server:
+  # Port HTTP untuk menerima push log dari Promtail dan query dari Grafana.
+  http_listen_port: 3100
+  # Timeout baca/tulis yang cukup untuk batch log besar.
+  http_server_read_timeout: 60s
+  http_server_write_timeout: 60s
+
+# -------------------------------------------
+# Ingester — komponen yang menulis log ke storage
+# -------------------------------------------
+ingester:
+  wal:
+    # Write-Ahead Log: memastikan log yang sudah diterima tidak hilang
+    # jika Loki crash sebelum flush ke disk. Setiap entri ditulis ke
+    # WAL terlebih dahulu, baru kemudian ke chunk storage.
+    dir: /loki/wal
+    enabled: true
+  lifecycler:
+    ring:
+      kvstore:
+        # Mode single-node: tidak perlu distributed KV store (consul/etcd).
+        store: inmemory
+      replication_factor: 1
+    # Langsung aktif tanpa waktu tunggu (single node, tidak ada peer).
+    final_sleep: 0s
+  # Chunk ditulis ke storage setelah idle selama 1 jam ATAU
+  # mencapai batas umur/ukuran. Ini mengurangi jumlah file yang
+  # dibuat di disk.
+  chunk_idle_period: 1h
+  max_chunk_age: 2h
+  chunk_target_size: 1048576  # 1MB — ukuran optimal per chunk file
+  chunk_retain_period: 30s
+
+# -------------------------------------------
+# Schema & Storage — pemetaan log ke filesystem
+# -------------------------------------------
+schema_config:
+  configs:
+    - from: "2024-01-01"
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        # Period 24h: satu file index per hari. Trade-off antara
+        # kecepatan query (file kecil = scan cepat) vs overhead I/O
+        # (terlalu banyak file = beban filesystem).
+        period: 24h
+
+storage_config:
+  # TSDB (Time-Series Database) index untuk pencarian cepat.
+  tsdb_shipper:
+    active_index_directory: /loki/tsdb-index
+    cache_location: /loki/tsdb-cache
+  # Chunk (isi log aktual) disimpan di filesystem lokal.
+  filesystem:
+    directory: /loki/chunks
+
+# -------------------------------------------
+# Compactor — optimasi dan retensi data
+# -------------------------------------------
+compactor:
+  working_directory: /loki/compactor
+  compaction_interval: 10m
+  # Retensi 30 hari: log lebih lama dari ini otomatis dihapus.
+  # Menyeimbangkan kebutuhan forensik (lihat 30 hari ke belakang)
+  # dengan kapasitas disk VPS yang terbatas.
+  retention_enabled: true
+  retention_delete_delay: 2h
+  delete_request_store: filesystem
+
+# -------------------------------------------
+# Limits — batasan global untuk mencegah abuse
+# -------------------------------------------
+limits_config:
+  # Retensi 30 hari (720 jam). Log lebih lama dihapus oleh compactor.
+  retention_period: 720h
+  # Tolak log yang timestamp-nya lebih dari 1 jam di masa depan
+  # atau lebih dari 168 jam (7 hari) di masa lalu. Mencegah
+  # injection log dengan timestamp palsu.
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+  # Ukuran maksimum per entri log: 8MB. Cukup untuk stack trace
+  # Laravel yang panjang tanpa memperbolehkan upload payload raksasa.
+  max_line_size: 8388608
+  # Batasi jumlah entri per query agar satu query berat tidak
+  # menghabiskan seluruh RAM Loki.
+  max_entries_limit_per_query: 5000
+  # Batasi jumlah stream unik per tenant.
+  max_global_streams_per_user: 5000
+  ingestion_rate_mb: 4
+  ingestion_burst_size_mb: 6
