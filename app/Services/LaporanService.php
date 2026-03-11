@@ -90,9 +90,8 @@ class LaporanService
                     ->where('status_saat_ini', 'DRAF')
                     ->firstOrFail();
 
-                // nomor_laporan (INC-...) sudah ada sejak CREATE — jangan diubah.
-                unset($dataInsiden['nomor_laporan']);
-
+                // nomor_laporan (INC-...) sudah ada sejak CREATE dan tidak disertakan
+                // dalam $dataInsiden, sehingga tidak ikut ter-update.
                 $insiden->update($dataInsiden);
 
                 // Update atau create detail pasien.

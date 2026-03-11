@@ -33,7 +33,7 @@ class KategoriKesalahanService
      * @param  int                  $tenantId
      * @param  array<string, mixed> $filter
      * @param  int                  $perHalaman
-     * @return LengthAwarePaginator<KategoriKesalahan>
+     * @return LengthAwarePaginator<int, KategoriKesalahan>
      */
     public function daftar(int $tenantId, array $filter = [], int $perHalaman = 15): LengthAwarePaginator
     {

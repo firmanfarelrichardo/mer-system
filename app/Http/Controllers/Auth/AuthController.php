@@ -69,13 +69,16 @@ class AuthController extends Controller
     public function masuk(LoginRequest $permintaan): RedirectResponse
     {
         // ----------------------------------------------------------
-        // 1. Cari akun berdasarkan nomor_induk.
-        //    Pendekatan manual dipilih agar aman di lingkungan multi-tenant.
-        //    Pada sistem multi-tenant, tambahkan filter tenant_id di sini.
+        // 1. Cari akun berdasarkan nomor_induk, username, atau nama_lengkap.
+        //    Grouped WHERE agar query tidak bocor ke kondisi scope lain.
+        //    ilike digunakan untuk pencarian case-insensitive di PostgreSQL.
         // ----------------------------------------------------------
         $identifier = $permintaan->validated('nomor_induk');
-        $pengguna = Pengguna::where('nomor_induk', $identifier)
-            ->orWhere('username', $identifier)
+        $pengguna = Pengguna::where(function ($q) use ($identifier): void {
+                $q->where('nomor_induk', $identifier)
+                  ->orWhere('username', 'ilike', $identifier)
+                  ->orWhere('nama_lengkap', 'ilike', $identifier);
+            })
             ->first();
 
         // ----------------------------------------------------------

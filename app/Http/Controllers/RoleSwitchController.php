@@ -9,40 +9,30 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * RoleSwitchController — Fitur "Lihat Sebagai" eksklusif untuk akun peneliti.
+ * RoleSwitchController — Fitur "Ganti Peran" untuk pengguna multi-role.
  *
- * Hanya akun yang memenuhi kondisi `isPeneliti()` (NIP sesuai env PENELITI_NIP)
- * yang dapat menggunakan fitur ini. Semua permintaan dari pengguna lain akan
- * ditolak dengan respons 403.
+ * Mendukung dua skenario:
+ * 1. Akun peneliti — dapat simulasi semua peran untuk pengujian.
+ * 2. Pengguna dual-role — misal Nakes yang juga menjabat sebagai Karu.
  *
  * Peran aktif disimpan di sesi; tidak ada perubahan ke database.
  *
- * @see \App\Models\Pengguna::isPeneliti()
+ * Akses ditolak (403) jika pengguna tidak memiliki hak ganti peran
+ * (hanya punya 1 peran dan bukan peneliti).
+ *
+ * @see \App\Models\Pengguna::bisaGantiPeran()
  * @see \App\Models\Pengguna::peranAktif()
  */
 class RoleSwitchController extends Controller
 {
     /**
-     * Daftar peran yang dapat disimulasikan oleh peneliti.
-     * Urutan ini juga menentukan urutan tampil di dropdown navbar.
-     */
-    private const PERAN_TERSEDIA = [
-        Peran::NAKES,
-        Peran::KEPALA_RUANGAN,
-        Peran::KOMITE,
-        Peran::ADMIN,
-        Peran::DIREKTUR,
-        Peran::PENELITI,  // Opsi "Kembali ke Peneliti" — menghapus sesi
-    ];
-
-    /**
      * Ganti peran aktif yang disimulasikan di sesi.
      *
      * POST /ganti-peran
-     * Body: peran = (salah satu dari PERAN_TERSEDIA)
+     * Body: peran = (salah satu dari peran yang dapat dipilih pengguna)
      *
-     * - Jika `peran` = Peran::PENELITI → sesi dihapus (kembali ke mode penuh).
-     * - Selain itu  → sesi diperbarui dengan peran yang dipilih.
+     * - Jika `peran` = Peran::PENELITI (khusus peneliti) → sesi dihapus (kembali ke mode penuh).
+     * - Selain itu → sesi diperbarui dengan peran yang dipilih.
      * - Selalu redirect ke /dasbor agar hub routing menentukan halaman yang tepat.
      */
     public function switch(Request $request): RedirectResponse
@@ -50,36 +40,39 @@ class RoleSwitchController extends Controller
         /** @var \App\Models\Pengguna $pengguna */
         $pengguna = auth()->user();
 
-        // ── Keamanan: hanya peneliti yang boleh mengakses ─────────────
-        abort_unless($pengguna->isPeneliti(), 403, 'Akses ditolak.');
+        // ── Keamanan: hanya pengguna multi-role yang boleh mengakses ──
+        abort_unless($pengguna->bisaGantiPeran(), 403, 'Akses ditolak.');
 
-        // ── Validasi input ────────────────────────────────────────────
+        // ── Validasi input — peran harus ada di daftar yang diizinkan ──
+        $peranTersedia = $pengguna->peranYangDapatDipilih();
+
         $validated = $request->validate([
-            'peran' => ['required', 'string', 'in:' . implode(',', self::PERAN_TERSEDIA)],
+            'peran' => ['required', 'string', 'in:' . implode(',', $peranTersedia)],
         ]);
 
         $peranDipilih = $validated['peran'];
 
-        // ── Perbarui atau hapus sesi ──────────────────────────────────
-        // Memilih "Peneliti" berarti kembali ke mode penuh (tanpa simulasi).
-        if ($peranDipilih === Peran::PENELITI) {
-            $request->session()->forget('active_role');
-        } else {
-            $request->session()->put('active_role', $peranDipilih);
-        }
-
+        // ── Perbarui sesi via method model ────────────────────────────
+        $pengguna->setPeranAktif($peranDipilih);
 
         return redirect()->route('dashboard');
     }
 
     /**
-     * Kembalikan daftar peran yang tersedia untuk dropdown Blade.
-     * Static agar dapat dipanggil langsung dari view tanpa instansiasi.
+     * Reset peran aktif ke default (peran utama dari database).
      *
-     * @return list<string>
+     * POST /reset-peran
+     *
+     * Berguna jika pengguna ingin kembali ke peran default tanpa
+     * memilih secara eksplisit dari dropdown.
      */
-    public static function peranTersedia(): array
+    public function reset(Request $request): RedirectResponse
     {
-        return self::PERAN_TERSEDIA;
+        /** @var \App\Models\Pengguna $pengguna */
+        $pengguna = auth()->user();
+
+        $pengguna->resetPeranAktif();
+
+        return redirect()->route('dashboard');
     }
 }
