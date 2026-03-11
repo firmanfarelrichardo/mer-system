@@ -105,29 +105,46 @@ services:
       retries: 5
 
   # -------------------------------------------
-  # Redis 7 — TIDAK expose port ke host (internal only)
-  # --requirepass: defense-in-depth (autentikasi meski internal).
-  # --appendonly yes: persistence agar session/cache tidak hilang saat restart.
-  # --maxmemory 512mb: headroom cukup untuk VPS 8GB.
-  # --maxmemory-policy allkeys-lru: evict key terlama saat penuh.
+  # Redis 7 — Cache, Session & Queue Store
+  #
+  # SECURITY: Tidak ada blok 'ports:' sama sekali.
+  # Port 6379 hanya bisa diakses dari internal bridge network.
+  # Tidak bisa dijangkau dari internet maupun dari host secara langsung.
   # -------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: mer-redis-prod
     restart: unless-stopped
-    # SECURITY: Tidak ada 'ports:' — Redis hanya bisa diakses dari internal network.
     command: >
       redis-server
+      --requirepass ${REDIS_PASSWORD}
       --appendonly yes
       --maxmemory 512mb
       --maxmemory-policy allkeys-lru
-      --requirepass ${REDIS_PASSWORD}
+    # Penjelasan flag:
+    #   --requirepass     : Wajibkan autentikasi. Semua klien (Laravel app, worker,
+    #                       scheduler) harus menyertakan password ini. Tanpa flag ini,
+    #                       siapapun di network yang sama bisa akses Redis tanpa password.
+    #   --appendonly yes  : Mode AOF (Append-Only File). Setiap perintah write dicatat
+    #                       ke disk. Data sesi & antrean job TIDAK hilang saat container
+    #                       restart atau VPS reboot. Trade-off: sedikit I/O lebih tinggi.
+    #   --maxmemory 512mb : Batasi RAM Redis ke 512MB. Mencegah OOM (Out of Memory)
+    #                       yang akan crash seluruh VPS. Menyisakan ~7.5GB untuk OS,
+    #                       PostgreSQL, dan PHP-FPM.
+    #   --maxmemory-policy: Saat 512MB penuh, hapus key yang paling lama tidak diakses
+    #     allkeys-lru       (Least Recently Used). Aplikasi tetap responsif; Redis tidak
+    #                       mengembalikan error OOM ke Laravel.
     volumes:
-      - mer-redis-data:/data
+      - mer-redis-data:/data  # Named volume untuk persistensi data AOF di host
     networks:
       - mer-prod-network
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      # CMD-SHELL digunakan agar bisa memakai pipe (|) untuk validasi response.
+      # --no-auth-warning: supres peringatan "Warning: Using a password..." dari redis-cli
+      # agar log container tidak dipenuhi warning setiap 10 detik.
+      # grep PONG: healthcheck hanya PASS jika response benar-benar "PONG",
+      # bukan sekedar exit code 0 dari redis-cli.
+      test: ["CMD-SHELL", "redis-cli -a ${REDIS_PASSWORD} --no-auth-warning ping | grep PONG"]
       interval: 10s
       timeout: 5s
       retries: 3
