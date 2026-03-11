@@ -107,6 +107,17 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 COPY deployment/production/php.ini /usr/local/etc/php/conf.d/99-custom.ini
 
 # -------------------------------------------
+# PHP-FPM healthcheck endpoint
+# Menggunakan drop-in file (zz-healthcheck.conf) — BUKAN dengan memodifikasi
+# www.conf bawaan — agar isolated, idempotent, dan mudah dilacak di version control.
+# Prefix 'zz-' memastikan file ini di-load TERAKHIR oleh PHP-FPM (alphabetical order),
+# sehingga tidak tertimpa atau menimpa konfigurasi pool yang sudah ada.
+# ping.path harus di-set pada pool yang sama (www) agar FPM menjawab di port 9000.
+# -------------------------------------------
+RUN echo '[www]' > /usr/local/etc/php-fpm.d/zz-healthcheck.conf \
+    && echo 'ping.path = /ping' >> /usr/local/etc/php-fpm.d/zz-healthcheck.conf
+
+# -------------------------------------------
 # Supervisord config
 # PID 1 = supervisord → manages php-fpm + queue-worker + scheduler.
 # -------------------------------------------
@@ -148,10 +159,25 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 9000
 
-# HEALTHCHECK: php-fpm-healthcheck (package fcgi) memeriksa FPM status endpoint.
-# start-period=60s memberi waktu untuk entrypoint (sync assets, permission).
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD php-fpm-healthcheck || exit 1
+# -------------------------------------------
+# HEALTHCHECK via cgi-fcgi (binary dari paket fcgi yang sudah terinstal)
+#
+# Mengapa cgi-fcgi dan bukan php-fpm-healthcheck?
+# php-fpm-healthcheck adalah shell script pihak ketiga yang TIDAK ada di Alpine.
+# cgi-fcgi adalah protokol FastCGI native yang berkomunikasi langsung ke port 9000,
+# tanpa perlu HTTP server atau curl — minimal attack surface, zero dependensi tambahan.
+#
+# Cara kerja:
+#   SCRIPT_NAME + SCRIPT_FILENAME membentuk request FastCGI ke endpoint /ping.
+#   FPM mengembalikan response HTTP sederhana; exit code 0 = sehat, non-0 = sakit.
+#
+# start-period=90s: memberi waktu penuh untuk entrypoint (sync assets + permission)
+# DAN supervisor startup (FPM + worker). Tanpa ini, --wait di deploy.sh akan
+# menerima false-negative dan membuat container dianggap unhealthy sebelum siap.
+# -------------------------------------------
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+    CMD SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET \
+        cgi-fcgi -bind -connect 127.0.0.1:9000 > /dev/null 2>&1 || exit 1
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
