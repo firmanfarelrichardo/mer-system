@@ -156,8 +156,8 @@ class ProductionPenggunaSeeder extends Seeder
         $peranKaru     = Peran::where(['tenant_id' => $tenant->id, 'nama_peran' => Peran::KEPALA_RUANGAN])->firstOrFail();
 
         // ── Step 1: Akun khusus ───────────────────────────────────────────
-        $this->command->info('  ▶ Membuat akun khusus (Admin, Direktur, 3 Komite, Peneliti)...');
-        $this->seedSpecialAccounts($tenant->id, $peranAdmin, $peranDirektur, $peranKomite, $peranPeneliti);
+        $this->command->info('  ▶ Membuat akun khusus (Admin, Direktur, 3 Komite, Peneliti, Nakes Demo)...');
+        $this->seedSpecialAccounts($tenant->id, $peranAdmin, $peranDirektur, $peranKomite, $peranPeneliti, $peranNakes);
 
         // ── Step 2: Nakes PIC ─────────────────────────────────────────────
         $this->command->info('  ▶ Membuat 25 akun Nakes (PIC per Unit) ...');
@@ -195,6 +195,7 @@ class ProductionPenggunaSeeder extends Seeder
         Peran $peranDirektur,
         Peran $peranKomite,
         Peran $peranPeneliti,
+        Peran $peranNakes,
     ): void {
         $entries = [
             // ── Admin ──────────────────────────────────────────────────────
