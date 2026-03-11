@@ -89,7 +89,7 @@ class PenggunaController extends Controller
         $tenantId = auth()->user()->tenant_id;
 
         // Filter peran: hilangkan Peneliti dan Kepala Ruangan
-        // - Peneliti: ditambahkan via sistem (env PENELITI_NIP)
+        // - Peneliti: dikelola via seeder, bukan form manual
         // - Kepala Ruangan: diberikan via fitur "Tambah Peran Karu" di edit
         $daftarPeran = Peran::where('tenant_id', $tenantId)
             ->whereNotIn('nama_peran', [Peran::PENELITI, Peran::KEPALA_RUANGAN])
@@ -135,7 +135,7 @@ class PenggunaController extends Controller
         abort_if(! $dataPengguna || $dataPengguna->tenant_id !== $tenantId, 404);
 
         // Filter peran: hilangkan Peneliti dan Kepala Ruangan dari pilihan utama
-        // - Peneliti: ditambahkan via sistem (env PENELITI_NIP)
+        // - Peneliti: dikelola via seeder, bukan form manual
         // - Kepala Ruangan: diberikan via fitur terpisah "Tambah Peran Karu"
         $daftarPeran = Peran::where('tenant_id', $tenantId)
             ->whereNotIn('nama_peran', [Peran::PENELITI, Peran::KEPALA_RUANGAN])
