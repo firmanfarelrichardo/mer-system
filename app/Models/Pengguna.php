@@ -307,13 +307,13 @@ class Pengguna extends Authenticatable
         if ($this->bisaGantiPeran()) {
             return $this->peran
                 ->first(fn (Peran $p) => $p->nama_peran !== Peran::KEPALA_RUANGAN)
-                ?->nama_peran
-                ?? $this->peran->first()?->nama_peran
+                ->nama_peran
+                ?? $this->peran->first()->nama_peran
                 ?? '—';
         }
 
         // Pengguna biasa (1 peran) → peran dari database
-        return $this->peran->first()?->nama_peran ?? '—';
+        return $this->peran->first()->nama_peran ?? '—';
     }
 
     /**

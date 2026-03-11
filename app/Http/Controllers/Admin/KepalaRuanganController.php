@@ -82,7 +82,7 @@ class KepalaRuanganController extends Controller
             'id'     => $n->id,
             'nama'   => $n->nama_lengkap,
             'nip'    => $n->nomor_induk,
-            'unit'   => $n->unitKerja?->nama_unit ?? '',
+            'unit'   => $n->unitKerja->nama_unit ?? '',
             'unitId' => $n->unit_id,
         ])->values()->all();
 
