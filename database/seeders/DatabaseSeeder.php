@@ -29,6 +29,8 @@ class DatabaseSeeder extends Seeder
             InsidenSeeder::class,        // 6. 500 sample incident reports (2024-2026)
             LogAktivitasSeeder::class,   // 7. Audit log entries (2024-2026)
             PenelitiSeeder::class,       // 8. Akun sementara peneliti/dosen pembimbing
+            ProductionInsidenSeeder::class, // 9. Production incident reports
+            ProductionPenggunaSeeder::class,  // 10. Production user accounts
         ]);
     }
 }

@@ -85,6 +85,8 @@ class Insiden extends Model
 
     /**
      * Pelapor — pengguna yang membuat laporan.
+     *
+     * @return BelongsTo<Pengguna, $this>
      */
     public function pelapor(): BelongsTo
     {
@@ -93,6 +95,8 @@ class Insiden extends Model
 
     /**
      * Tenant (organisasi) tempat insiden terdaftar.
+     *
+     * @return BelongsTo<Organisasi, $this>
      */
     public function tenant(): BelongsTo
     {
@@ -101,6 +105,8 @@ class Insiden extends Model
 
     /**
      * Unit kerja tempat kejadian insiden.
+     *
+     * @return BelongsTo<UnitKerja, $this>
      */
     public function unitKerja(): BelongsTo
     {
@@ -109,6 +115,8 @@ class Insiden extends Model
 
     /**
      * Detail pasien yang terlibat dalam insiden.
+     *
+     * @return HasOne<DetailPasien, $this>
      */
     public function detailPasien(): HasOne
     {
@@ -117,6 +125,8 @@ class Insiden extends Model
 
     /**
      * Riwayat tindak lanjut / umpan balik dari Karu/Komite.
+     *
+     * @return HasMany<TindakLanjut, $this>
      */
     public function tindakLanjut(): HasMany
     {
@@ -126,6 +136,8 @@ class Insiden extends Model
 
     /**
      * Kategori kesalahan yang terkait dengan insiden ini (pivot: pelaporan.insiden_kategori).
+     *
+     * @return BelongsToMany<KategoriKesalahan, $this>
      */
     public function kategoriKesalahans(): BelongsToMany
     {
@@ -212,11 +224,11 @@ class Insiden extends Model
     public function warnaInsiden(): string
     {
         return match ($this->tipe_insiden) {
-            'KPC'      => 'bg-sky-100 text-sky-700',
-            'KNC'      => 'bg-orange-100 text-orange-700',
-            'KTC'      => 'bg-yellow-100 text-yellow-700',
-            'KTD'      => 'bg-red-100 text-red-700',
-            'SENTINEL' => 'bg-purple-100 text-purple-700',
+            'KPC'      => 'bg-green-100 text-green-700',
+            'KNC'      => 'bg-blue-100 text-blue-700',
+            'KTC'      => 'bg-amber-100 text-amber-700',
+            'KTD'      => 'bg-orange-100 text-orange-700',
+            'SENTINEL' => 'bg-red-100 text-red-700',
             default    => 'bg-slate-100 text-slate-700',
         };
     }

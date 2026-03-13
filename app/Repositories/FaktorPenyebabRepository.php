@@ -27,7 +27,7 @@ class FaktorPenyebabRepository
      * @param  int                  $tenantId
      * @param  array<string, mixed> $filter   Kunci opsional: cari
      * @param  int                  $perHalaman
-     * @return LengthAwarePaginator<FaktorPenyebab>
+     * @return LengthAwarePaginator<int, FaktorPenyebab>
      */
     public function getPaginatedAdmin(int $tenantId, array $filter = [], int $perHalaman = 15): LengthAwarePaginator
     {

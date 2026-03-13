@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Middleware\CheckForcePasswordChange;
+use App\Http\Middleware\EnsurePeranAktif;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -35,11 +37,19 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         // -----------------------------------------------------------------
+        // Global Middleware — dijalankan pada SETIAP request HTTP.
+        // SecurityHeaders: defense-in-depth, menambahkan X-Frame-Options,
+        // X-Content-Type-Options, dll. pada response dari PHP-FPM.
+        // -----------------------------------------------------------------
+        $middleware->append(SecurityHeaders::class);
+
+        // -----------------------------------------------------------------
         // Alias Middleware — deklarasi alias agar dapat dipakai di route
         // tanpa menulis FQCN penuh.
         // -----------------------------------------------------------------
         $middleware->alias([
             'force.password.change' => CheckForcePasswordChange::class,
+            'peran.aktif'           => EnsurePeranAktif::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -26,7 +26,7 @@ class KategoriKesalahanRepository
      * @param  int                  $tenantId
      * @param  array<string, mixed> $filter   Kunci opsional: cari
      * @param  int                  $perHalaman
-     * @return LengthAwarePaginator<KategoriKesalahan>
+     * @return LengthAwarePaginator<int, KategoriKesalahan>
      */
     public function daftarDenganFilter(int $tenantId, array $filter = [], int $perHalaman = 15): LengthAwarePaginator
     {

@@ -9,10 +9,10 @@ return [
 
     'characters' => [
         // Hanya huruf kecil + angka agar mudah dibaca (tanpa huruf besar).
-        // Huruf ambigu/berisiko terpotong dihapus: i, j, l, o, g, q, y.
+        // Huruf ambigu/berisiko terpotong dihapus: i, j, l, o, g, p, q, y.
         // Angka ambigu dihapus: 0, 1.
         'a', 'b', 'c', 'd', 'e', 'f', 'h', 'k', 'm', 'n',
-        'p', 'r', 's', 't', 'u', 'v', 'w', 'x', 'z',
+        'r', 's', 't', 'u', 'v', 'w', 'x', 'z',
         2, 3, 4, 5, 6, 7, 8, 9,
     ],
 

@@ -1,0 +1,67 @@
+# ===========================================
+# Grafana — Contact Points Provisioning
+# ===========================================
+# Mendefinisikan tujuan notifikasi untuk alert rules.
+#
+# CARA MENGISI:
+#   1. Salin blok Telegram atau Email yang relevan.
+#   2. Isi nilai variabel dari .env:
+#      GRAFANA_TELEGRAM_BOT_TOKEN=<token dari @BotFather>
+#      GRAFANA_TELEGRAM_CHAT_ID=<chat_id grup/channel>
+#      GRAFANA_ALERT_EMAIL=<alamat email tujuan>
+#
+#   3. Restart Grafana untuk memuat perubahan:
+#      docker compose -f docker-compose.monitoring.yml restart grafana
+#
+# MENDAPATKAN TELEGRAM CHAT ID:
+#   1. Buat bot via @BotFather → salin token.
+#   2. Tambahkan bot ke grup Telegram.
+#   3. Kirim pesan di grup, lalu akses:
+#      https://api.telegram.org/bot<TOKEN>/getUpdates
+#   4. Cari nilai "chat":{"id": -XXXXXXXXX} — itu chat_id-nya.
+# ===========================================
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: MER System Ops
+    receivers:
+      # -------------------------------------------
+      # Telegram — notifikasi instan ke grup ops.
+      # Isi GRAFANA_TELEGRAM_BOT_TOKEN dan
+      # GRAFANA_TELEGRAM_CHAT_ID di .env monitoring.
+      # -------------------------------------------
+      - uid: mer-telegram
+        type: telegram
+        settings:
+          bottoken: "${GRAFANA_TELEGRAM_BOT_TOKEN}"
+          chatid: "${GRAFANA_TELEGRAM_CHAT_ID}"
+          message: |
+            *[MER System] {{ .CommonLabels.severity | upper }} Alert*
+
+            *{{ .CommonAnnotations.summary }}*
+            {{ .CommonAnnotations.description }}
+
+            Severity : {{ .CommonLabels.severity }}
+            Status   : {{ .Status }}
+            Time     : {{ .StartsAt.Format "2006-01-02 15:04 WIB" }}
+          parse_mode: Markdown
+        disableResolveMessage: false
+
+# -------------------------------------------
+# Notification Policy — routing alert ke contact point.
+# Semua alert dikirim ke grup "MER System Ops".
+# -------------------------------------------
+policies:
+  - orgId: 1
+    receiver: MER System Ops
+    group_by: [alertname, severity]
+    # groupWait: tunda notifikasi 30 detik untuk mengelompokkan
+    # alert yang datang bersamaan menjadi satu pesan.
+    group_wait: 30s
+    # groupInterval: kirim notifikasi berikutnya jika ada alert baru
+    # dalam grup yang sama setelah 5 menit.
+    group_interval: 5m
+    # repeatInterval: kirim ulang notifikasi alert yang masih aktif
+    # setiap 4 jam agar kondisi kritis tidak terlupakan.
+    repeat_interval: 4h

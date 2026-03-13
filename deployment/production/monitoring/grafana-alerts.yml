@@ -1,0 +1,208 @@
+# ===========================================
+# Grafana — Alert Rules Provisioning
+# ===========================================
+# File ini secara otomatis mendaftarkan alerting rules ke Grafana
+# saat container start. Tidak perlu konfigurasi manual di UI.
+#
+# CARA KERJA:
+#   Grafana membaca /etc/grafana/provisioning/alerting/ saat startup.
+#   Rules didefinisikan sebagai Unified Alerting (Grafana 9+).
+#
+# CONTACT POINT:
+#   Notifikasi dikirim ke Telegram dan/atau Email yang dikonfigurasi
+#   di grafana-contact-points.yml (file terpisah).
+#
+# KONDISI ALERT:
+#   1. CPU host      > 80% selama 5 menit
+#   2. RAM host      > 80% selama 5 menit
+#   3. Container restart berulang (>3 kali dalam 15 menit)
+#   4. Container dalam status non-running (OOM / crash)
+# ===========================================
+apiVersion: 1
+
+groups:
+  # -------------------------------------------
+  # Grup 1: Resource Usage — CPU & RAM Host
+  # Sumber data: Node Exporter via Prometheus
+  # -------------------------------------------
+  - orgId: 1
+    name: Resource Usage
+    folder: MER System
+    interval: 1m
+    rules:
+      # Alert: CPU usage host melebihi 80% selama 5 menit.
+      # Formula: 100 - idle% = usage%
+      # Threshold 80% dipilih karena spike singkat normal;
+      # sustained >80% selama 5 menit mengindikasikan beban abnormal.
+      - uid: mer-cpu-high
+        title: "CPU Usage Tinggi (> 80%)"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: >
+                100 - (avg by (instance) (
+                  rate(node_cpu_seconds_total{mode="idle"}[5m])
+                ) * 100)
+              intervalMs: 60000
+              maxDataPoints: 43200
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator:
+                    params: [80]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "CPU usage VPS melebihi 80% selama > 5 menit"
+          description: "Nilai saat ini: {{ $values.A.Value | printf \"%.1f\" }}%. Investigasi via: docker stats"
+        labels:
+          severity: warning
+          team: ops
+
+      # Alert: RAM usage host melebihi 80%.
+      # Formula: (total - available) / total * 100
+      # 'available' lebih akurat dari 'free' karena memperhitungkan
+      # page cache yang bisa dibebaskan OS kapan saja.
+      - uid: mer-ram-high
+        title: "RAM Usage Tinggi (> 80%)"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: >
+                (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+              intervalMs: 60000
+              maxDataPoints: 43200
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator:
+                    params: [80]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+        noDataState: NoData
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: "RAM usage VPS melebihi 80% selama > 5 menit"
+          description: "RAM terpakai: {{ $values.A.Value | printf \"%.1f\" }}%. Cek: docker stats; free -h"
+        labels:
+          severity: warning
+          team: ops
+
+  # -------------------------------------------
+  # Grup 2: Container Health
+  # Sumber data: cAdvisor via Prometheus
+  # -------------------------------------------
+  - orgId: 1
+    name: Container Health
+    folder: MER System
+    interval: 1m
+    rules:
+      # Alert: Container mengalami restart berulang.
+      # cAdvisor mengekspos metrik container_last_seen dan
+      # container_start_time_seconds. Restart terdeteksi jika
+      # rate restart_count > 0 dalam window 15 menit.
+      # Lebih dari 3 restart dalam 15 menit = OOM kill loop atau
+      # crash loop — memerlukan investigasi segera.
+      - uid: mer-container-restart
+        title: "Container Restart Berulang (> 3x / 15 menit)"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: >
+                increase(container_restart_count{
+                  name=~"mer-.*",
+                  name!=""
+                }[15m])
+              intervalMs: 60000
+              maxDataPoints: 43200
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator:
+                    params: [3]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: max
+        noDataState: NoData
+        execErrState: Alerting
+        for: 0s
+        annotations:
+          summary: "Container {{ $labels.name }} restart berulang"
+          description: "{{ $values.A.Value | printf \"%.0f\" }} kali restart dalam 15 menit. Investigasi: docker compose logs {{ $labels.name }} --tail 50"
+        labels:
+          severity: critical
+          team: ops
+
+      # Alert: Disk usage root filesystem > 85%.
+      # Disk penuh menyebabkan PostgreSQL gagal menulis WAL,
+      # Nginx gagal menulis log, dan PHP-FPM crash saat upload.
+      - uid: mer-disk-high
+        title: "Disk Usage Tinggi (> 85%)"
+        condition: C
+        data:
+          - refId: A
+            datasourceUid: prometheus
+            model:
+              expr: >
+                (1 - node_filesystem_avail_bytes{
+                  mountpoint="/",
+                  fstype!="tmpfs"
+                } / node_filesystem_size_bytes{
+                  mountpoint="/",
+                  fstype!="tmpfs"
+                }) * 100
+              intervalMs: 60000
+              maxDataPoints: 43200
+          - refId: C
+            datasourceUid: "__expr__"
+            model:
+              type: threshold
+              conditions:
+                - evaluator:
+                    params: [85]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [A]
+                  reducer:
+                    type: last
+        noDataState: NoData
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: "Disk root filesystem hampir penuh"
+          description: "Disk terpakai: {{ $values.A.Value | printf \"%.1f\" }}%. Bersihkan: docker system prune -f; df -h"
+        labels:
+          severity: critical
+          team: ops

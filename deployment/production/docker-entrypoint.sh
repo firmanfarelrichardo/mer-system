@@ -2,20 +2,18 @@
 set -e
 
 # ===========================================
-# MER System - Production Entrypoint
+# MER System — Production Entrypoint
 # ===========================================
-# Script ini menangani inisialisasi production:
-# - Database migration (--force untuk non-interactive)
-# - Laravel optimization (config/route/view cache)
-# - Sync public assets ke shared volume (replica-safe)
-# - Set permission
+# Menangani inisialisasi container saat startup:
+# 1. Sync public assets ke shared volume (untuk Nginx)
+# 2. Set permissions pada storage
 #
-# CATATAN ARSITEKTUR:
-# - TIDAK ada loop pengecekan DB karena docker-compose
-#   depends_on + healthcheck sudah menjamin PostgreSQL
-#   ready sebelum container ini start
+# CATATAN:
+# - Migration & optimasi TIDAK dilakukan di sini.
+#   Keduanya dijalankan oleh deploy.sh (Step 4 & 5)
+#   SETELAH semua container sehat, agar urutan terkontrol.
 # - Public assets sync menggunakan mkdir-based lock
-#   agar aman jika dijalankan dengan multiple replicas
+#   (atomic di POSIX) untuk keamanan multi-replica.
 # ===========================================
 
 log_message() {
@@ -25,48 +23,17 @@ log_message() {
 log_message "Starting MER System production container..."
 
 # -------------------------------------------
-# 1. Run database migrations
-#    --force: wajib untuk environment production
-#    (Laravel menolak migration tanpa flag ini di production)
-# -------------------------------------------
-log_message "Running database migrations..."
-php artisan migrate --force
-
-# -------------------------------------------
-# 2. Optimize application for production
-#    Meng-cache config, route, dan view ke file PHP
-#    sehingga tidak perlu parsing ulang setiap request
-# -------------------------------------------
-log_message "Optimizing application..."
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
-# -------------------------------------------
-# 3. Sync public assets ke shared volume
+# 1. Sync public assets ke shared volume
 #
-#    ARSITEKTUR:
-#    - Image production sudah memiliki public assets
-#      (termasuk Vite build output) di /var/www/html/public/
-#    - Volume shared-public di-mount ke /public-shared
-#      (BUKAN ke /var/www/html/public) agar tidak men-shadow
-#      file bawaan image
-#    - Script ini meng-copy assets ke /public-shared
-#    - Nginx membaca dari volume shared-public
-#
-#    REPLICA SAFETY (mkdir-based lock):
-#    - mkdir bersifat atomic di POSIX filesystem
-#    - Hanya satu replica yang bisa membuat lock directory
-#    - Replica lain menunggu sampai lock dilepas
-#    - Trap EXIT memastikan lock dilepas walau terjadi error
-#    - Ini mencegah race condition saat multiple replicas
-#      mencoba sync secara bersamaan
+#    Image sudah memiliki public assets (termasuk Vite build)
+#    di /var/www/html/public/. Volume shared-public di-mount
+#    ke /public-shared (bukan /var/www/html/public) agar tidak
+#    men-shadow file bawaan image. Nginx membaca dari volume ini.
 # -------------------------------------------
 if [ -d "/public-shared" ]; then
     LOCKDIR="/public-shared/.sync-lock"
 
-    # Bersihkan stale lock (jika container sebelumnya crash)
-    # Lock dianggap stale jika lebih dari 120 detik
+    # Bersihkan stale lock (container sebelumnya mungkin crash)
     if [ -d "$LOCKDIR" ]; then
         LOCK_AGE=$(( $(date +%s) - $(stat -c %Y "$LOCKDIR" 2>/dev/null || echo 0) ))
         if [ "$LOCK_AGE" -gt 120 ]; then
@@ -75,7 +42,7 @@ if [ -d "/public-shared" ]; then
         fi
     fi
 
-    # Acquire lock
+    # Acquire lock (mkdir atomic)
     RETRIES=0
     MAX_RETRIES=30
     while ! mkdir "$LOCKDIR" 2>/dev/null; do
@@ -89,7 +56,6 @@ if [ -d "/public-shared" ]; then
     done
 
     if [ "$RETRIES" -lt "$MAX_RETRIES" ]; then
-        # Pastikan lock dilepas saat exit (normal atau error)
         trap 'rm -rf "$LOCKDIR"' EXIT
 
         log_message "Syncing public assets to shared volume..."
@@ -103,13 +69,13 @@ if [ -d "/public-shared" ]; then
 fi
 
 # -------------------------------------------
-# 4. Set permissions
+# 2. Set permissions
 # -------------------------------------------
 log_message "Setting permissions..."
 chown -R www-data:www-data /var/www/html/storage
 chmod -R 775 /var/www/html/storage
 
-log_message "Initialization complete. Starting PHP-FPM..."
+log_message "Initialization complete. Starting supervisord..."
 
-# Execute main command (php-fpm)
+# Execute CMD (supervisord)
 exec "$@"

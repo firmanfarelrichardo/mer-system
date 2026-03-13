@@ -1,0 +1,397 @@
+# ===========================================
+# MER System — Monitoring Stack (Observability)
+# Terpisah dari stack produksi utama
+# ===========================================
+#
+# ARSITEKTUR 5-LAYER:
+#   Layer 1: Metrik Infrastruktur (Prometheus + cAdvisor + Node Exporter)
+#   Layer 2: Log Aggregation (Loki + Promtail)
+#   Layer 3: Visualisasi (Grafana)
+#   Layer 4: Error Tracking Aplikasi (Sentry — SaaS, bukan di file ini)
+#   Layer 5: Intrusion Detection (CrowdSec — di docker-compose.yml utama)
+#
+# PRINSIP ISOLASI:
+#   File ini TERPISAH dari docker-compose.yml produksi agar:
+#   1. Monitoring bisa di-restart/update tanpa mengganggu aplikasi.
+#   2. Jika monitoring crash (misal: OOM), aplikasi TETAP berjalan.
+#   3. Resource limits pada monitoring tidak berkonflik dengan app limits.
+#   4. Operator bisa men-deploy monitoring secara independen.
+#
+# KONEKSI KE STACK PRODUKSI:
+#   Kedua stack terhubung via external network 'mer-prod-network'.
+#   Network ini harus dibuat sebelum menjalankan compose:
+#     docker network create mer-prod-network
+#
+# PENGGUNAAN:
+#   cd /var/www/mer-system/deployment/production
+#   docker compose -f docker-compose.monitoring.yml up -d
+#
+# RESOURCE BUDGET (VPS 8GB RAM):
+#   Aplikasi (app+web+db+redis) : ~5.5 GB (alokasi utama)
+#   Monitoring total             : ~1.5 GB (strict limits di bawah)
+#   OS + buffer                  : ~1.0 GB
+# ===========================================
+
+services:
+  # -------------------------------------------
+  # Prometheus — Time-Series Database untuk Metrik
+  #
+  # CARA KERJA (Pull-based):
+  #   Prometheus secara aktif mengambil (scrape) metrik dari target
+  #   pada interval tetap (15 detik). Target cukup menyediakan
+  #   endpoint HTTP /metrics — tidak perlu SDK atau client library.
+  #
+  #   Prometheus ──GET /metrics──> cAdvisor    (setiap 15s)
+  #   Prometheus ──GET /metrics──> Node Exporter (setiap 15s)
+  #
+  # SECURITY:
+  #   Port 9090 TIDAK di-expose ke publik (tidak ada blok 'ports:').
+  #   Hanya Grafana yang mengakses Prometheus via internal Docker DNS.
+  #   Untuk debugging manual: SSH tunnel → ssh -L 9090:localhost:9090
+  # -------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mer-prometheus
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command:
+      # Flag CLI Prometheus:
+      #   --config.file         : lokasi konfigurasi scrape targets
+      #   --storage.tsdb.path   : direktori penyimpanan time-series data
+      #   --storage.tsdb.retention.time : retensi 30 hari, setelah itu data dihapus
+      #   --web.enable-lifecycle : mengizinkan reload config via HTTP POST
+      #                           (POST /-/reload — tanpa restart container)
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=30d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks:
+      - mer-prod-network
+    deploy:
+      resources:
+        limits:
+          # 512MB RAM: cukup untuk ~100K active time-series.
+          # MER System dengan 4 container + host hanya menghasilkan
+          # ~5K time-series — margin sangat aman.
+          memory: 512M
+          # 0.5 CPU core: Prometheus scraping 3 target setiap 15 detik
+          # tidak memerlukan lebih dari ini.
+          cpus: "0.50"
+
+  # -------------------------------------------
+  # cAdvisor — Container Metrics Exporter
+  #
+  # CARA KERJA:
+  #   cAdvisor membaca metrik langsung dari cgroups dan /proc kernel
+  #   untuk setiap container Docker yang berjalan. Data disajikan
+  #   sebagai endpoint Prometheus /metrics di port 8080.
+  #
+  #   Docker Engine
+  #     └── cgroups ──dibaca oleh──> cAdvisor ──/metrics──> Prometheus
+  #
+  # KENAPA PERLU MOUNT /var/run/docker.sock?
+  #   cAdvisor memerlukan akses ke Docker daemon socket untuk:
+  #   1. Mengenumerasi container yang sedang berjalan.
+  #   2. Membaca metadata container (nama, image, labels).
+  #   Tanpa ini, cAdvisor hanya melihat proses tanpa konteks Docker.
+  #
+  # SECURITY:
+  #   Mode read-only (:ro) pada semua mount memastikan cAdvisor
+  #   TIDAK bisa memodifikasi filesystem host atau Docker daemon.
+  #   Port 8080 TIDAK di-expose ke publik — hanya Prometheus
+  #   yang mengaksesnya via internal Docker DNS.
+  # -------------------------------------------
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: mer-cadvisor
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    privileged: false
+    volumes:
+      # Mount read-only ke filesystem host yang diperlukan cAdvisor
+      # untuk membaca metrik kernel (cgroups, /proc, /dev/disk).
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    networks:
+      - mer-prod-network
+    deploy:
+      resources:
+        limits:
+          # 256MB RAM: cAdvisor cukup ringan untuk 6-10 container.
+          # Jika container count bertambah signifikan, naikkan ke 384MB.
+          memory: 256M
+          cpus: "0.25"
+
+  # -------------------------------------------
+  # Loki — Log Aggregation Database
+  #
+  # CARA KERJA (Push-based):
+  #   Promtail membaca file log dan MENGIRIM (push) ke Loki via
+  #   HTTP POST. Loki menyimpan, mengindeks, dan menyajikan log
+  #   untuk query dari Grafana.
+  #
+  #   Promtail ──POST /loki/api/v1/push──> Loki ──LogQL query──> Grafana
+  #
+  # KENAPA PUSH-BASED (bukan Pull seperti Prometheus)?
+  #   Log bersifat event-driven dan streaming. Tidak ada endpoint
+  #   /logs yang bisa di-scrape secara periodik. File log bertambah
+  #   secara asinkron setiap ada request/error. Agen (Promtail)
+  #   memantau file real-time dan langsung mengirim baris baru.
+  #
+  # SECURITY:
+  #   Port 3100 TIDAK di-expose ke publik.
+  #   Hanya Promtail (push) dan Grafana (query) yang mengakses
+  #   Loki via internal Docker DNS.
+  #
+  # RESOURCE LIMITS — KRITIKAL:
+  #   Jika terjadi serangan DDoS yang menghasilkan jutaan baris
+  #   log per menit, Promtail akan mendorong volume besar ke Loki.
+  #   Tanpa memory limit, Loki akan mengonsumsi seluruh RAM VPS
+  #   dan meng-OOM-kill proses lain (termasuk PostgreSQL/PHP-FPM).
+  #   Limit 512MB memastikan Loki akan ter-OOM-kill DULUAN daripada
+  #   mengganggu stack produksi.
+  # -------------------------------------------
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: mer-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    networks:
+      - mer-prod-network
+    deploy:
+      resources:
+        limits:
+          # 512MB RAM: batasan ketat agar serangan DDoS yang
+          # menghasilkan jutaan log tidak meng-crash seluruh VPS.
+          # Loki akan ter-OOM-kill dan restart (restart: unless-stopped)
+          # tanpa mengganggu aplikasi produksi.
+          memory: 512M
+          cpus: "0.50"
+
+  # -------------------------------------------
+  # Promtail — Log Collection Agent
+  #
+  # CARA KERJA:
+  #   Promtail berjalan sebagai daemon yang memantau file log
+  #   menggunakan mekanisme inotify (Linux kernel file watcher).
+  #   Setiap baris baru yang muncul di file log langsung dibaca,
+  #   di-parse sesuai pipeline, dan dikirim ke Loki.
+  #
+  #   File log (Nginx/Laravel)
+  #     │
+  #     └── inotify ──trigger──> Promtail ──parse──> label + timestamp
+  #                                         │
+  #                                         └── HTTP POST ──> Loki:3100
+  #
+  # VOLUME MOUNTS:
+  #   nginx-logs + app-logs adalah named volumes dari docker-compose.yml
+  #   produksi. Promtail membacanya dalam mode read-only (:ro).
+  #   Kedua compose file terhubung via external network 'mer-prod-network'
+  #   DAN via shared named volumes yang dideklarasikan sebagai external.
+  #
+  # RESOURCE LIMITS — KRITIKAL:
+  #   Promtail adalah komponen PALING RENTAN terhadap DDoS.
+  #   Serangan yang menghasilkan 10GB log/jam akan membuat Promtail
+  #   mencoba membaca, buffer, dan mengirim semua data tersebut.
+  #   Limit 256MB memastikan Promtail yang ter-OOM-kill, BUKAN PostgreSQL.
+  # -------------------------------------------
+  promtail:
+    image: grafana/promtail:3.0.0
+    container_name: mer-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./monitoring/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      # Log Nginx: shared volume dari stack produksi (read-only).
+      - nginx-logs:/var/log/nginx:ro
+      # Log Laravel: shared volume dari stack produksi (read-only).
+      - app-logs:/var/log/laravel:ro
+      # Positions file: menyimpan offset baca terakhir agar tidak
+      # membaca ulang seluruh file saat container restart.
+      - promtail-positions:/tmp
+    networks:
+      - mer-prod-network
+    deploy:
+      resources:
+        limits:
+          # 256MB RAM: agent pembaca log tidak memerlukan banyak memori.
+          # Jika ter-OOM-kill saat DDoS, ia akan restart dan melanjutkan
+          # dari posisi terakhir (positions.yaml).
+          memory: 256M
+          cpus: "0.25"
+
+  # -------------------------------------------
+  # Grafana — Dashboard Visualisasi Pusat
+  #
+  # SATU-SATUNYA service monitoring yang boleh diakses dari luar.
+  # Semua service lain (Prometheus, Loki, cAdvisor) hanya bisa
+  # diakses via internal Docker DNS.
+  #
+  # SECURITY:
+  #   - Port default 3000, bind ke 127.0.0.1 SAJA (localhost).
+  #     TIDAK bisa diakses langsung dari internet.
+  #   - Akses dari luar harus melalui:
+  #     (a) SSH Tunnel: ssh -L 3000:localhost:3000 user@vps
+  #     (b) Reverse proxy Nginx dengan Basic Auth / Cloudflare Access
+  #   - Password admin WAJIB diganti dari default "admin" saat
+  #     pertama kali login.
+  #   - Anonymous access dimatikan (GF_AUTH_ANONYMOUS_ENABLED=false).
+  #
+  # DATASOURCE PROVISIONING:
+  #   Prometheus dan Loki otomatis dikonfigurasi sebagai datasource
+  #   via file provisioning (grafana-datasources.yml). Operator
+  #   tidak perlu menambahkannya manual di UI Grafana.
+  # -------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mer-grafana
+    restart: unless-stopped
+    environment:
+      # SECURITY: Matikan anonymous access (siapapun tanpa login).
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      # SECURITY: Matikan fitur registrasi publik.
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      # Admin password: WAJIB diganti setelah login pertama.
+      # Jangan gunakan password default di production.
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      # Aktifkan Unified Alerting (engine alert baru, wajib untuk
+      # provisioning alert rules via file).
+      GF_ALERTING_ENABLED: "false"
+      GF_UNIFIED_ALERTING_ENABLED: "true"
+      # Telegram contact point — isi di .env monitoring.
+      GRAFANA_TELEGRAM_BOT_TOKEN: ${GRAFANA_TELEGRAM_BOT_TOKEN:-}
+      GRAFANA_TELEGRAM_CHAT_ID: ${GRAFANA_TELEGRAM_CHAT_ID:-}
+      # Timezone konsisten dengan aplikasi utama.
+      TZ: Asia/Jakarta
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    ports:
+      # BIND KE LOCALHOST SAJA — tidak bisa diakses dari internet.
+      # Akses dari luar via SSH tunnel atau reverse proxy.
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      # Alert rules — mendefinisikan kondisi trigger (CPU, RAM, restart).
+      - ./monitoring/grafana-alerts.yml:/etc/grafana/provisioning/alerting/alerts.yml:ro
+      # Contact points — mendefinisikan tujuan notifikasi (Telegram/Email).
+      - ./monitoring/grafana-contact-points.yml:/etc/grafana/provisioning/alerting/contact-points.yml:ro
+    networks:
+      - mer-prod-network
+    deploy:
+      resources:
+        limits:
+          # 256MB RAM: cukup untuk dashboard dengan 10-20 panel.
+          # Grafana meng-cache query result, jadi memori usage stabil.
+          memory: 256M
+          cpus: "0.25"
+
+  # -------------------------------------------
+  # Node Exporter — Metrik Host OS
+  #
+  # Mengekspos metrik CPU, RAM, disk, dan network dari VPS (host)
+  # sebagai endpoint Prometheus /metrics di port 9100.
+  #
+  # DIPERLUKAN oleh alert rules Grafana untuk:
+  #   - CPU Usage Host (node_cpu_seconds_total)
+  #   - RAM Usage Host (node_memory_MemAvailable_bytes)
+  #   - Disk Usage    (node_filesystem_avail_bytes)
+  #
+  # SECURITY:
+  #   Port 9100 TIDAK di-expose ke publik.
+  #   Hanya Prometheus yang mengaksesnya via internal Docker DNS.
+  #
+  # pid: host + network: host diperlukan agar Node Exporter bisa
+  # membaca metrik /proc dari perspektif host (bukan container).
+  # -------------------------------------------
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: mer-node-exporter
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    pid: host
+    network_mode: host
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+          cpus: "0.10"
+
+# ===========================================
+# Networks — bergabung ke external network produksi
+#
+# External network 'mer-prod-network' harus sudah ada:
+#   docker network create mer-prod-network
+#
+# Kenapa external (bukan internal)?
+#   Agar container monitoring bisa mengakses container produksi
+#   (nginx-logs, app-logs) via shared volumes dan Docker DNS
+#   tanpa mengekspos port ke host.
+# ===========================================
+networks:
+  mer-prod-network:
+    external: true
+
+# ===========================================
+# Volumes
+#
+# Volume yang ditandai 'external: true' adalah volume yang SUDAH
+# dibuat oleh docker-compose.yml produksi. Monitoring stack hanya
+# MEMBACA volume ini (mount :ro di service definition).
+#
+# Volume TANPA external: true adalah milik monitoring stack sendiri.
+# ===========================================
+volumes:
+  # Volumes dari stack produksi (read-only access)
+  nginx-logs:
+    external: true
+    name: production_nginx-logs
+  app-logs:
+    external: true
+    name: production_app-logs
+
+  # Volumes milik monitoring stack
+  prometheus-data:
+    driver: local
+  loki-data:
+    driver: local
+  grafana-data:
+    driver: local
+  promtail-positions:
+    driver: local

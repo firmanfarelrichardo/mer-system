@@ -42,7 +42,7 @@ class AuditLogService
         ?int $idPengguna = null,
     ): LogAktivitas|null {
         $pengguna = Auth::user();
-        $tenantId = $pengguna?->tenant_id ?? 1;
+        $tenantId = $pengguna->tenant_id ?? 1;
 
         $payload = [
             'tenant_id'   => $tenantId,

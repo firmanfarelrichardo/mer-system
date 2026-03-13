@@ -4,7 +4,6 @@
 |--------------------------------------------------------------------------
 | Halaman pengaturan akun pengguna:
 |   - Ubah Kata Sandi
-|   - Preferensi Notifikasi
 |
 | Tersedia untuk semua peran yang terautentikasi.
 |--------------------------------------------------------------------------
@@ -84,68 +83,6 @@
                                    transition-colors hover:bg-brand-dark focus:outline-none focus:ring-2
                                    focus:ring-brand/50 focus:ring-offset-2">
                         Simpan Kata Sandi
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        {{-- ============================================================
-             PREFERENSI NOTIFIKASI
-             ============================================================ --}}
-        <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 class="mb-1 text-base font-semibold text-slate-800">Preferensi Notifikasi</h2>
-            <p class="mb-5 text-sm text-slate-400">Atur notifikasi yang ingin Anda terima.</p>
-
-            <form method="POST" action="#" class="max-w-lg space-y-4">
-                @csrf
-                @method('PUT')
-
-                {{-- Toggle: Notifikasi laporan baru --}}
-                <label class="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
-                    <div>
-                        <p class="text-sm font-medium text-slate-700">Laporan Baru</p>
-                        <p class="text-xs text-slate-400">Terima notifikasi saat ada laporan insiden baru.</p>
-                    </div>
-                    <input type="checkbox" name="notif_laporan_baru" value="1" checked
-                           class="h-5 w-5 rounded border-slate-300 text-brand focus:ring-brand/50">
-                </label>
-
-                {{-- Toggle: Perubahan status --}}
-                <label class="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
-                    <div>
-                        <p class="text-sm font-medium text-slate-700">Perubahan Status</p>
-                        <p class="text-xs text-slate-400">Notifikasi saat status laporan Anda berubah.</p>
-                    </div>
-                    <input type="checkbox" name="notif_perubahan_status" value="1" checked
-                           class="h-5 w-5 rounded border-slate-300 text-brand focus:ring-brand/50">
-                </label>
-
-                {{-- Toggle: Investigasi --}}
-                <label class="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
-                    <div>
-                        <p class="text-sm font-medium text-slate-700">Proses Investigasi</p>
-                        <p class="text-xs text-slate-400">Notifikasi terkait proses investigasi dan tindak lanjut.</p>
-                    </div>
-                    <input type="checkbox" name="notif_investigasi" value="1" checked
-                           class="h-5 w-5 rounded border-slate-300 text-brand focus:ring-brand/50">
-                </label>
-
-                {{-- Toggle: Email --}}
-                <label class="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
-                    <div>
-                        <p class="text-sm font-medium text-slate-700">Notifikasi Email</p>
-                        <p class="text-xs text-slate-400">Kirim salinan notifikasi ke email Anda.</p>
-                    </div>
-                    <input type="checkbox" name="notif_email" value="1"
-                           class="h-5 w-5 rounded border-slate-300 text-brand focus:ring-brand/50">
-                </label>
-
-                <div class="pt-2">
-                    <button type="submit"
-                            class="rounded-lg bg-brand px-5 py-2.5 text-sm font-medium text-white shadow-sm
-                                   transition-colors hover:bg-brand-dark focus:outline-none focus:ring-2
-                                   focus:ring-brand/50 focus:ring-offset-2">
-                        Simpan Preferensi
                     </button>
                 </div>
             </form>

@@ -188,7 +188,7 @@
             $dotClass = ['bg-blue-700', 'bg-blue-600', 'bg-blue-500', 'bg-blue-400'];
             $badgeClass = [
                 'bg-blue-700 text-white', 'bg-blue-600 text-white',
-                'bg-blue-500 text-white', 'bg-blue-400 text-blue-900',
+                'bg-blue-500 text-white', 'bg-blue-400 text-white',
             ];
             $barClass = ['bg-blue-700', 'bg-blue-600', 'bg-blue-500', 'bg-blue-400'];
         @endphp
@@ -257,23 +257,23 @@
                             <td class="py-3 pr-4 font-medium text-slate-700" x-text="unit.unit"></td>
                             <td class="px-3 py-3 text-center font-semibold text-slate-800" x-text="unit.total > 0 ? unit.total : '—'"></td>
                             <td class="px-2 py-3 text-center">
-                                <span x-show="unit.kpc > 0" x-text="unit.kpc" class="inline-flex min-w-[22px] justify-center rounded-full bg-blue-100 px-1.5 py-0.5 text-xs font-bold text-blue-700"></span>
+                                <span x-show="unit.kpc > 0" x-text="unit.kpc" class="inline-flex min-w-[22px] justify-center rounded-full bg-green-100 px-1.5 py-0.5 text-xs font-bold text-green-700"></span>
                                 <span x-show="unit.kpc === 0" class="text-slate-300">–</span>
                             </td>
                             <td class="px-2 py-3 text-center">
-                                <span x-show="unit.knc > 0" x-text="unit.knc" class="inline-flex min-w-[22px] justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-700"></span>
+                                <span x-show="unit.knc > 0" x-text="unit.knc" class="inline-flex min-w-[22px] justify-center rounded-full bg-blue-100 px-1.5 py-0.5 text-xs font-bold text-blue-700"></span>
                                 <span x-show="unit.knc === 0" class="text-slate-300">–</span>
                             </td>
                             <td class="px-2 py-3 text-center">
-                                <span x-show="unit.ktc > 0" x-text="unit.ktc" class="inline-flex min-w-[22px] justify-center rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-bold text-orange-700"></span>
+                                <span x-show="unit.ktc > 0" x-text="unit.ktc" class="inline-flex min-w-[22px] justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-700"></span>
                                 <span x-show="unit.ktc === 0" class="text-slate-300">–</span>
                             </td>
                             <td class="px-2 py-3 text-center">
-                                <span x-show="unit.ktd > 0" x-text="unit.ktd" class="inline-flex min-w-[22px] justify-center rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-bold text-red-700"></span>
+                                <span x-show="unit.ktd > 0" x-text="unit.ktd" class="inline-flex min-w-[22px] justify-center rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-bold text-orange-700"></span>
                                 <span x-show="unit.ktd === 0" class="text-slate-300">–</span>
                             </td>
                             <td class="px-2 py-3 text-center">
-                                <span x-show="unit.sentinel > 0" x-text="unit.sentinel" class="inline-flex min-w-[22px] justify-center rounded-full bg-red-200 px-1.5 py-0.5 text-xs font-bold text-red-900"></span>
+                                <span x-show="unit.sentinel > 0" x-text="unit.sentinel" class="inline-flex min-w-[22px] justify-center rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-bold text-red-700"></span>
                                 <span x-show="unit.sentinel === 0" class="text-slate-300">–</span>
                             </td>
                             <td class="pl-3 py-3 text-center">
@@ -296,11 +296,11 @@
                     <tr class="border-t-2 border-slate-200 bg-slate-50/60 font-bold text-slate-800">
                         <td class="py-3 pr-4 text-sm">Total</td>
                         <td class="px-3 py-3 text-center text-sm">{{ $tAll }}</td>
-                        <td class="px-2 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tKpc }}</span></td>
-                        <td class="px-2 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-amber-500 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tKnc }}</span></td>
-                        <td class="px-2 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-orange-500 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tKtc }}</span></td>
-                        <td class="px-2 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tKtd }}</span></td>
-                        <td class="px-2 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-red-900 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tSnt }}</span></td>
+                        <td class="px-2 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-green-500 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tKpc }}</span></td>
+                        <td class="px-2 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-blue-500 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tKnc }}</span></td>
+                        <td class="px-2 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-amber-500 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tKtc }}</span></td>
+                        <td class="px-2 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-orange-500 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tKtd }}</span></td>
+                        <td class="px-2 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tSnt }}</span></td>
                         <td class="pl-3 py-3 text-center"><span class="inline-flex min-w-[22px] justify-center rounded-full bg-slate-500 px-1.5 py-0.5 text-xs font-bold text-white">{{ $tSls }}</span></td>
                     </tr>
                 </tfoot>
@@ -338,7 +338,7 @@
                     <template x-for="p in pageNums()" :key="p">
                         <button @click="goTo(p)"
                                 :class="p === page
-                                    ? 'bg-rose-600 text-white border-rose-600'
+                                    ? 'bg-primary-600 text-white border-primary-600'
                                     : 'border-slate-200 text-slate-600 hover:bg-slate-50'"
                                 class="inline-flex h-8 min-w-[2rem] items-center justify-center rounded-lg
                                        border px-2 text-xs font-medium transition"

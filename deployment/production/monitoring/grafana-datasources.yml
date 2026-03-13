@@ -1,0 +1,42 @@
+# ===========================================
+# Grafana — Datasource Provisioning (Auto-Config)
+#
+# File ini otomatis mendaftarkan Prometheus dan Loki sebagai
+# datasource saat Grafana pertama kali start. Operator TIDAK
+# perlu menambahkannya secara manual di UI Grafana.
+#
+# CARA KERJA:
+#   Grafana membaca /etc/grafana/provisioning/datasources/ saat
+#   startup dan membuat datasource sesuai definisi di file ini.
+#   Jika datasource dengan nama yang sama sudah ada, ia di-update.
+#
+# KONEKSI VIA DOCKER DNS:
+#   Prometheus dan Loki diakses menggunakan nama container
+#   sebagai hostname (e.g. mer-prometheus:9090). Ini bekerja
+#   karena semua service berada di network 'mer-prod-network'.
+# ===========================================
+apiVersion: 1
+
+datasources:
+  # -------------------------------------------
+  # Prometheus: untuk metrik infrastruktur
+  #   CPU usage, memory usage, container restarts, disk I/O.
+  #   Bahasa query: PromQL
+  # -------------------------------------------
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://mer-prometheus:9090
+    isDefault: true
+    editable: false
+
+  # -------------------------------------------
+  # Loki: untuk log agregasi
+  #   Nginx access/error logs, Laravel application logs.
+  #   Bahasa query: LogQL
+  # -------------------------------------------
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://mer-loki:3100
+    editable: false

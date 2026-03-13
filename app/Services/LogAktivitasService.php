@@ -23,7 +23,7 @@ class LogAktivitasService
     /**
      * Ambil daftar log aktivitas berdasarkan filter DTO.
      *
-     * @return LengthAwarePaginator<\App\Models\LogAktivitas>
+     * @return LengthAwarePaginator<int, \App\Models\LogAktivitas>
      */
     public function daftar(LogAktivitasFilterDTO $dto, int $perHalaman = 20): LengthAwarePaginator
     {

@@ -24,9 +24,16 @@
     </div>
 
     {{-- Keterangan deskriptif di bawah chart --}}
-    <div class="mt-4 grid grid-cols-5 gap-1.5 text-center text-xs text-slate-500">
-        @foreach (['Potensial Cedera', 'Nyaris Cedera', 'Tidak Cedera', 'Tidak Diharapkan', 'Sentinel'] as $idx => $ket)
-            <div class="leading-tight">{{ $distribusiTipe['labels'][$idx] ?? '' }}<br><span class="text-slate-400">{{ $ket }}</span></div>
+    @php
+        $warnaLabel = ['text-green-600', 'text-blue-600', 'text-amber-500', 'text-orange-500', 'text-red-500'];
+        $ketLabel   = ['Potensial Cedera', 'Nyaris Cedera', 'Tidak Cedera', 'Tidak Diharapkan', 'Sentinel'];
+    @endphp
+    <div class="mt-4 grid grid-cols-5 gap-1.5 text-center text-xs">
+        @foreach ($ketLabel as $idx => $ket)
+            <div class="leading-tight {{ $warnaLabel[$idx] }} font-medium">
+                {{ $distribusiTipe['labels'][$idx] ?? '' }}<br>
+                <span class="font-normal text-slate-400">{{ $ket }}</span>
+            </div>
         @endforeach
     </div>
 </div>
