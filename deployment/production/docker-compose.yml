@@ -120,9 +120,11 @@ services:
         max-file: "5"
     ports:
       - "${APP_PORT:-80}:80"
+      - "443:443"
     volumes:
       - shared-public:/var/www/html/public:ro
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
       - ./lockdown:/etc/nginx/lockdown:ro
       # Log volume: dibaca oleh Promtail untuk parsing access/error log.
       - nginx-logs:/var/log/nginx
