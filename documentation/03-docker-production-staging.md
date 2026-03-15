@@ -948,17 +948,33 @@ cd staging
 cp .env.example .env
 nano .env  # Sesuaikan untuk staging
 
+# --- TROUBLESHOOTING & CATATAN PENTING STAGING ---
+# 1. Port Collision: Pastikan nilai APP_PORT tidak bentrok dengan production (misal gunakan APP_PORT=8080).
+#    Jika .env stagging menggunakan port 80, web container akan gagal (bind: port is already allocated).
+# 2. Resolusi Nginx DNS: Pada file konfigurasi Nginx staging (deployment/staging/nginx/default.conf),
+#    pastikan 'fastcgi_pass' mengarah ke _container_name_ eksak (contoh: 'mer-app-dev:9000' atau 'mer-app-staging:9000'),
+#    Bukan nama service ('app:9000'). Jika tidak, Nginx akan terkena crash loop "host not found in upstream".
+# -------------------------------------------------
+
 docker compose --env-file .env -f deployment/staging/docker-compose.yml up -d --build
 ```
 
 ### Akses Staging dari Komputer Lokal
 
+Karena keamanan Nginx Staging membatasinya hanya pada `127.0.0.1:8080` di internal VPS, Anda perlu membuka jalur terenkripsi (SSH Tunnel) dari komputer lokal ke VPS tersebut.
+
 ```bash
-# Buat SSH Tunnel dari komputer lokal
+# Buka terminal DI KOMPUTER LOKAL Anda (jangan jalankan di dalam VPS).
+# Jika Anda sebelumnya sudah mengatur alias ~/.ssh/config ('mer-vps'):
+ssh -L 8080:127.0.0.1:8080 mer-vps
+
+# Atau jika menggunakan perintah manual (pastikan path SSH key dan IP benar):
 ssh -L 8080:127.0.0.1:8080 -p 49152 mer_ops@<IP_VPS_ANDA>
 
-# Buka browser: http://localhost:8080
-# Anda akan melihat instance staging MER System
+# JANGAN tutup terminal ini (biarkan tetap menyala untuk menjaga tunnel).
+# Buka browser di komputer lokal dan kunjungi (disarankan bukan localhost tapi IP balik langsung):
+# http://127.0.0.1:8080
+# Anda akan melihat instance staging MER System tersambung secara otomatis.
 ```
 
 ---
