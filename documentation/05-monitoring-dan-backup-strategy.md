@@ -125,7 +125,10 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-      GF_SERVER_ROOT_URL: https://mer-system.rs.id/grafana/
+      # Ini penting jika Grafana berada di belakang reverse proxy seperti Nginx
+      # dan kita ingin agar share link berfungsi dengan benar.
+      GF_SERVER_DOMAIN: mers-rsryacudu.com
+      GF_SERVER_ROOT_URL: https://mers-rsryacudu.com/grafana/
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       GF_LOG_LEVEL: warn
     volumes:
@@ -407,7 +410,8 @@ Setelah akses Uptime Kuma via SSH tunnel (`http://localhost:3001`):
 
 | Monitor | Type | URL/Host | Interval | Alasan |
 |---------|------|----------|----------|--------|
-| **MER Production** | HTTP(S) | `https://mer-system.rs.id/health` | 60s | Health check aplikasi via Cloudflare |
+| **MER Production** | HTTP(S) | `https://mers-rsryacudu.com/health` | 60s | Health check aplikasi via Cloudflare |
+| **MER Staging** | HTTP(S) | `http://<IP_VPS>:8080/health` | 60s | Health check staging (Direct IP) |
 | **Nginx Direct** | HTTP | `http://127.0.0.1:80/health` | 30s | Health check Nginx langsung |
 | **PostgreSQL** | TCP Port | `127.0.0.1:5432` | 30s | Cek database reachable |
 | **Redis** | TCP Port | `mer-redis-prod:6379` | 30s | Cek Redis reachable (via Docker network) |
