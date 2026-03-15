@@ -14,10 +14,11 @@
 3. [Uptime Kuma (Uptime & Health Monitoring)](#3-uptime-kuma-uptime--health-monitoring)
 4. [Netdata (Lightweight System Metrics)](#4-netdata-lightweight-system-metrics)
 5. [Log Audit Medis di Laravel](#5-log-audit-medis-di-laravel)
-6. [Backup Strategy — PostgreSQL Terenkripsi](#6-backup-strategy--postgresql-terenkripsi)
-7. [Skrip Backup Otomatis Harian](#7-skrip-backup-otomatis-harian)
-8. [Restore Prosedur](#8-restore-prosedur)
-9. [Verifikasi](#9-verifikasi)
+6. [Sentry — Exception & Error Tracking](#6-sentry--exception--error-tracking)
+7. [Backup Strategy — PostgreSQL Terenkripsi](#7-backup-strategy--postgresql-terenkripsi)
+8. [Skrip Backup Otomatis Harian](#8-skrip-backup-otomatis-harian)
+9. [Restore Prosedur](#9-restore-prosedur)
+10. [Verifikasi](#10-verifikasi)
 
 ---
 
@@ -520,7 +521,70 @@ Log ini otomatis dikumpulkan oleh Promtail (via Docker container log atau file m
 
 ---
 
-## 6. Backup Strategy — PostgreSQL Terenkripsi
+## 6. Sentry — Exception & Error Tracking
+
+### Mengapa Sentry Berbeda dari Loki?
+
+**Versi Sederhana:** Loki adalah CCTV yang merekam aktivitas orang keluar-masuk (log server/infrastruktur). Sentry adalah dokter spesialis yang menganalisis penyebab dokter pingsan saat operasi, lengkap dengan gejalanya (error aplikasi/exception). Keduanya bekerja saling melengkapi.
+
+**Versi Formal:** 
+- **Loki** mencatat *audit trail*, *access logs* Nginx, dan *stdout/stderr* container. Fokusnya pada telemetri infrastruktur dan rekam jejak operasional sistem.
+- **Sentry** (via SDK Laravel) menangkap *unhandled exceptions*, mencakup *stack trace* kode PHP, merekam state aplikasi (variabel), dan menghitung impact pengguna. Fokusnya pada penyelesaian bug (error tracking).
+
+### Peringatan Kebocoran Data / PHI
+
+> [!CAUTION]
+> **POTENSI KEBOCORAN PROTECTED HEALTH INFORMATION (PHI) DI SENTRY** 
+> Sentry secara default mengambil *context* (isi variabel, HTTP payload, request header) saat exception terjadi. Jika payload request berisi data pasien, data klinis tersebut **akan terkirim dan tersimpan di server Sentry** saat terjadi crash. Hal ini merupakan pelanggaran berat terhadap standar kerahasiaan medis.
+
+### Konfigurasi Laravel Sentry (Sensor Data Otomatis)
+
+Untuk mencegah kebocoran PHI, `send_default_pii` harus dinonaktifkan dan field medis yang rentan terekspos dimasukkan ke dalam opsi `scrub_fields` agar digantikan oleh label `[Filtered]` secara otomatis oleh SDK Sentry.
+
+> **Lokasi file:** `config/sentry.php`
+
+```php
+<?php
+
+return [
+
+    // DSN dari .env Production/Staging
+    'dsn' => env('SENTRY_LARAVEL_DSN', env('SENTRY_DSN')),
+    
+    // SANGAT PENTING: Matikan pengiriman Personally Identifiable Information
+    // (PII) secara default seperti alamat IP pasien, cookie sesi, dan user ID.
+    'send_default_pii' => false,
+
+    'traces_sample_rate' => env('SENTRY_TRACES_SAMPLE_RATE', 1.0),
+
+    // Sensor parameter berisiko otomatis saat crash
+    'scrub_fields' => [
+        // Keamanan dasar
+        'password',
+        'password_confirmation',
+        'token',
+        
+        // Data PHI (Protected Health Information) Rumah Sakit
+        'nik',
+        'nama_pasien',
+        'rekam_medis',
+        'no_rm',
+        'diagnosis',
+        'tanggal_lahir',
+        'alamat_pasien',
+        'no_telp',
+        'hasil_lab',
+        'tindakan_medis',
+        'obat_diresepkan',
+        'catatan_klinis'
+    ],
+
+];
+```
+
+---
+
+## 7. Backup Strategy — PostgreSQL Terenkripsi
 
 ### Prinsip Backup 3-2-1
 
@@ -538,7 +602,7 @@ Log ini otomatis dikumpulkan oleh Promtail (via Docker container log atau file m
 
 ---
 
-## 7. Skrip Backup Otomatis Harian
+## 8. Skrip Backup Otomatis Harian
 
 ### Buat Skrip Backup
 
@@ -708,7 +772,7 @@ cat /var/log/mer-system/backup.log
 
 ---
 
-## 8. Restore Prosedur
+## 9. Restore Prosedur
 
 ### Restore dari Backup Terenkripsi
 
@@ -757,7 +821,7 @@ docker exec -i mer-db-staging psql -U mer_staging_user -d mer_staging < /tmp/mer
 
 ---
 
-## 9. Verifikasi
+## 10. Verifikasi
 
 ### Checklist Monitoring & Backup
 

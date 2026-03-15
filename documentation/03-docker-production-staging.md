@@ -290,6 +290,8 @@ services:
       CACHE_STORE: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
     volumes:
       - shared-public:/public-shared
       - app-storage:/var/www/html/storage/app
@@ -447,6 +449,9 @@ REDIS_PASSWORD=GENERATE_PASSWORD_REDIS_MINIMAL_32_KARAKTER
 
 QUEUE_CONNECTION=redis
 APP_PORT=80
+
+SENTRY_LARAVEL_DSN="https://public@sentry.example.com/1"
+SENTRY_TRACES_SAMPLE_RATE="1.0"
 ```
 
 ---
