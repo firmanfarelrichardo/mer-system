@@ -910,10 +910,10 @@ nano .env
 docker run --rm -v $(pwd):/app -w /app php:8.2-cli php artisan key:generate
 
 # 6. Build dan deploy
-docker compose -f deployment/production/docker-compose.yml up -d --build
+docker compose --env-file .env -f deployment/production/docker-compose.yml up -d --build
 
 # 7. Verifikasi semua container berjalan
-docker compose -f deployment/production/docker-compose.yml ps
+docker compose --env-file .env -f deployment/production/docker-compose.yml ps
 
 # 8. Test health endpoint
 curl http://localhost/health
@@ -926,15 +926,15 @@ curl http://localhost/health
 cd /var/www/mer-system/production
 
 # 2. Tarik kode terbaru
-git pull origin main
+git pull origin production
 
 # 3. Rebuild dan deploy (hanya app yang perlu rebuild)
-docker compose -f deployment/production/docker-compose.yml build app
-docker compose -f deployment/production/docker-compose.yml up -d --no-deps app
+docker compose --env-file .env -f deployment/production/docker-compose.yml build app
+docker compose --env-file .env -f deployment/production/docker-compose.yml up -d --no-deps app
 
 # 4. Verifikasi
-docker compose -f deployment/production/docker-compose.yml ps
-docker compose -f deployment/production/docker-compose.yml logs --tail 50 app
+docker compose --env-file .env -f deployment/production/docker-compose.yml ps
+docker compose --env-file .env -f deployment/production/docker-compose.yml logs --tail 50 app
 ```
 
 ### Staging Deployment
@@ -948,7 +948,7 @@ cd staging
 cp .env.example .env
 nano .env  # Sesuaikan untuk staging
 
-docker compose -f deployment/staging/docker-compose.yml up -d --build
+docker compose --env-file .env -f deployment/staging/docker-compose.yml up -d --build
 ```
 
 ### Akses Staging dari Komputer Lokal
@@ -976,11 +976,11 @@ echo "========================================="
 
 echo ""
 echo "[1] Container Status (Production)"
-docker compose -f /var/www/mer-system/production/deployment/production/docker-compose.yml ps
+docker compose --env-file .env -f /var/www/mer-system/production/deployment/production/docker-compose.yml ps
 
 echo ""
 echo "[2] Container Status (Staging)"
-docker compose -f /var/www/mer-system/staging/deployment/staging/docker-compose.yml ps 2>/dev/null || echo "  Staging belum di-deploy"
+docker compose --env-file .env -f /var/www/mer-system/staging/deployment/staging/docker-compose.yml ps 2>/dev/null || echo "  Staging belum di-deploy"
 
 echo ""
 echo "[3] Network Isolation"
