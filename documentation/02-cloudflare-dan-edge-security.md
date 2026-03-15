@@ -72,10 +72,10 @@ Buat DNS record berikut:
 
 ### Mengapa Proxied dan Bukan DNS Only?
 
-**Saat Proxied aktif:**
-- Ketika user melakukan DNS lookup ke `mer-system.rs.id`, jawaban yang dikembalikan adalah IP Cloudflare, **bukan** IP VPS asli.
-- Semua traffic HTTP/HTTPS melewati infrastruktur Cloudflare terlebih dahulu.
-- IP VPS asli tersembunyi dari publik.
+**SBerdasarkan diagram arsitektur di atas:**
+- Ketika user melakukan DNS lookup ke `mers-rsryacudu.com`, jawaban yang dikembalikan adalah IP Cloudflare, **bukan** IP VPS asli.
+- Atacker tidak mengetahui IP VPS asli, sehingga tidak dapat menyerang server secara langsung melalui DDoS volumetrik.
+- Traffic berbahaya (SQLi, XSS, bot) diblokir di Edge (server Cloudflare) sebelum mencapai VPS.
 
 **Risiko DNS Only:**
 - IP VPS terekspos langsung.
@@ -106,8 +106,8 @@ Cloudflare menawarkan 4 mode SSL:
 Navigasi: Cloudflare Dashboard > Domain Anda > SSL/TLS > Overview
 ```
 
-1. Set **SSL/TLS encryption mode** ke **Full (Strict)**
-2. Pastikan toggle **Always Use HTTPS** di tab **Edge Certificates** dalam keadaan **ON**
+1.  Set **SSL/TLS encryption mode** ke **Full (Strict)**
+2.  Pastikan toggle **Always Use HTTPS** di tab **Edge Certificates** dalam keadaan **ON**
 
 ### Konfigurasi Tambahan SSL/TLS
 
@@ -142,19 +142,19 @@ Navigasi: Cloudflare Dashboard > Domain Anda > SSL/TLS > Edge Certificates
 Navigasi: Cloudflare Dashboard > Domain Anda > SSL/TLS > Origin Server
 ```
 
-1. Klik **Create Certificate**
-2. Pilih opsi berikut:
+1.  Klik **Create Certificate**
+2.  Pilih opsi berikut:
 
 | Setting | Nilai |
 |---------|-------|
 | **Private key type** | RSA (2048) |
-| **Hostnames** | `mer-system.rs.id`, `*.mer-system.rs.id` |
+| **Hostnames** | `mers-rsryacudu.com`, `*.mers-rsryacudu.com` |
 | **Certificate validity** | 15 years |
 
-3. Klik **Create**
-4. Cloudflare akan menampilkan dua blok teks:
-   - **Origin Certificate** (PEM) — Public certificate
-   - **Private Key** (PEM) — Kunci privat
+3.  Klik **Create**
+4.  Cloudflare akan menampilkan dua blok teks:
+    -   **Origin Certificate** (PEM) — Public certificate
+    -   **Private Key** (PEM) — Kunci privat
 
 > [!CAUTION]
 > **SALIN DAN SIMPAN PRIVATE KEY SEKARANG.** Cloudflare hanya menampilkan private key SEKALI. Jika tab ditutup sebelum disalin, Anda harus membuat sertifikat baru.
@@ -462,27 +462,30 @@ Setelah semua konfigurasi selesai, jalankan verifikasi berikut:
 > **Konteks Eksekusi:** `Terminal Komputer Lokal`
 
 ```bash
-# Verifikasi DNS mengembalikan IP Cloudflare, BUKAN IP VPS asli
-dig +short mer-system.rs.id
-
-# Output seharusnya IP dari range Cloudflare (104.x.x.x atau 172.x.x.x)
-# BUKAN IP VPS Anda dari Hostinger
-```
-
-### Test 2: SSL/TLS Certificate Chain
+### Verifikasi DNS Proxy Status
 
 ```bash
-# Periksa certificate chain
-echo | openssl s_client -connect mer-system.rs.id:443 -servername mer-system.rs.id 2>/dev/null | openssl x509 -noout -issuer -subject
+# Cek resolusi DNS dari komputer lokal Anda
+dig +short mers-rsryacudu.com
 
-# Output seharusnya menunjukkan issuer dari Cloudflare
+# Output HARUS BUKAN IP VPS Anda.
+# Harus menampilkan 2-3 IP milik Cloudflare (contoh: 104.21.x.x, 172.67.x.x)
+```
 ```
 
-### Test 3: Security Headers
+### Verifikasi SSL
 
+```bash
+# Paksa koneksi ke port 443 dan lihat subject/issuer sertifikat
+echo | openssl s_client -connect mers-rsryacudu.com:443 -servername mers-rsryacudu.com 2>/dev/null | openssl x509 -noout -issuer -subject
+
+# Output yang diharapkan:
+# issuer=C = US, O = Google Trust Services LLC, CN = GTS CA 1P5 (Sertifikat edge Cloudflare)
+# subject=CN = mers-rsryacudu.com
+```
 ```bash
 # Periksa response headers
-curl -sI https://mer-system.rs.id | grep -iE '(strict-transport|x-frame|x-content|cf-ray|server)'
+curl -sI https://mers-rsryacudu.com | grep -iE '(strict-transport|x-frame|x-content|cf-ray|server)'
 
 # Output yang diharapkan:
 # strict-transport-security: max-age=...
@@ -492,20 +495,17 @@ curl -sI https://mer-system.rs.id | grep -iE '(strict-transport|x-frame|x-conten
 # server: cloudflare
 ```
 
-### Test 4: WAF Rules — File Sensitif
+### Verifikasi WAF Custom Rules
 
 ```bash
-# Test blokir akses ke .env
-curl -sI https://mer-system.rs.id/.env
-# Output: HTTP/2 403 (blocked by WAF)
+# Mencoba akses file .env (Harus mendapat 403 Forbidden)
+curl -sI https://mers-rsryacudu.com/.env
 
-# Test blokir akses ke .git
-curl -sI https://mer-system.rs.id/.git/config
-# Output: HTTP/2 403
+# Mencoba akses .git config (Harus mendapat 403 Forbidden)
+curl -sI https://mers-rsryacudu.com/.git/config
 
-# Test blokir akses ke phpMyAdmin
-curl -sI https://mer-system.rs.id/phpmyadmin
-# Output: HTTP/2 403
+# Mencoba akses endpoint sensitif yang diblokir (Harus mendapat 403 Forbidden)
+curl -sI https://mers-rsryacudu.com/phpmyadmin
 ```
 
 ### Test 5: Direct IP Access Should Fail

@@ -16,8 +16,10 @@
 6. [Optimasi PHP-FPM](#6-optimasi-php-fpm)
 7. [Konfigurasi PHP.ini Production](#7-konfigurasi-phpini-production)
 8. [Supervisord — Multi-Process Container](#8-supervisord--multi-process-container)
-9. [Startup Script Laravel (Entrypoint)](#9-startup-script-laravel-entrypoint)
-10. [Verifikasi](#10-verifikasi)
+9. [Resolusi Konflik Izin Host-Container (UID/GID)](#9-resolusi-konflik-izin-host-container-uidgid)
+10. [First-Time Initialization (Inisialisasi Pertama)](#10-first-time-initialization-inisialisasi-pertama)
+11. [Startup Script Laravel (Entrypoint)](#11-startup-script-laravel-entrypoint)
+12. [Verifikasi](#12-verifikasi)
 
 ---
 
@@ -546,17 +548,385 @@ Penjelasan setiap parameter kunci:
 
 **Versi Sederhana:** Daripada menyewa 3 ruangan terpisah (3 container) untuk 1 dokter + 1 asisten + 1 penjadwal, lebih efisien satu ruangan besar (1 container) dengan manajer ruangan (Supervisord) yang mengawasi ketiganya.
 
-File konfigurasi: [`deployment/production/supervisord.conf`](../deployment/production/supervisord.conf)
+### Konfigurasi Supervisord (File Lengkap)
 
-| Program | Perintah | Fungsi |
-|---------|----------|--------|
-| `php-fpm` | `php-fpm -F` | Melayani HTTP request dari Nginx |
-| `queue-worker` | `php artisan queue:work --max-time=3600` | Memproses background jobs (email notifikasi, PDF generation) |
-| `scheduler` | `php artisan schedule:run` (loop 60s) | Menjalankan scheduled tasks (backup reminder, report generation) |
+> **Lokasi file:** `deployment/production/supervisord.conf`
+
+```ini
+; ===========================================
+; MER System - Supervisord Configuration
+; ===========================================
+; File ini menjalankan 3 proses dalam satu container:
+; 1. PHP-FPM   : menerima HTTP request dari Nginx
+; 2. Queue     : memproses background jobs (email, PDF)
+; 3. Scheduler : menjalankan cron-like tasks Laravel
+;
+; Supervisord dipilih karena VPS hanya 8GB RAM.
+; Menjalankan masing-masing sebagai container terpisah
+; memakan ~3x overhead memory.
+; ===========================================
+
+[supervisord]
+nodaemon=true
+user=root
+logfile=/var/log/supervisor/supervisord.log
+logfile_maxbytes=5MB
+logfile_backups=3
+pidfile=/var/run/supervisord.pid
+
+; ===========================================
+; Program 1: PHP-FPM
+; ===========================================
+; Proses utama yang melayani HTTP request dari Nginx
+; via FastCGI protocol pada port 9000.
+;
+; priority=1 memastikan PHP-FPM start PERTAMA sebelum
+; queue worker dan scheduler. Jika PHP-FPM belum siap,
+; queue worker yang memanggil kode Laravel bisa crash.
+;
+; -F (--nodaemonize) memaksa PHP-FPM berjalan di foreground
+; agar Supervisord bisa mendeteksi jika proses mati.
+[program:php-fpm]
+command=php-fpm -F
+autostart=true
+autorestart=true
+priority=1
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr
+stderr_logfile_maxbytes=0
+
+; ===========================================
+; Program 2: Queue Worker
+; ===========================================
+; Memproses background jobs dari Redis queue:
+; - Pengiriman email notifikasi insiden medis
+; - Generasi PDF laporan (DOMPDF)
+; - Proses data berat yang tidak boleh blocking HTTP request
+;
+; --sleep=3      : polling interval (detik) jika queue kosong
+; --tries=3      : jumlah percobaan sebelum job dianggap gagal
+; --max-time=3600: worker di-restart setiap 1 jam untuk mencegah
+;                  memory leak yang umum pada long-running PHP process
+; --max-jobs=1000: worker di-restart setelah memproses 1000 job
+;                  (safety limit tambahan untuk memory leak)
+;
+; stopwaitsecs=30: memberikan waktu 30 detik untuk menyelesaikan
+;                  job yang sedang diproses sebelum di-kill.
+;                  Mencegah job terpotong di tengah-tengah.
+[program:queue-worker]
+command=php /var/www/html/artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --max-jobs=1000
+autostart=true
+autorestart=true
+priority=5
+numprocs=1
+stopwaitsecs=30
+stdout_logfile=/var/www/html/storage/logs/queue-worker.log
+stdout_logfile_maxbytes=5MB
+stdout_logfile_backups=3
+stderr_logfile=/var/www/html/storage/logs/queue-worker-error.log
+stderr_logfile_maxbytes=5MB
+stderr_logfile_backups=3
+
+; ===========================================
+; Program 3: Task Scheduler
+; ===========================================
+; Menjalankan Laravel Task Scheduler setiap 60 detik,
+; menggantikan kebutuhan cronjob di dalam container.
+;
+; schedule:run memeriksa jadwal yang didefinisikan di
+; app/Console/Kernel.php dan mengeksekusi task yang
+; sudah waktunya (backup reminder, report generation,
+; pembersihan session expired, dsb).
+;
+; Menggunakan loop bash agar berjalan terus-menerus:
+; - Jalankan schedule:run
+; - Tunggu 60 detik
+; - Ulangi
+[program:scheduler]
+command=bash -c "while true; do php /var/www/html/artisan schedule:run --no-interaction >> /var/www/html/storage/logs/scheduler.log 2>&1; sleep 60; done"
+autostart=true
+autorestart=true
+priority=10
+stdout_logfile=/dev/stdout
+stdout_logfile_maxbytes=0
+stderr_logfile=/dev/stderr
+stderr_logfile_maxbytes=0
+```
+
+### Ringkasan Proses Supervisord
+
+| Program | Perintah | Priority | Fungsi |
+|---------|----------|----------|--------|
+| `php-fpm` | `php-fpm -F` | 1 (start pertama) | Melayani HTTP request dari Nginx |
+| `queue-worker` | `php artisan queue:work --max-time=3600` | 5 | Memproses background jobs (email notifikasi, PDF generation) |
+| `scheduler` | `php artisan schedule:run` (loop 60s) | 10 | Menjalankan scheduled tasks (backup reminder, report generation) |
+
+### Mengapa `numprocs=1` untuk Queue Worker?
+
+Pada VPS 2 Core dengan memory limit 1536MB untuk container app, satu queue worker sudah cukup untuk throughput rumah sakit (< 100 jobs/jam). Menambah worker berarti menambah konsumsi RAM (~50MB per worker) yang merenggut dari pool PHP-FPM. Jika traffic meningkat signifikan, naikkan `numprocs` ke 2-3 sambil memperhatikan memory usage.
+
+> [!IMPORTANT]
+> **Queue Worker dan Scheduler WAJIB berjalan di production.** Tanpa queue worker, semua background jobs (notifikasi email insiden medis, PDF generation) tidak akan terproses — tertumpuk di Redis tanpa disentu. Tanpa scheduler, tugas terjadwal (cleanup session, reminder) tidak akan tereksekusi.
 
 ---
 
-## 9. Startup Script Laravel (Entrypoint)
+## 9. Resolusi Konflik Izin Host-Container (UID/GID)
+
+### Mengapa Ini Kritis?
+
+**Versi Formal:** Saat Docker container menjalankan PHP-FPM sebagai user `www-data` (UID 33), dan volume yang di-mount dari host dimiliki oleh user `mer_ops` (UID 1000), terjadi UID/GID mismatch. PHP-FPM tidak bisa menulis ke direktori `storage/logs`, `storage/framework/cache`, `storage/framework/sessions`, dan `bootstrap/cache` karena filesystem permission menolak akses dari UID 33. Ini menghasilkan **Error 500 (Permission Denied)** yang terlihat di browser tanpa informasi diagnostik apapun (karena log file pun tidak bisa ditulis).
+
+**Versi Sederhana:** Bayangkan dokter (PHP-FPM/www-data) diminta menulis catatan di ruang arsip (storage/), tapi ruangan itu hanya bisa dibuka oleh petugas IT (mer_ops). Dokter berdiri di depan pintu terkunci — tidak bisa menulis, tidak bisa melaporkan masalah (log tidak bisa ditulis), sistem hanya menunjukkan "Error 500" di layar tanpa penjelasan.
+
+### Peta Konflik UID/GID
+
+| Konteks | User | UID | GID |
+|---------|------|-----|-----|
+| Host OS (Ubuntu) | `mer_ops` | 1000 | 1000 |
+| Docker Container | `www-data` | 33 | 33 |
+| Docker Container | `root` | 0 | 0 |
+
+**Direktori yang terdampak:**
+
+| Direktori | Siapa yang menulis | Mengapa |
+|-----------|-------------------|----------|
+| `storage/logs/` | PHP-FPM (www-data) | Log aplikasi Laravel |
+| `storage/framework/cache/` | PHP-FPM (www-data) | Cache data konfigurasi dan route |
+| `storage/framework/sessions/` | PHP-FPM (www-data) | Session file pengguna |
+| `storage/framework/views/` | PHP-FPM (www-data) | Compiled Blade templates |
+| `storage/app/` | PHP-FPM (www-data) | File upload (dokumen insiden medis) |
+| `bootstrap/cache/` | PHP-FPM (www-data) | Cache autoloader dan konfigurasi |
+
+### Eksekusi — Sinkronisasi Permission dari Host
+
+> **Konteks Eksekusi:** `User: mer_ops @ VPS`
+
+```bash
+# Masuk ke direktori project production.
+cd /var/www/mer-system/production
+
+# Set ownership untuk direktori yang membutuhkan akses tulis oleh PHP-FPM.
+# Menggunakan UID:GID numerik (33:33) agar perintah ini bekerja
+# meskipun user www-data tidak ada di host OS.
+#
+# Mengapa 33:33?
+# Di dalam container Debian/Ubuntu, user www-data memiliki UID=33.
+# Dengan men-chown file ke UID 33 dari host, saat container melihat
+# file tersebut melalui volume mount, file tersebut dimiliki oleh www-data
+# sesuai mapping UID di dalam container.
+sudo chown -R 33:33 storage/
+sudo chown -R 33:33 bootstrap/cache/
+
+# Set permission yang optimal:
+# Direktori: 775 = owner+group bisa baca/tulis/eksekusi, others bisa baca+eksekusi
+# File:      664 = owner+group bisa baca/tulis, others bisa baca
+#
+# Mengapa 775/664 (bukan 777)?
+# 777 memberikan write access ke SEMUA user di sistem — kerentanan keamanan.
+# 775/664 membatasi write hanya ke owner (www-data) dan group,
+# sementara user lain hanya bisa membaca.
+sudo find storage/ -type d -exec chmod 775 {} \;
+sudo find storage/ -type f -exec chmod 664 {} \;
+sudo find bootstrap/cache/ -type d -exec chmod 775 {} \;
+sudo find bootstrap/cache/ -type f -exec chmod 664 {} \;
+
+# Verifikasi ownership dan permission
+ls -la storage/
+ls -la bootstrap/cache/
+# Setiap entri harus menunjukkan:
+# drwxrwxr-x  ... 33 33 ... (untuk direktori)
+# -rw-rw-r--  ... 33 33 ... (untuk file)
+```
+
+### Integrasi di Docker Entrypoint
+
+Perintah chown juga dijalankan otomatis di `docker-entrypoint.sh` setiap kali container start, sebagai jaring pengaman jika permission berubah (misalnya setelah `git pull` yang membuat file baru):
+
+```bash
+# Cuplikan dari docker-entrypoint.sh
+# Dijalankan sebagai root saat container start, sebelum Supervisord
+# menurunkan privilege ke www-data.
+chown -R www-data:www-data /var/www/html/storage
+chown -R www-data:www-data /var/www/html/bootstrap/cache
+chmod -R 775 /var/www/html/storage
+chmod -R 775 /var/www/html/bootstrap/cache
+```
+
+> [!CAUTION]
+> **Error 500 tanpa log adalah tanda klasik permission denied.** Jika setelah deployment pertama Anda melihat halaman kosong dengan HTTP 500, langkah pertama yang HARUS dilakukan adalah memeriksa ownership `storage/` di dalam container:
+> ```bash
+> docker exec mer-app-prod ls -la /var/www/html/storage/
+> # Jika ownership BUKAN www-data:www-data, jalankan:
+> docker exec mer-app-prod chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+> ```
+
+---
+
+## 10. First-Time Initialization (Inisialisasi Pertama)
+
+### Mengapa Perlu Urutan Eksekusi Statis?
+
+**Versi Formal:** Laravel membutuhkan serangkaian perintah inisialisasi yang harus dijalankan dalam urutan spesifik saat pertama kali di-deploy. Masing-masing perintah memiliki dependensi terhadap output perintah sebelumnya. Melewatkan satu langkah atau menjalankan dalam urutan yang salah menghasilkan error yang sulit didiagnosis — mulai dari "No application encryption key has been specified" hingga "SQLSTATE connection refused".
+
+**Versi Sederhana:** Ini seperti prosedur membuka rumah sakit baru: pertama pasang alat medis (composer install), lalu buat kunci brankas (key:generate), siapkan ruang arsip (migrate), dan pasang petunjuk arah (storage:link). Jika langkah-langkah ini dilakukan tanpa urutan, rumah sakit tidak bisa beroperasi.
+
+### Urutan Eksekusi (Wajib Diikuti)
+
+> **Konteks Eksekusi:** `User: mer_ops @ VPS` — jalankan setelah `docker compose up -d` pertama
+
+```bash
+# ================================================================
+# FIRST-TIME INITIALIZATION - MER System
+# ================================================================
+# Jalankan perintah ini SATU KALI saja saat deployment pertama.
+# Urutan TIDAK BOLEH diubah karena setiap langkah depends on
+# output langkah sebelumnya.
+# ================================================================
+
+# Pastikan semua container sudah running
+cd /var/www/mer-system/production
+docker compose -f deployment/production/docker-compose.yml ps
+
+# ================================================================
+# STEP 1: composer install
+# ================================================================
+# Menginstall seluruh dependency PHP dari composer.lock
+#
+# --optimize-autoloader : menghasilkan classmap yang dioptimasi
+#     sehingga PHP tidak perlu melakukan filesystem scan setiap kali
+#     memanggil class. Meningkatkan autoloading speed ~60%.
+#
+# --no-dev : TIDAK menginstall development dependencies
+#     (PHPUnit, Faker, Debugbar, dll). Mengurangi attack surface
+#     dan ukuran vendor/ hingga ~30%.
+#
+# HARUS dijalankan PERTAMA karena semua artisan command
+# berikutnya membutuhkan vendor/ directory.
+docker exec mer-app-prod \
+    composer install --optimize-autoloader --no-dev --no-interaction
+
+# ================================================================
+# STEP 2: php artisan key:generate
+# ================================================================
+# Menggenerate APP_KEY (AES-256-CBC encryption key) dan menyimpannya
+# ke file .env. Key ini digunakan untuk:
+# - Enkripsi session cookie
+# - Enkripsi data sensitif di database (jika menggunakan encrypt())
+# - Signing CSRF token
+#
+# HARUS dijalankan SEBELUM migrate karena beberapa migration
+# mungkin menggunakan encryption helper.
+#
+# PERHATIAN: Jika APP_KEY sudah di-set manual di .env (misal dari
+# environment lain), LEWATI langkah ini agar tidak menimpa key
+# yang sudah ada. Mengganti APP_KEY di production yang sudah
+# berjalan akan menginvalidasi semua session dan data terenkripsi.
+docker exec mer-app-prod \
+    php artisan key:generate --force --no-interaction
+
+# ================================================================
+# STEP 3: php artisan migrate
+# ================================================================
+# Membuat semua tabel database dari migration files.
+#
+# --force : WAJIB di production. Tanpa flag ini, Laravel menolak
+#     menjalankan migration di environment production sebagai
+#     mekanisme keamanan (mencegah migration tidak sengaja).
+#
+# HARUS dijalankan SETELAH key:generate karena beberapa seeder
+# atau migration callback mungkin membutuhkan APP_KEY.
+docker exec mer-app-prod \
+    php artisan migrate --force --no-interaction
+
+# ================================================================
+# STEP 4: php artisan storage:link
+# ================================================================
+# Membuat symbolic link: public/storage -> storage/app/public
+#
+# Ini memungkinkan file yang diupload oleh user (foto bukti
+# insiden medis, dokumen pendukung) dapat diakses via URL publik
+# (https://mers-rsryacudu.com/storage/foto-insiden.jpg).
+#
+# Tanpa symlink ini, semua file upload tidak bisa ditampilkan
+# di browser — user melihat gambar rusak (broken image).
+docker exec mer-app-prod \
+    php artisan storage:link --no-interaction
+
+# ================================================================
+# STEP 5: Cache Optimization (Opsional tapi Sangat Direkomendasikan)
+# ================================================================
+# Meng-compile konfigurasi, routes, dan views ke file PHP statis
+# sehingga tidak perlu parsing ulang setiap request.
+# Meningkatkan throughput ~30%.
+docker exec mer-app-prod php artisan config:cache
+docker exec mer-app-prod php artisan route:cache
+docker exec mer-app-prod php artisan view:cache
+
+# ================================================================
+# VERIFIKASI
+# ================================================================
+echo ""
+echo "=== First-Time Initialization Complete ==="
+echo ""
+echo "Checklist:"
+
+# Verifikasi vendor/ terinstall
+docker exec mer-app-prod test -d vendor && echo "[OK] vendor/ directory exists" || echo "[FAIL] vendor/ missing"
+
+# Verifikasi APP_KEY terisi
+docker exec mer-app-prod php artisan env | grep APP_KEY && echo "[OK] APP_KEY is set" || echo "[FAIL] APP_KEY not set"
+
+# Verifikasi migration berhasil
+docker exec mer-app-prod php artisan migrate:status | tail -5
+
+# Verifikasi storage link
+docker exec mer-app-prod test -L public/storage && echo "[OK] Storage link exists" || echo "[FAIL] Storage link missing"
+
+echo ""
+echo "Buka browser: $(grep APP_URL /var/www/mer-system/production/.env | cut -d= -f2)"
+echo "Jika muncul halaman login MER System, inisialisasi berhasil."
+```
+
+### Ringkasan Urutan Dependensi
+
+```
+STEP 1: composer install
+   |
+   +-- Menghasilkan: vendor/ directory (semua dependency PHP)
+   |
+   v
+STEP 2: key:generate
+   |
+   +-- Menghasilkan: APP_KEY di .env (encryption key)
+   +-- Depend on: vendor/ (artisan command membutuhkan autoloader)
+   |
+   v
+STEP 3: migrate --force
+   |
+   +-- Menghasilkan: tabel database di PostgreSQL
+   +-- Depend on: APP_KEY (beberapa migration menggunakan encryption)
+   +-- Depend on: database container healthy (depends_on di compose)
+   |
+   v
+STEP 4: storage:link
+   |
+   +-- Menghasilkan: symlink public/storage -> storage/app/public
+   +-- Depend on: vendor/ (artisan command)
+   |
+   v
+STEP 5: config/route/view cache
+   |
+   +-- Menghasilkan: cached config/routes/views di bootstrap/cache/
+   +-- Depend on: ALL previous steps completed
+```
+
+> [!WARNING]
+> **JANGAN jalankan `key:generate` di production yang sudah berjalan** kecuali Anda yakin belum ada data terenkripsi. Mengganti APP_KEY akan membuat semua data yang di-encrypt dengan key lama tidak bisa di-decrypt — termasuk session aktif pengguna, password reset tokens, dan data medis terenkripsi.
+
+---
+
+## 11. Startup Script Laravel (Entrypoint)
 
 ### Alur Startup Container Production
 
@@ -604,7 +974,7 @@ Laravel migration bersifat **idempoten** — menjalankan `migrate` berulang kali
 
 ---
 
-## 10. Verifikasi
+## 12. Verifikasi
 
 ### Test Security Headers
 
