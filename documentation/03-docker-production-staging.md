@@ -969,7 +969,7 @@ Karena keamanan Nginx Staging membatasinya hanya pada `127.0.0.1:8080` di intern
 ssh -L 8080:127.0.0.1:8080 mer-vps
 
 # Atau jika menggunakan perintah manual (pastikan path SSH key dan IP benar):
-ssh -L 8080:127.0.0.1:8080 -p 49152 mer_ops@<IP_VPS_ANDA>
+ssh -L 8080:127.0.0.1:8080 -p 49152 mer-vps
 
 # JANGAN tutup terminal ini (biarkan tetap menyala untuk menjaga tunnel).
 # Buka browser di komputer lokal dan kunjungi (disarankan bukan localhost tapi IP balik langsung):
