@@ -872,16 +872,16 @@ echo ""
 echo "Checklist:"
 
 # Verifikasi vendor/ terinstall
-docker exec mer-app-prod test -d vendor && echo "[OK] vendor/ directory exists" || echo "[FAIL] vendor/ missing"
+docker exec production-app-1 test -d vendor && echo "[OK] vendor/ directory exists" || echo "[FAIL] vendor/ missing"
 
 # Verifikasi APP_KEY terisi
-docker exec mer-app-prod php artisan env | grep APP_KEY && echo "[OK] APP_KEY is set" || echo "[FAIL] APP_KEY not set"
+docker exec production-app-1 php artisan env | grep APP_KEY && echo "[OK] APP_KEY is set" || echo "[FAIL] APP_KEY not set"
 
 # Verifikasi migration berhasil
-docker exec mer-app-prod php artisan migrate:status | tail -5
+docker exec production-app-1 php artisan migrate:status | tail -5
 
 # Verifikasi storage link
-docker exec mer-app-prod test -L public/storage && echo "[OK] Storage link exists" || echo "[FAIL] Storage link missing"
+docker exec production-app-1 test -L public/storage && echo "[OK] Storage link exists" || echo "[FAIL] Storage link missing"
 
 echo ""
 echo "Buka browser: $(grep APP_URL /var/www/mer-system/production/.env | cut -d= -f2)"
