@@ -1027,13 +1027,13 @@ done
 
 ```bash
 # Cek PHP-FPM processes
-docker exec mer-app-prod ps aux | grep php-fpm
+docker exec production-app-1 ps aux | grep php-fpm
 
 # Cek PHP-FPM status (jika pm.status_path dikonfigurasi)
-docker exec mer-app-prod curl -s http://localhost/fpm-status 2>/dev/null || echo "FPM status not configured"
+docker exec production-app-1 curl -s http://localhost/fpm-status 2>/dev/null || echo "FPM status not configured"
 
 # Cek supervisord processes
-docker exec mer-app-prod supervisorctl status
+docker exec production-app-1 supervisorctl status
 ```
 
 ### Checklist Verifikasi
