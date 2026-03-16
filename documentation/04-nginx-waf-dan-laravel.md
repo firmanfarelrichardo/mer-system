@@ -467,6 +467,7 @@ Tambahkan server block HTTPS di dalam `nginx.conf`:
 ### Konfigurasi PHP-FPM Pool
 
 > **Lokasi:** File ini bisa ditambahkan ke Dockerfile sebagai custom pool config.
+> **CATATAN PENTING:** Konfigurasi INI PHP-FPM (`www.conf`) **TUDAK BOLEH** menggunakan tanda pagar (`#`) untuk komentar. Selalu gunakan titik koma (`;`). Jika menggunakan `#`, aplikasi akan mengalami *crash* berulang dengan error `ZEND_INI_PARSER_ENTRY`. Jika Anda melakukan perubahan pada file ini, selalu terapkan dengan membangun ulang image: `docker compose up -d --build app`.
 
 ```ini
 ; ===========================================
@@ -639,12 +640,14 @@ stderr_logfile_backups=3
 ; sudah waktunya (backup reminder, report generation,
 ; pembersihan session expired, dsb).
 ;
-; Menggunakan loop bash agar berjalan terus-menerus:
+; Menggunakan loop sh agar berjalan terus-menerus:
+; - PENTING: Karena image berbasis Alpine Linux, gunakan 'sh' BUKAN 'bash'
+;   (penggunaan bash akan membuat scheduler gagal karena not found)
 ; - Jalankan schedule:run
 ; - Tunggu 60 detik
 ; - Ulangi
 [program:scheduler]
-command=bash -c "while true; do php /var/www/html/artisan schedule:run --no-interaction >> /var/www/html/storage/logs/scheduler.log 2>&1; sleep 60; done"
+command=sh -c "while true; do php /var/www/html/artisan schedule:run --no-interaction >> /var/www/html/storage/logs/scheduler.log 2>&1; sleep 60; done"
 autostart=true
 autorestart=true
 priority=10
@@ -756,9 +759,9 @@ chmod -R 775 /var/www/html/bootstrap/cache
 > [!CAUTION]
 > **Error 500 tanpa log adalah tanda klasik permission denied.** Jika setelah deployment pertama Anda melihat halaman kosong dengan HTTP 500, langkah pertama yang HARUS dilakukan adalah memeriksa ownership `storage/` di dalam container:
 > ```bash
-> docker exec mer-app-prod ls -la /var/www/html/storage/
+> docker exec production-app-1 ls -la /var/www/html/storage/
 > # Jika ownership BUKAN www-data:www-data, jalankan:
-> docker exec mer-app-prod chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+> docker exec production-app-1 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 > ```
 
 ---
@@ -803,7 +806,7 @@ docker compose -f deployment/production/docker-compose.yml ps
 #
 # HARUS dijalankan PERTAMA karena semua artisan command
 # berikutnya membutuhkan vendor/ directory.
-docker exec mer-app-prod \
+docker exec production-app-1 \
     composer install --optimize-autoloader --no-dev --no-interaction
 
 # ================================================================
@@ -818,11 +821,15 @@ docker exec mer-app-prod \
 # HARUS dijalankan SEBELUM migrate karena beberapa migration
 # mungkin menggunakan encryption helper.
 #
-# PERHATIAN: Jika APP_KEY sudah di-set manual di .env (misal dari
-# environment lain), LEWATI langkah ini agar tidak menimpa key
-# yang sudah ada. Mengganti APP_KEY di production yang sudah
-# berjalan akan menginvalidasi semua session dan data terenkripsi.
-docker exec mer-app-prod \
+# PERHATIAN TENTANG .ENV:
+# Dalam arsitektur kita, file .env berada di *host* VPS (bukan di dalam container).
+# Nilai-nilai ini diinjeksi lewat `--env-file` pada saat container berjalan.
+# Jika `APP_KEY` sudah terisi di file `.env` di host, LEWATI proses generate key,
+# dan cukup jalankan reset cache configurasi sebagai gantinya:
+# docker exec production-app-1 php artisan config:clear
+# docker exec production-app-1 php artisan config:cache
+#
+docker exec production-app-1 \
     php artisan key:generate --force --no-interaction
 
 # ================================================================
@@ -836,7 +843,7 @@ docker exec mer-app-prod \
 #
 # HARUS dijalankan SETELAH key:generate karena beberapa seeder
 # atau migration callback mungkin membutuhkan APP_KEY.
-docker exec mer-app-prod \
+docker exec production-app-1 \
     php artisan migrate --force --no-interaction
 
 # ================================================================
@@ -850,7 +857,7 @@ docker exec mer-app-prod \
 #
 # Tanpa symlink ini, semua file upload tidak bisa ditampilkan
 # di browser — user melihat gambar rusak (broken image).
-docker exec mer-app-prod \
+docker exec production-app-1 \
     php artisan storage:link --no-interaction
 
 # ================================================================
@@ -859,9 +866,9 @@ docker exec mer-app-prod \
 # Meng-compile konfigurasi, routes, dan views ke file PHP statis
 # sehingga tidak perlu parsing ulang setiap request.
 # Meningkatkan throughput ~30%.
-docker exec mer-app-prod php artisan config:cache
-docker exec mer-app-prod php artisan route:cache
-docker exec mer-app-prod php artisan view:cache
+docker exec production-app-1 php artisan config:cache
+docker exec production-app-1 php artisan route:cache
+docker exec production-app-1 php artisan view:cache
 
 # ================================================================
 # VERIFIKASI
