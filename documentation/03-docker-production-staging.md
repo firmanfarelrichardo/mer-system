@@ -977,6 +977,64 @@ ssh -L 8080:127.0.0.1:8080 -p 49152 mer-vps
 # Anda akan melihat instance staging MER System tersambung secara otomatis.
 ```
 
+### Siklus Kerja Developer (Workflow Staging ke Production)
+
+**PENTING:** Perubahan file yang Anda lakukan langsung di direktori VPS **TIDAK AKAN** otomatis tersimpan ke GitHub. Server VPS bersifat pasif (hanya *menarik* kode, bukan tempat untuk *ngoding*). 
+
+Berikut adalah SOP jika Anda ingin mengupdate kode aplikasi (misalnya mengubah CSS, menambah fitur, atau memperbaiki bug):
+
+**Tahap 1: Ngoding di Komputer/Laptop Lokal Anda**
+```bash
+# 1. Pastikan Anda berada di branch staging di lokal
+git checkout staging
+git pull origin staging
+
+# 2. Lakukan perubahan kode (modifikasi fitur, perbaiki tampilan, dsb.) via VSCode
+npm run build # (Opsi: Jika memakai vite, biasakan build di lokal juga untuk test)
+
+# 3. Commit dan Push ke repository GitHub
+git add .
+git commit -m "feat: perbaikan tampilan CSS login"
+git push origin staging
+```
+
+**Tahap 2: Menarik Kode & Uji Coba di VPS Staging**
+```bash
+# 1. Masuk ke environment staging di VPS
+cd /var/www/mer-system/staging
+
+# 2. Tarik update kode terbaru
+git pull origin staging
+
+# 3. Terapkan pembaruan (Compile ulang aset Frontend jika ada perubahan)
+# (Kompilasi CSS/JS wajib dilakukan menggunakan container sementara node)
+docker run --rm -v $(pwd):/app -w /app node:20-alpine sh -c "npm install && npm run build"
+
+# 4. Tes hasilnya di browser laptop Anda melalui SSH Tunnel (http://127.0.0.1:8080)
+# Refresh paksa (Ctrl+F5) untuk membuang cache lama.
+```
+
+**Tahap 3: Replikasi ke Production (Jika Uji Coba Staging LULUS)**
+```bash
+# (KEMBALI KE LAPTOP LOKAL)
+# 1. Gabungkan kode dari staging ke branch utama (main)
+git checkout main
+git merge staging
+git push origin main
+
+# (KEMBALI KE TERMINAL VPS)
+# 2. Terapkan update di environment production
+cd /var/www/mer-system/production
+git pull origin main
+
+# 3. Compile ulang aset Frontend untuk production
+docker run --rm -v $(pwd):/app -w /app node:20-alpine sh -c "npm install && npm run build"
+
+# (JIKA ada pembaruan package composer atau environment, maka perlu restart PHP)
+docker compose -f deployment/production/docker-compose.yml build app
+docker compose -f deployment/production/docker-compose.yml up -d --no-deps app
+```
+
 ---
 
 ## 12. Verifikasi
