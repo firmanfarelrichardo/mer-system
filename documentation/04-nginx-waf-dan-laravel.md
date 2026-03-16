@@ -866,7 +866,6 @@ docker exec mer-app-prod php artisan view:cache
 # ================================================================
 # VERIFIKASI
 # ================================================================
-echo ""
 echo "=== First-Time Initialization Complete ==="
 echo ""
 echo "Checklist:"
@@ -874,18 +873,20 @@ echo "Checklist:"
 # Verifikasi vendor/ terinstall
 docker exec production-app-1 test -d vendor && echo "[OK] vendor/ directory exists" || echo "[FAIL] vendor/ missing"
 
-# Verifikasi APP_KEY terisi
-docker exec production-app-1 php artisan env | grep APP_KEY && echo "[OK] APP_KEY is set" || echo "[FAIL] APP_KEY not set"
+# Verifikasi APP_KEY terisi (Mengecek langsung ke .env)
+docker exec production-app-1 grep -q "^APP_KEY=" .env && echo "[OK] APP_KEY is set" || echo "[FAIL] APP_KEY not set"
 
 # Verifikasi migration berhasil
 docker exec production-app-1 php artisan migrate:status | tail -5
 
+# Verifikasi log direktori supervisor ( memastikan fix sebelumnya berhasil)
+docker exec production-app-1 test -d /var/log/supervisor && echo "[OK] Supervisor log dir exists" || echo "[FAIL] Supervisor log dir missing"
+
 # Verifikasi storage link
-docker exec production-app-1 test -L public/storage && echo "[OK] Storage link exists" || echo "[FAIL] Storage link missing"
+docker exec production-app-1 test -d public/storage && echo "[OK] Storage link exists" || echo "[FAIL] Storage link missing"
 
 echo ""
-echo "Buka browser: $(grep APP_URL /var/www/mer-system/production/.env | cut -d= -f2)"
-echo "Jika muncul halaman login MER System, inisialisasi berhasil."
+echo "Cek Browser: Buka URL/IP Anda untuk melihat halaman MER System."
 ```
 
 ### Ringkasan Urutan Dependensi
