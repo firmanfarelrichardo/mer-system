@@ -1,50 +1,51 @@
 # ===========================================
-# MER System - Staging Docker Compose
+# MER System - Production Docker Compose
+# VPS: Ubuntu 24.04 LTS | RAM 8GB | CPU 2 Core
 # ===========================================
-# ISOLASI: Network, port, database, dan volume semuanya
-# terpisah dari production. Container staging berjalan
-# di mer-staging-network yang tidak bisa berkomunikasi
-# dengan mer-prod-network.
-#
-# AKSES: Nginx staging di-bind ke 127.0.0.1:8080.
-# Untuk mengakses staging dari browser lokal, gunakan SSH Tunnel:
-#   ssh -L 8080:127.0.0.1:8080 mer_ops@<IP_VPS>
-#   Lalu buka: http://localhost:8080
+# PRINSIP KEAMANAN:
+# - Hanya port 80 Nginx yang terexpose ke host (melalui Cloudflare)
+# - PostgreSQL di-bind ke 127.0.0.1 (loopback only)
+# - Redis tidak expose port sama sekali (internal only)
+# - Setiap container memiliki memory limit untuk mencegah OOM
 # ===========================================
 
 services:
+  # -------------------------------------------
+  # PHP-FPM Application Server
+  # -------------------------------------------
   app:
     build:
       context: ../..
-      dockerfile: deployment/staging/Dockerfile
-    container_name: mer-app-staging
+      dockerfile: deployment/production/Dockerfile
     restart: unless-stopped
     environment:
-      APP_NAME: "MER System (Staging)"
-      APP_ENV: staging
-      APP_DEBUG: "true"
+      APP_NAME: ${APP_NAME:-MER System}
+      APP_ENV: production
+      APP_DEBUG: "false"
       APP_KEY: ${APP_KEY}
-      APP_URL: ${APP_URL:-http://localhost:8080}
+      APP_URL: ${APP_URL}
       APP_TIMEZONE: Asia/Jakarta
       TZ: Asia/Jakarta
       DB_CONNECTION: pgsql
       DB_HOST: db
       DB_PORT: 5432
-      DB_DATABASE: ${DB_DATABASE:-mer_staging}
-      DB_USERNAME: ${DB_USERNAME:-mer_staging_user}
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       CACHE_STORE: redis
       SESSION_DRIVER: redis
-      QUEUE_CONNECTION: redis
+      QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
     volumes:
-      - staging-shared-public:/public-shared
-      - staging-app-storage:/var/www/html/storage/app
-      - staging-app-logs:/var/www/html/storage/logs
+      - shared-public:/public-shared
+      - app-storage:/var/www/html/storage/app
+      - app-logs:/var/www/html/storage/logs
     networks:
-      - mer-staging-network
+      - mer-prod-network
     depends_on:
       db:
         condition: service_healthy
@@ -53,78 +54,93 @@ services:
     deploy:
       resources:
         limits:
-          memory: 768M
+          memory: 1536M
         reservations:
-          memory: 256M
+          memory: 512M
 
+  # -------------------------------------------
+  # Nginx Reverse Proxy
+  # Satu-satunya container yang expose port ke host.
+  # -------------------------------------------
   web:
     image: nginx:1.27-alpine
-    container_name: mer-web-staging
+    container_name: mer-web-prod
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8080:80"
+      - "80:80"
     volumes:
-      - staging-shared-public:/var/www/html/public:ro
+      - shared-public:/var/www/html/public:ro
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - app
     networks:
-      - mer-staging-network
+      - mer-prod-network
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: 256M
         reservations:
-          memory: 32M
+          memory: 64M
 
+  # -------------------------------------------
+  # PostgreSQL 16 Database
+  # Port di-bind ke 127.0.0.1 (loopback) — BUKAN 0.0.0.0.
+  # Akses remote via SSH Tunnel saja.
+  # -------------------------------------------
   db:
     image: postgres:16-alpine
-    container_name: mer-db-staging
+    container_name: mer-db-prod
     restart: unless-stopped
     ports:
-      - "127.0.0.1:5433:5432"
+      - "127.0.0.1:5432:5432"
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-mer_staging}
-      POSTGRES_USER: ${DB_USERNAME:-mer_staging_user}
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Jakarta
     volumes:
-      - staging-db-data:/var/lib/postgresql/data
+      - mer-db-data:/var/lib/postgresql/data
     networks:
-      - mer-staging-network
+      - mer-prod-network
     healthcheck:
-      test: ["CMD", "pg_isready", "-q", "-d", "${DB_DATABASE:-mer_staging}", "-U", "${DB_USERNAME:-mer_staging_user}"]
+      test: ["CMD", "pg_isready", "-q", "-d", "${DB_DATABASE}", "-U", "${DB_USERNAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
     deploy:
       resources:
         limits:
-          memory: 768M
+          memory: 2048M
         reservations:
-          memory: 256M
+          memory: 512M
     command: >
       postgres
-      -c shared_buffers=128MB
-      -c effective_cache_size=512MB
-      -c work_mem=4MB
-      -c maintenance_work_mem=64MB
-      -c max_connections=30
+      -c shared_buffers=512MB
+      -c effective_cache_size=1536MB
+      -c work_mem=8MB
+      -c maintenance_work_mem=128MB
+      -c max_connections=100
+      -c log_min_duration_statement=1000
+      -c log_statement=ddl
 
+  # -------------------------------------------
+  # Redis 7 (Cache, Session, Queue)
+  # Tidak expose port - hanya akses internal docker network.
+  # -------------------------------------------
   redis:
     image: redis:7-alpine
-    container_name: mer-redis-staging
+    container_name: mer-redis-prod
     restart: unless-stopped
     command: >
       redis-server
       --appendonly yes
-      --maxmemory 128mb
+      --maxmemory 512mb
       --maxmemory-policy allkeys-lru
       --requirepass ${REDIS_PASSWORD}
     volumes:
-      - staging-redis-data:/data
+      - mer-redis-data:/data
     networks:
-      - mer-staging-network
+      - mer-prod-network
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
@@ -133,22 +149,22 @@ services:
     deploy:
       resources:
         limits:
-          memory: 192M
+          memory: 640M
         reservations:
-          memory: 64M
+          memory: 128M
 
 networks:
-  mer-staging-network:
+  mer-prod-network:
     driver: bridge
 
 volumes:
-  staging-shared-public:
+  shared-public:
     driver: local
-  staging-app-storage:
+  app-storage:
     driver: local
-  staging-app-logs:
+  app-logs:
     driver: local
-  staging-db-data:
+  mer-db-data:
     driver: local
-  staging-redis-data:
+  mer-redis-data:
     driver: local
