@@ -116,6 +116,7 @@ RUN mkdir -p \
         storage/framework/sessions \
         storage/framework/views \
         bootstrap/cache \
+        /var/log/supervisor \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 storage bootstrap/cache
 
