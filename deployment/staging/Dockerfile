@@ -94,7 +94,7 @@ RUN mkdir -p storage/logs \
 # -------------------------------------------
 # 5. Entrypoint & Command
 # -------------------------------------------
-COPY deployment/local/docker-entrypoint.sh /usr/local/bin/
+COPY deployment/staging/docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 9000
