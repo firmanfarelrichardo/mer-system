@@ -1,0 +1,88 @@
+# ===========================================
+# MER System - Promtail Configuration
+# ===========================================
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # -------------------------------------------
+  # Job 1: Docker Container Logs
+  # Mengumpulkan stdout/stderr dari semua container Docker.
+  # -------------------------------------------
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'logstream'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+
+  # -------------------------------------------
+  # Job 2: System Auth Log
+  # Mengumpulkan log autentikasi SSH untuk audit keamanan.
+  # -------------------------------------------
+  - job_name: auth
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: auth
+          __path__: /var/log/auth.log
+
+  # -------------------------------------------
+  # Job 3: Nginx Access Log (JSON format)
+  # -------------------------------------------
+  - job_name: nginx
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: nginx
+          __path__: /var/lib/docker/containers/*/*.log
+    pipeline_stages:
+      - docker: {}
+      - match:
+          selector: '{service="web"}'
+          stages:
+            - json:
+                expressions:
+                  status: status
+                  request: request
+                  request_time: request_time
+            - labels:
+                status:
+
+  # -------------------------------------------
+  # Job 4: UFW Firewall Log
+  # -------------------------------------------
+  - job_name: ufw
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: ufw
+          __path__: /var/log/ufw.log
+
+  # -------------------------------------------
+  # Job 5: Cloudflare UFW Update Log
+  # -------------------------------------------
+  - job_name: cloudflare-update
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: cloudflare-update
+          __path__: /var/log/mer-system/cloudflare-ufw-update.log

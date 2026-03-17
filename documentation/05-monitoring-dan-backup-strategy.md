@@ -9,6 +9,7 @@
 
 ## Daftar Isi
 
+- [⚠️ SOP Implementasi (Wajib Dibaca)](#️-sop-implementasi-wajib-dibaca)
 1. [Strategi Monitoring untuk VPS Terbatas](#1-strategi-monitoring-untuk-vps-terbatas)
 2. [Grafana Loki + Promtail (Centralized Logging)](#2-grafana-loki--promtail-centralized-logging)
 3. [Uptime Kuma (Uptime & Health Monitoring)](#3-uptime-kuma-uptime--health-monitoring)
@@ -19,6 +20,30 @@
 8. [Skrip Backup Otomatis Harian](#8-skrip-backup-otomatis-harian)
 9. [Restore Prosedur](#9-restore-prosedur)
 10. [Verifikasi](#10-verifikasi)
+
+---
+
+## ⚠️ SOP Implementasi (Wajib Dibaca)
+
+Mengingat aplikasi `production` berstatus *live* dan menangani data medis (*High-Risk*), **SANGAT TIDAK DISARANKAN** untuk mengeksekusi langsung dokumen ini ke *environment production*. Spesifikasi VPS yang terbatas (8GB RAM) berisiko mengalami *Out of Memory* (OOM) yang dapat menyebabkan gangguan *downtime* berantai pada aplikasi jika set *monitoring* tidak diuji terlebih dahulu.
+
+**Alur Kerja (Workflow) Zero-Downtime yang Wajib Dilakukan:**
+
+1. **Kerjakan di Branch Khusus (`feature/monitoring`):**
+   * Di komputer lokal Anda, buat *branch* khusus dari `main` atau `development`: `git checkout -b feature/monitoring`.
+   * Pada *branch* ini, tambahkan file `docker-compose.monitoring.yml`, konfigurasi Loki/Promtail, rancangan skrip *backup*, dan edit konfigurasi Laravel (`logging.php`, `sentry.php`).
+   * *Push* *branch* `feature/monitoring` ke repositori Git pusat.
+2. **Deploy dan Uji Coba di `staging` (VPS):**
+   * Masuk ke direktori *staging* di VPS: `cd /var/www/mer-system/staging`
+   * Tarik (*pull*) dan ganti aktifkan *branch* tersebut: `git fetch origin && git checkout feature/monitoring`
+   * Terapkan konfigurasi *monitoring* (*docker compose up*). Pastikan Anda **menyesuaikan semua nilai direktori dan nama container di dalam script yang ada di dokumen ini** menjadi versi *staging* (contoh: ubah *path* `/production/` menjadi `/staging/`, dan container `mer-db-prod` menjadi `mer-db-staging`).
+   * Pantau penggunaan RAM dan CPU *server* menggunakan perintah `docker stats`. Pastikan OOM Killer tidak aktif.
+   * Uji coba simulasi pembuatan log medis, verifikasi sensor (*scrubbing*) PHP di Sentry, dan jalankan simulasi Skrip Backup serta Restore secara manual.
+3. **Deploy ke `production` (Hanya jika Staging Sukses):**
+   * Jika semua komponen sudah diverifikasi berjalan mulus di *staging* VPS tanpa membebani sistem pembatasan *resource*, gabungkan (*merge*) *branch* `feature/monitoring` ke `main`/`production`.
+   * Pindah ke direktori *production*: `cd /var/www/mer-system/production`
+   * Lakukan integrasi versi terbaru: `git pull origin main` (atau *branch production* yang relevan).
+   * Jalankan instruksi *monitoring* dan *backup* secara nyata di *production*.
 
 ---
 
