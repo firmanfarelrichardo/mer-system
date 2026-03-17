@@ -1,0 +1,58 @@
+# ===========================================
+# MER System - Loki Configuration
+# Dioptimalkan untuk VPS 8GB RAM
+# ===========================================
+
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+common:
+  path_prefix: /loki
+  storage:
+    filesystem:
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+schema_config:
+  configs:
+    - from: 2024-01-01
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+limits_config:
+  # Retensi log 30 hari — cukup untuk audit trail medis bulanan.
+  # Log lebih lama diarsip melalui backup script.
+  retention_period: 720h
+  ingestion_rate_mb: 4
+  ingestion_burst_size_mb: 6
+  max_query_series: 500
+  max_query_parallelism: 2
+
+compactor:
+  working_directory: /loki/compactor
+  compaction_interval: 10m
+  retention_enabled: true
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+
+# Membatasi penggunaan memori untuk query
+query_range:
+  parallelise_shardable_queries: false
+
+# Chunk dan ingester config dioptimalkan untuk throughput rendah
+ingester:
+  chunk_idle_period: 1h
+  max_chunk_age: 2h
+  chunk_retain_period: 30s
+  wal:
+    dir: /loki/wal
