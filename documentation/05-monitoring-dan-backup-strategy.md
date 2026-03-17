@@ -150,11 +150,6 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-      # Ini penting jika Grafana berada di belakang reverse proxy seperti Nginx
-      # dan kita ingin agar share link berfungsi dengan benar.
-      GF_SERVER_DOMAIN: mers-rsryacudu.com
-      GF_SERVER_ROOT_URL: https://mers-rsryacudu.com/grafana/
-      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       GF_LOG_LEVEL: warn
     volumes:
       - grafana-data:/var/lib/grafana
@@ -379,8 +374,8 @@ docker compose -f docker-compose.monitoring.yml ps
 curl -s http://127.0.0.1:3100/ready
 # Output: ready
 
-# Test Grafana login
-curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/login
+# Test Grafana login (menggunakan -L agar mengikuti redirect 301)
+curl -sL -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/login
 # Output: 200
 ```
 
@@ -868,17 +863,17 @@ echo "  Status: $LOKI_STATUS"
 
 echo ""
 echo "[2] Grafana"
-GRAFANA_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/login 2>/dev/null || echo "NOT RUNNING")
+GRAFANA_STATUS=$(curl -sfL -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/login 2>/dev/null || echo "NOT RUNNING")
 echo "  HTTP Status: $GRAFANA_STATUS"
 
 echo ""
 echo "[3] Uptime Kuma"
-KUMA_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://127.0.0.1:3001 2>/dev/null || echo "NOT RUNNING")
+KUMA_STATUS=$(curl -sfL -o /dev/null -w "%{http_code}" http://127.0.0.1:3001 2>/dev/null || echo "NOT RUNNING")
 echo "  HTTP Status: $KUMA_STATUS"
 
 echo ""
 echo "[4] Netdata"
-NETDATA_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://127.0.0.1:19999 2>/dev/null || echo "NOT RUNNING")
+NETDATA_STATUS=$(curl -sfL -o /dev/null -w "%{http_code}" http://127.0.0.1:19999 2>/dev/null || echo "NOT RUNNING")
 echo "  HTTP Status: $NETDATA_STATUS"
 
 echo ""
