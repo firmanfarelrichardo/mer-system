@@ -426,24 +426,36 @@ ssh -L 3000:127.0.0.1:3000 -L 3001:127.0.0.1:3001 -p 49152 mer_ops@<IP_VPS_ANDA>
 Setelah akses Uptime Kuma via SSH tunnel (`http://localhost:3001`):
 
 1. Buat akun admin saat pertama kali akses
-2. Tambahkan monitors berikut:
+2. Navigasi ke tombol **+ Tambah Monitor** di kiri atas untuk setiap entri di bawah ini:
 
-| Monitor | Type | URL/Host | Interval | Alasan |
-|---------|------|----------|----------|--------|
-| **MER Production** | HTTP(S) | `https://mers-rsryacudu.com/health` | 60s | Health check aplikasi via Cloudflare |
-| **MER Staging** | HTTP(S) | `http://<IP_VPS>:8080/health` | 60s | Health check staging (Direct IP) |
-| **Nginx Direct** | HTTP | `http://127.0.0.1:80/health` | 30s | Health check Nginx langsung |
-| **PostgreSQL** | TCP Port | `127.0.0.1:5432` | 30s | Cek database reachable |
-| **Redis** | TCP Port | `mer-redis-prod:6379` | 30s | Cek Redis reachable (via Docker network) |
-| **SSH Port** | TCP Port | `127.0.0.1:49152` | 60s | Pastikan SSH masih accessible |
-| **Disk Usage** | HTTP | `http://127.0.0.1:19999/api/v1/data?chart=disk_space._` | 300s | Jika Netdata terpasang |
+| Nama Monitor (Ramah) | Tipe Monitor | URL / Host | Port | Interval (Detik) | Alasan |
+|-----------------------|---------------|-------------|------|-------------------|--------|
+| **MER Production** | `HTTP(s)` | `https://mers-rsryacudu.com/login` | - | 60 | Health check via url website production (Cloudflare) |
+| **MER Staging** | `HTTP(s)` | `http://172.17.0.1:8080/login` | - | 60 | Health check staging via IP internal gateway Docker |
+| **PostgreSQL Live** | `TCP Port` | `172.17.0.1` | `5432` | 30 | Cek langsung port 5432 database PostgreSQL |
+| **Redis Server** | `Redis` | `redis://:secret_redis_staging@172.17.0.1:6379` | `6379` | 30 | Cek konektivitas node caching |
+| **SSH VPS Access**| `TCP Port` | `127.0.0.1` | `49152` | 60 | Cek apakah service custom SSH VPS berjalan sehat |
 
-### Setup Notifikasi
+*Catatan: Pastikan mengubah Nilai "Kode Status yang Diterima" pada bagian HTTP/S menjadi `200-299` atau kosongkan sesuai standar Uptime Kuma.*
 
-Uptime Kuma mendukung berbagai channel notifikasi. Konfigurasikan minimal:
+### Setup Notifikasi Alarm (Email Gmail)
 
-1. **Telegram Bot** — Untuk alert instant ke tim DevOps
-2. **Email** — Untuk notifikasi formal ke manajemen IT
+Uptime Kuma dapat mengirim peringatan seketika (alert) bila "Monitor" di atas berstatus **DOWN**:
+
+1. Klik tombol akun admin di sudut kanan atas > Pilih **Pengaturan** > Pilih **Notifikasi**
+2. Klik tombol **Setel Notifikasi**
+3. Isi parameter ini untuk Email via Gmail:
+   - **Tipe Notifikasi**: `Email (SMTP)`
+   - **Nama yang Ramah**: `Peringatan IT MER Server`
+   - **Nama Inang SMTP**: `smtp.gmail.com`
+   - **Port**: `465` (Secara SSL) atau `587`
+   - **Keamanan TLS**: Aktifkan (centang)
+   - **Pengguna Akun Email**: `[alamat.email.anda]@gmail.com`
+   - **Kata Sandi**: *(Gunakan Sandi Aplikasi / App Password Google, JANGAN sandi email asli!)*
+   - **Dari Surel (From)**: `[alamat.email.anda]@gmail.com`
+   - **Beralih Kepada (To)**: Email IT Manager/Penerima Alert
+4. Klik tombol **Uji Coba**, bila ada notifikasi sukses, simpan pengaturannya.
+5. Kaitkan notifikasi ini di tab *Umum* setiap Monitor yang telah dibuat.
 
 ---
 
