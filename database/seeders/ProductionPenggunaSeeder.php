@@ -165,7 +165,7 @@ class ProductionPenggunaSeeder extends Seeder
 
         // ── Step 3: Kepala Ruangan / Validator ───────────────────────────
         $this->command->info('  ▶ Membuat 28 akun Kepala Ruangan (Didaftarkan sebagai Nakes awal) ...');
-        $this->seedStaff($tenant->id, self::KARU_DATA, $peranNakes);
+        $this->seedStaff($tenant->id, self::KARU_DATA, $peranNakes, $peranKaru);
 
         $this->command->info('  ✔ ProductionPenggunaSeeder selesai: 59 akun production diproses.');
         $this->command->warn('  ⚠ Semua akun non-Admin diwajibkan ganti sandi pada login pertama.');
@@ -334,7 +334,7 @@ class ProductionPenggunaSeeder extends Seeder
      *
      * @param array<int, array<int, string>> $staffData
      */
-    private function seedStaff(int $tenantId, array $staffData, Peran $peran): void
+    private function seedStaff(int $tenantId, array $staffData, Peran ...$peranList): void
     {
         // Ambil semua unit kerja sekaligus untuk menghindari query per-record.
         $unitMap = DB::table('master.unit_kerja')
@@ -385,13 +385,16 @@ class ProductionPenggunaSeeder extends Seeder
                 $p = Pengguna::create($values);
             }
 
-            $p->peran()->syncWithoutDetaching([$peran->id]);
+            // Sync seberapa banyak pun peran yang di-passing dengan spread operator
+            $peranIds = array_map(fn($r) => $r->id, $peranList);
+            $p->peran()->syncWithoutDetaching($peranIds);
         }
 
+        $namaPeranStr = implode(', ', array_map(fn($r) => $r->nama_peran, $peranList));
         $this->command->line(sprintf(
             '    ✓ %d akun %s diproses.',
             count($staffData),
-            $peran->nama_peran,
+            $namaPeranStr
         ));
     }
 }
