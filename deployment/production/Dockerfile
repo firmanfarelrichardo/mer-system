@@ -24,7 +24,7 @@ FROM composer:2 AS composer-builder
 WORKDIR /build
 
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
 
 COPY . .
 RUN composer dump-autoload --no-dev --optimize
@@ -116,6 +116,7 @@ RUN mkdir -p \
         storage/framework/sessions \
         storage/framework/views \
         bootstrap/cache \
+        /var/log/supervisor \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 storage bootstrap/cache
 
@@ -138,3 +139,10 @@ ENTRYPOINT ["docker-entrypoint.sh"]
 # Supervisord sebagai PID 1 menggantikan php-fpm langsung.
 # Ini memungkinkan satu container mengelola php-fpm + queue worker secara bersamaan.
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+
+# ===========================================
+# MER System - PHP-FPM Pool Configuration
+# File: www.conf (override default pool)
+# ===========================================
+
+COPY deployment/production/www.conf /usr/local/etc/php-fpm.d/www.conf
