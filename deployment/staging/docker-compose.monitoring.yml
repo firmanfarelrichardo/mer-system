@@ -67,11 +67,6 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-      # Ini penting jika Grafana berada di belakang reverse proxy seperti Nginx
-      # dan kita ingin agar share link berfungsi dengan benar.
-      GF_SERVER_DOMAIN: mers-rsryacudu.com
-      GF_SERVER_ROOT_URL: https://mers-rsryacudu.com/grafana/
-      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       GF_LOG_LEVEL: warn
     volumes:
       - grafana-data:/var/lib/grafana
