@@ -73,6 +73,16 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Channel khusus audit data medis (wajib ada untuk keamanan data kesehatan)
+        'medical_audit' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/medical-audit.log'),
+            'level' => 'info',
+            'days' => 90,  // Retensi 90 hari di disk lokal (sesuai best practice HIS)
+            'permission' => 0640,
+            'replace_placeholders' => true,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),
