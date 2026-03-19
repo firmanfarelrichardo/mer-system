@@ -11,15 +11,16 @@
 
 1. [Konsep Isolasi Environment](#1-konsep-isolasi-environment)
 2. [Struktur Folder Server](#2-struktur-folder-server)
-3. [Instalasi Docker Engine](#3-instalasi-docker-engine)
-4. [Jebakan Docker & UFW — Solusi Teknis](#4-jebakan-docker--ufw--solusi-teknis)
-5. [Docker Compose Production](#5-docker-compose-production)
-6. [Docker Compose Staging](#6-docker-compose-staging)
-7. [Dockerfile Production (Multi-Stage Build)](#7-dockerfile-production-multi-stage-build)
-8. [Entrypoint Production](#8-entrypoint-production)
-9. [Kalkulasi Resource Budget (RAM 8GB)](#9-kalkulasi-resource-budget-ram-8gb)
-10. [Deployment Workflow](#10-deployment-workflow)
-11. [Verifikasi](#11-verifikasi)
+3. [SSH Deploy Key (Distribusi Kode Git yang Aman)](#3-ssh-deploy-key-distribusi-kode-git-yang-aman)
+4. [Instalasi Docker Engine](#4-instalasi-docker-engine)
+5. [Jebakan Docker & UFW — Solusi Teknis](#5-jebakan-docker--ufw--solusi-teknis)
+6. [Docker Compose Production](#6-docker-compose-production)
+7. [Docker Compose Staging](#7-docker-compose-staging)
+8. [Dockerfile Production (Multi-Stage Build)](#8-dockerfile-production-multi-stage-build)
+9. [Entrypoint Production](#9-entrypoint-production)
+10. [Kalkulasi Resource Budget (RAM 8GB)](#10-kalkulasi-resource-budget-ram-8gb)
+11. [Deployment Workflow](#11-deployment-workflow)
+12. [Verifikasi](#12-verifikasi)
 
 ---
 
@@ -98,7 +99,181 @@ sudo chown -R mer_ops:mer_ops /var/log/mer-system
 
 ---
 
-## 3. Instalasi Docker Engine
+## 3. SSH Deploy Key (Distribusi Kode Git yang Aman)
+
+### Mengapa Bukan FTP/SFTP?
+
+**Versi Formal:** FTP (File Transfer Protocol) mengirimkan kredensial dan data dalam bentuk *plaintext* — artinya siapapun yang melakukan network sniffing di jalur antara komputer Anda dan server dapat melihat username, password, dan seluruh kode sumber yang ditransfer. SFTP lebih baik (terenkripsi), tapi tetap memiliki kelemahan operasional: tidak ada version tracking, tidak ada rollback capability, dan rawan human error (upload file yang salah, menimpa file konfigurasi). SSH Deploy Key dengan Git memberikan distribusi kode yang terenkripsi, auditable (setiap perubahan tercatat di commit history), dan reproducible (bisa rollback ke commit manapun).
+
+**Versi Sederhana:** FTP seperti mengirim dokumen rahasia rumah sakit lewat pos terbuka — siapapun bisa membaca isinya. SFTP seperti pos tercatat — lebih aman tapi tidak ada catatan apa yang dikirim kapan. Git + Deploy Key seperti sistem kurir rumah sakit yang terenkripsi, tercatat setiap pengiriman, dan bisa menarik kembali dokumen jika salah kirim.
+
+### Apa Itu SSH Deploy Key?
+
+**Versi Formal:** SSH Deploy Key adalah pasangan kunci kriptografis Ed25519 yang di-generate khusus di server (bukan di komputer lokal) dan didaftarkan ke platform Git (GitHub/GitLab) sebagai **read-only key**. Berbeda dengan SSH key personal yang memberikan akses ke semua repository akun, Deploy Key hanya memberikan akses ke **satu repository spesifik** dengan hak baca saja. Jika server dikompromikan, attacker hanya bisa membaca kode sumber dari satu repository — tidak bisa mengubah kode atau mengakses repository lain.
+
+**Versi Sederhana:** Deploy Key seperti kartu akses ruang arsip yang hanya bisa "baca" — staf bisa masuk dan menyalin dokumen (git pull), tapi tidak bisa mengubah atau menghapus arsip asli (read-only). Dan kartu ini hanya berlaku untuk satu ruang arsip (satu repository), bukan seluruh gedung.
+
+### Eksekusi — Generate Deploy Key di VPS
+
+> **Konteks Eksekusi:** `User: mer_ops @ VPS`
+
+```bash
+# Generate SSH key pair Ed25519 khusus untuk deploy.
+# -t ed25519    : algoritma kriptografi modern (kecil, cepat, aman)
+# -C "..."      : label identifikasi agar mudah dikenali
+# -f ~/.ssh/... : lokasi penyimpanan — TERPISAH dari key personal
+# -N ""         : tanpa passphrase (diperlukan untuk operasi otomatis
+#                 seperti cronjob atau CI/CD yang tidak bisa input passphrase)
+ssh-keygen -t ed25519 -C "deploy@mer-system-vps" -f ~/.ssh/mer_deploy_ed25519 -N ""
+```
+
+**Mengapa tanpa passphrase?**
+
+Deploy key tanpa passphrase diperbolehkan karena:
+1. Key ini bersifat **read-only** — jika dicuri, attacker hanya bisa membaca kode (yang mungkin sudah open-source atau bisa di-revoke segera).
+2. Key ini digunakan oleh **proses otomatis** (git pull via script/cron) yang tidak bisa memasukkan passphrase secara interaktif.
+3. Keamanan dijaga melalui **permission file yang ketat** dan **hak akses read-only di platform Git**.
+
+```bash
+# Set permission ketat pada private key.
+# 600 = hanya pemilik (mer_ops) yang bisa baca/tulis.
+chmod 600 ~/.ssh/mer_deploy_ed25519
+chmod 644 ~/.ssh/mer_deploy_ed25519.pub
+
+# Tampilkan public key — salin output ini untuk langkah berikutnya.
+cat ~/.ssh/mer_deploy_ed25519.pub
+# Output contoh:
+# ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... deploy@mer-system-vps
+```
+
+### Eksekusi — Daftarkan Deploy Key di GitHub
+
+```
+Navigasi: github.com > Repository mer-system > Settings > Deploy keys > Add deploy key
+```
+
+| Field | Nilai |
+|-------|-------|
+| **Title** | `VPS Production - Read Only (mer_ops)` |
+| **Key** | *(paste isi dari `cat ~/.ssh/mer_deploy_ed25519.pub`)* |
+| **Allow write access** | **JANGAN dicentang** (biarkan unchecked = read-only) |
+
+Klik **Add key**.
+
+> [!IMPORTANT]
+> **JANGAN centang "Allow write access"** kecuali Anda memerlukan server untuk melakukan `git push` (biasanya tidak diperlukan untuk deployment). Read-only key menerapkan prinsip *Least Privilege* — server hanya perlu *membaca* kode, bukan *menulis*.
+
+### Eksekusi — Daftarkan Deploy Key di GitLab (Alternatif)
+
+Jika menggunakan GitLab sebagai platform Git:
+
+```
+Navigasi: gitlab.com > Project mer-system > Settings > Repository > Deploy keys > Add new key
+```
+
+| Field | Nilai |
+|-------|-------|
+| **Title** | `VPS Production - Read Only (mer_ops)` |
+| **Key** | *(paste isi dari `cat ~/.ssh/mer_deploy_ed25519.pub`)* |
+| **Grant write permissions** | **Tidak dicentang** (read-only) |
+| **Expiry date** | *(opsional, kosongkan untuk tanpa batas waktu)* |
+
+### Eksekusi — Konfigurasi SSH Client di VPS
+
+> **Konteks Eksekusi:** `User: mer_ops @ VPS`
+
+```bash
+# Buat/edit SSH config agar git secara otomatis menggunakan deploy key
+# saat berkomunikasi dengan GitHub.
+# IdentitiesOnly=yes mencegah SSH mencoba key lain (menghindari
+# "Too many authentication failures" jika ada banyak key).
+
+mkdir -p ~/.ssh
+
+cat >> ~/.ssh/config << 'SSH_GIT_CONFIG'
+
+# --- MER System Deploy Key (Git Operations) ---
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/mer_deploy_ed25519
+    IdentitiesOnly yes
+SSH_GIT_CONFIG
+
+chmod 600 ~/.ssh/config
+```
+
+**Untuk GitLab**, ganti blok di atas dengan:
+
+```bash
+cat >> ~/.ssh/config << 'SSH_GIT_CONFIG'
+
+# --- MER System Deploy Key (Git Operations) ---
+Host gitlab.com
+    HostName gitlab.com
+    User git
+    IdentityFile ~/.ssh/mer_deploy_ed25519
+    IdentitiesOnly yes
+SSH_GIT_CONFIG
+```
+
+### Eksekusi — Verifikasi Koneksi
+
+```bash
+# Test koneksi SSH ke GitHub menggunakan deploy key.
+ssh -T git@github.com
+# Output yang diharapkan:
+# Hi <username>/<repository>! You've successfully authenticated,
+# but GitHub does not provide shell access.
+
+# Untuk GitLab:
+# ssh -T git@gitlab.com
+# Output: Welcome to GitLab, @<username>!
+```
+
+### Eksekusi — Clone Repository dengan Deploy Key
+
+```bash
+# Clone repository ke folder production.
+# GUNAKAN URL SSH (git@github.com:...) — BUKAN HTTPS.
+# URL HTTPS memerlukan personal access token, sedangkan
+# URL SSH akan otomatis menggunakan deploy key yang sudah dikonfigurasi.
+cd /var/www/mer-system
+git clone git@github.com:<ORGANISASI>/mer-system.git production
+
+# Clone ke folder staging (branch berbeda)
+git clone -b staging git@github.com:<ORGANISASI>/mer-system.git staging
+
+# Verifikasi remote URL menggunakan SSH
+cd /var/www/mer-system/production
+git remote -v
+# Output seharusnya:
+# origin  git@github.com:<ORGANISASI>/mer-system.git (fetch)
+# origin  git@github.com:<ORGANISASI>/mer-system.git (push)
+```
+
+### Eksekusi — Pull Kode Terbaru (Update Deployment)
+
+```bash
+# Setiap kali ada update kode, cukup jalankan:
+cd /var/www/mer-system/production
+git pull origin main
+
+# Untuk staging:
+cd /var/www/mer-system/staging
+git pull origin staging
+```
+
+> [!NOTE]
+> Jika Anda perlu mengganti deploy key (rotasi key, key compromised), cukup:
+> 1. Generate key baru: `ssh-keygen -t ed25519 -C "deploy@mer-system-vps" -f ~/.ssh/mer_deploy_ed25519 -N ""`
+> 2. Hapus key lama di GitHub/GitLab Settings > Deploy keys
+> 3. Tambahkan key baru (public key) ke GitHub/GitLab
+> 4. Test: `ssh -T git@github.com`
+
+---
+
+## 4. Instalasi Docker Engine
 
 ### Mengapa Docker CE Official dan Bukan apt default?
 
@@ -148,7 +323,7 @@ sudo tee /etc/docker/daemon.json > /dev/null << 'DOCKER_DAEMON'
 {
   "log-driver": "json-file",
   "log-opts": {
-    "max-size": "10m",
+    "max-size": "50m",
     "max-file": "3"
   },
   "storage-driver": "overlay2",
@@ -170,15 +345,18 @@ sudo systemctl enable docker
 | Parameter | Nilai | Alasan |
 |-----------|-------|--------|
 | `log-driver` | `json-file` | Format log yang kompatibel dengan Promtail/Loki |
-| `max-size` | `10m` | Batas ukuran per file log. Mencegah disk penuh akibat log yang membengkak |
-| `max-file` | `3` | Rotasi 3 file = maksimum 30MB log per container |
+| `max-size` | `50m` | Batas ukuran per file log container. Nilai 50MB dipilih karena sistem medis production menghasilkan log yang lebih verbose (audit trail, error tracking DOMPDF, query logging). Nilai terlalu kecil (10MB) menyebabkan log penting ter-rotasi sebelum sempat dianalisis. Nilai terlalu besar (>100MB) berisiko menghabiskan disk |
+| `max-file` | `3` | Rotasi 3 file = maksimum **150MB log per container**. Dengan ~8 container aktif (production + staging), total worst-case pemakaian disk untuk log = 8 x 150MB = **1.2GB** — aman untuk SSD 100GB |
 | `storage-driver` | `overlay2` | Driver storage paling efisien untuk Linux modern |
 | `live-restore` | `true` | Container tetap berjalan saat Docker daemon restart (zero downtime untuk maintenance daemon) |
 | `default-address-pools` | `172.20-21.x.x` | Mencegah konflik IP dengan subnet lokal dan VPN |
 
+> [!IMPORTANT]
+> **Mengapa `max-size` ditingkatkan ke 50MB?** Konfigurasi log rotation ini adalah pencegahan terhadap error **"No space left on device"** yang merupakan penyebab downtime paling umum di server Docker production. Tanpa rotasi, satu container yang mengalami *error loop* (misalnya koneksi database gagal terus-menerus) bisa menghasilkan log bergigabyte dalam hitungan jam, menghabiskan seluruh disk, dan menyebabkan **semua container** gagal — termasuk database. Konfigurasi `max-size: 50m` dengan `max-file: 3` menjamin setiap container tidak pernah menggunakan lebih dari 150MB disk untuk log.
+
 ---
 
-## 4. Jebakan Docker & UFW — Solusi Teknis
+## 5. Jebakan Docker & UFW — Solusi Teknis
 
 ### Masalah
 
@@ -243,7 +421,7 @@ sudo netfilter-persistent save
 
 ---
 
-## 5. Docker Compose Production
+## 6. Docker Compose Production
 
 ### File Konfigurasi
 
@@ -290,6 +468,8 @@ services:
       CACHE_STORE: redis
       SESSION_DRIVER: redis
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
     volumes:
       - shared-public:/public-shared
       - app-storage:/var/www/html/storage/app
@@ -435,7 +615,7 @@ volumes:
 
 APP_NAME="MER System"
 APP_KEY=base64:GENERATE_DENGAN_php_artisan_key_generate
-APP_URL=https://mer-system.rs.id
+APP_URL=https://mers-rsryacudu.com
 
 DB_DATABASE=mer_production
 DB_USERNAME=mer_dbadmin
@@ -447,11 +627,14 @@ REDIS_PASSWORD=GENERATE_PASSWORD_REDIS_MINIMAL_32_KARAKTER
 
 QUEUE_CONNECTION=redis
 APP_PORT=80
+
+SENTRY_LARAVEL_DSN="https://public@sentry.example.com/1"
+SENTRY_TRACES_SAMPLE_RATE="1.0"
 ```
 
 ---
 
-## 6. Docker Compose Staging
+## 7. Docker Compose Staging
 
 ### Prinsip Isolasi Staging
 
@@ -627,7 +810,7 @@ volumes:
 
 ---
 
-## 7. Dockerfile Production (Multi-Stage Build)
+## 8. Dockerfile Production (Multi-Stage Build)
 
 ### Mengapa Multi-Stage Build?
 
@@ -642,7 +825,7 @@ Referensi file: [`deployment/production/Dockerfile`](../deployment/production/Do
 
 ---
 
-## 8. Entrypoint Production
+## 9. Entrypoint Production
 
 File `docker-entrypoint.sh` menjalankan 4 langkah inisialisasi setiap kali container production dimulai:
 
@@ -657,7 +840,7 @@ Referensi file: [`deployment/production/docker-entrypoint.sh`](../deployment/pro
 
 ---
 
-## 9. Kalkulasi Resource Budget (RAM 8GB)
+## 10. Kalkulasi Resource Budget (RAM 8GB)
 
 ### Mengapa Memory Limit Penting?
 
@@ -699,7 +882,7 @@ BUFFER: ~544 MB (headroom untuk spike traffic)
 
 ---
 
-## 10. Deployment Workflow
+## 11. Deployment Workflow
 
 ### Initial Deployment (Pertama Kali)
 
@@ -727,10 +910,10 @@ nano .env
 docker run --rm -v $(pwd):/app -w /app php:8.2-cli php artisan key:generate
 
 # 6. Build dan deploy
-docker compose -f deployment/production/docker-compose.yml up -d --build
+docker compose --env-file .env -f deployment/production/docker-compose.yml up -d --build
 
 # 7. Verifikasi semua container berjalan
-docker compose -f deployment/production/docker-compose.yml ps
+docker compose --env-file .env -f deployment/production/docker-compose.yml ps
 
 # 8. Test health endpoint
 curl http://localhost/health
@@ -743,15 +926,15 @@ curl http://localhost/health
 cd /var/www/mer-system/production
 
 # 2. Tarik kode terbaru
-git pull origin main
+git pull origin production
 
 # 3. Rebuild dan deploy (hanya app yang perlu rebuild)
-docker compose -f deployment/production/docker-compose.yml build app
-docker compose -f deployment/production/docker-compose.yml up -d --no-deps app
+docker compose --env-file .env -f deployment/production/docker-compose.yml build app
+docker compose --env-file .env -f deployment/production/docker-compose.yml up -d --no-deps app
 
 # 4. Verifikasi
-docker compose -f deployment/production/docker-compose.yml ps
-docker compose -f deployment/production/docker-compose.yml logs --tail 50 app
+docker compose --env-file .env -f deployment/production/docker-compose.yml ps
+docker compose --env-file .env -f deployment/production/docker-compose.yml logs --tail 50 app
 ```
 
 ### Staging Deployment
@@ -765,22 +948,96 @@ cd staging
 cp .env.example .env
 nano .env  # Sesuaikan untuk staging
 
-docker compose -f deployment/staging/docker-compose.yml up -d --build
+# --- TROUBLESHOOTING & CATATAN PENTING STAGING ---
+# 1. Port Collision: Pastikan nilai APP_PORT tidak bentrok dengan production (misal gunakan APP_PORT=8080).
+#    Jika .env stagging menggunakan port 80, web container akan gagal (bind: port is already allocated).
+# 2. Resolusi Nginx DNS: Pada file konfigurasi Nginx staging (deployment/staging/nginx/default.conf),
+#    pastikan 'fastcgi_pass' mengarah ke _container_name_ eksak (contoh: 'mer-app-dev:9000' atau 'mer-app-staging:9000'),
+#    Bukan nama service ('app:9000'). Jika tidak, Nginx akan terkena crash loop "host not found in upstream".
+# -------------------------------------------------
+
+docker compose --env-file .env -f deployment/staging/docker-compose.yml up -d --build
 ```
 
 ### Akses Staging dari Komputer Lokal
 
-```bash
-# Buat SSH Tunnel dari komputer lokal
-ssh -L 8080:127.0.0.1:8080 -p 49152 mer_ops@<IP_VPS_ANDA>
+Karena keamanan Nginx Staging membatasinya hanya pada `127.0.0.1:8080` di internal VPS, Anda perlu membuka jalur terenkripsi (SSH Tunnel) dari komputer lokal ke VPS tersebut.
 
-# Buka browser: http://localhost:8080
-# Anda akan melihat instance staging MER System
+```bash
+# Buka terminal DI KOMPUTER LOKAL Anda (jangan jalankan di dalam VPS).
+# Jika Anda sebelumnya sudah mengatur alias ~/.ssh/config ('mer-vps'):
+ssh -L 8080:127.0.0.1:8080 mer-vps
+
+# Atau jika menggunakan perintah manual (pastikan path SSH key dan IP benar):
+ssh -L 8080:127.0.0.1:8080 -p 49152 mer-vps
+
+# JANGAN tutup terminal ini (biarkan tetap menyala untuk menjaga tunnel).
+# Buka browser di komputer lokal dan kunjungi (disarankan bukan localhost tapi IP balik langsung):
+# http://127.0.0.1:8080
+# Anda akan melihat instance staging MER System tersambung secara otomatis.
+```
+
+### Siklus Kerja Developer (Workflow Staging ke Production)
+
+**PENTING:** Perubahan file yang Anda lakukan langsung di direktori VPS **TIDAK AKAN** otomatis tersimpan ke GitHub. Server VPS bersifat pasif (hanya *menarik* kode, bukan tempat untuk *ngoding*). 
+
+Berikut adalah SOP jika Anda ingin mengupdate kode aplikasi (misalnya mengubah CSS, menambah fitur, atau memperbaiki bug):
+
+**Tahap 1: Ngoding di Komputer/Laptop Lokal Anda**
+```bash
+# 1. Pastikan Anda berada di branch staging di lokal
+git checkout staging
+git pull origin staging
+
+# 2. Lakukan perubahan kode (modifikasi fitur, perbaiki tampilan, dsb.) via VSCode
+npm run build # (Opsi: Jika memakai vite, biasakan build di lokal juga untuk test)
+
+# 3. Commit dan Push ke repository GitHub
+git add .
+git commit -m "feat: perbaikan tampilan CSS login"
+git push origin staging
+```
+
+**Tahap 2: Menarik Kode & Uji Coba di VPS Staging**
+```bash
+# 1. Masuk ke environment staging di VPS
+cd /var/www/mer-system/staging
+
+# 2. Tarik update kode terbaru
+git pull origin staging
+
+# 3. Terapkan pembaruan (Compile ulang aset Frontend jika ada perubahan)
+# (Kompilasi CSS/JS wajib dilakukan menggunakan container sementara node)
+docker run --rm -v $(pwd):/app -w /app node:20-alpine sh -c "npm install && npm run build"
+
+# 4. Tes hasilnya di browser laptop Anda melalui SSH Tunnel (http://127.0.0.1:8080)
+# Refresh paksa (Ctrl+F5) untuk membuang cache lama.
+```
+
+**Tahap 3: Replikasi ke Production (Jika Uji Coba Staging LULUS)**
+```bash
+# (KEMBALI KE LAPTOP LOKAL)
+# 1. Gabungkan kode dari staging ke branch utama (main)
+git checkout main
+git merge staging
+git push origin main
+
+# (KEMBALI KE TERMINAL VPS)
+# 2. Terapkan update di environment production
+cd /var/www/mer-system/production
+git pull origin main
+
+# 3. Compile ulang aset Frontend untuk production
+docker run --rm -v $(pwd):/app -w /app node:20-alpine sh -c "npm install && npm run build"
+
+# (JIKA ada pembaruan package composer atau environment, maka perlu restart PHP)
+docker compose -f deployment/production/docker-compose.yml build app
+docker compose -f deployment/production/docker-compose.yml up -d --no-deps app
 ```
 
 ---
 
-## 11. Verifikasi
+## 12. Verifikasi
 
 ### Verifikasi Isolasi Network
 
@@ -793,11 +1050,11 @@ echo "========================================="
 
 echo ""
 echo "[1] Container Status (Production)"
-docker compose -f /var/www/mer-system/production/deployment/production/docker-compose.yml ps
+docker compose --env-file .env -f /var/www/mer-system/production/deployment/production/docker-compose.yml ps
 
 echo ""
 echo "[2] Container Status (Staging)"
-docker compose -f /var/www/mer-system/staging/deployment/staging/docker-compose.yml ps 2>/dev/null || echo "  Staging belum di-deploy"
+docker compose --env-file .env -f /var/www/mer-system/staging/deployment/staging/docker-compose.yml ps 2>/dev/null || echo "  Staging belum di-deploy"
 
 echo ""
 echo "[3] Network Isolation"

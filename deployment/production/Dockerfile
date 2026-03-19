@@ -41,9 +41,18 @@ COPY public/ ./public/
 
 RUN npm run build
 
-# ╔══════════════════════════════════════════════════════╗
-# ║  Stage 3: Final — PHP 8.2 FPM Alpine (Production)   ║
-# ╚══════════════════════════════════════════════════════╝
+# ==== Stage 2: Install PHP dependencies ====
+FROM composer:2 AS composer-builder
+
+WORKDIR /build
+
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
+
+COPY . .
+RUN composer dump-autoload --no-dev --optimize
+
+# ==== Stage 3: Production PHP-FPM image ====
 # php:8.2-fpm-alpine dipilih karena:
 # - LTS dengan dukungan security update panjang
 # - Alpine meminimalkan attack surface (image ~90MB vs ~450MB debian)
@@ -148,6 +157,7 @@ RUN mkdir -p \
         storage/framework/sessions \
         storage/framework/views \
         bootstrap/cache \
+        /var/log/supervisor \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 storage bootstrap/cache
 
@@ -181,3 +191,10 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+
+# ===========================================
+# MER System - PHP-FPM Pool Configuration
+# File: www.conf (override default pool)
+# ===========================================
+
+COPY deployment/production/www.conf /usr/local/etc/php-fpm.d/www.conf

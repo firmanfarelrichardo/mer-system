@@ -1,0 +1,82 @@
+name: Staging Pipeline
+
+on:
+  push:
+    branches:
+      - staging
+
+concurrency:
+  group: staging-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy-staging:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pdo_pgsql, mbstring, redis, curl, xml, zip
+          coverage: none
+
+      - name: Install Composer Dependencies
+        run: composer install --optimize-autoloader --no-dev --no-interaction --prefer-dist
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install NPM & Build Assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Package Artifact
+        run: |
+          # Menghapus source khusus build untuk mengurangi ukuran upload
+          rm -rf node_modules
+          rm -rf .git
+          tar -czf ../release.tar.gz .
+          mv ../release.tar.gz .
+
+      - name: Upload Artifact to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USER }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "release.tar.gz"
+          target: "/var/www/mer-system/staging"
+
+      - name: Execute Deployment Commands
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_SSH_HOST }}
+          username: ${{ secrets.VPS_SSH_USER }}
+          port: ${{ secrets.VPS_SSH_PORT }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /var/www/mer-system/staging
+            tar -xzf release.tar.gz
+            rm release.tar.gz
+            
+            # 1. Sesuaikan kembali Hak Akses Storage (Abaikan bila sudah benar)
+            chown -R 33:33 storage bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
+            
+            # 2. Rebuild dan Replace Container Web tanpa Menyetuh Database
+            docker compose -f deployment/staging/docker-compose.yml --env-file .env build app
+            docker compose -f deployment/staging/docker-compose.yml --env-file .env up -d app
+            
+            # 3. Optimasi, Migrasi Model, dan Cache Routes (Safety Run)
+            docker compose -f deployment/staging/docker-compose.yml --env-file .env exec -T app php artisan optimize:clear
+            docker compose -f deployment/staging/docker-compose.yml --env-file .env exec -T app php artisan migrate --force
+            docker compose -f deployment/staging/docker-compose.yml --env-file .env exec -T app php artisan optimize

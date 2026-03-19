@@ -12,15 +12,16 @@
 1. [Gambaran Arsitektur Sistem](#1-gambaran-arsitektur-sistem)
 2. [Diagram Arsitektur Defense in Depth](#2-diagram-arsitektur-defense-in-depth)
 3. [Provisioning Awal & Pembaruan Sistem](#3-provisioning-awal--pembaruan-sistem)
-4. [Pembuatan User Operasional (Non-Root)](#4-pembuatan-user-operasional-non-root)
-5. [Autentikasi Kriptografis SSH Key Ed25519](#5-autentikasi-kriptografis-ssh-key-ed25519)
-6. [Hardening Daemon SSH](#6-hardening-daemon-ssh)
-7. [Konfigurasi Firewall UFW Eksklusif Cloudflare](#7-konfigurasi-firewall-ufw-eksklusif-cloudflare)
-8. [Skrip Otomatis Pembaruan IP Cloudflare (Cronjob)](#8-skrip-otomatis-pembaruan-ip-cloudflare-cronjob)
-9. [Konfigurasi Fail2Ban Anti Brute-Force](#9-konfigurasi-fail2ban-anti-brute-force)
-10. [Hardening Kernel (Sysctl)](#10-hardening-kernel-sysctl)
-11. [Automatic Security Updates (Unattended Upgrades)](#11-automatic-security-updates-unattended-upgrades)
-12. [Verifikasi Akhir](#12-verifikasi-akhir)
+4. [Alokasi Swap File 4GB (Pencegahan OOM)](#4-alokasi-swap-file-4gb-pencegahan-oom)
+5. [Pembuatan User Operasional (Non-Root)](#5-pembuatan-user-operasional-non-root)
+6. [Autentikasi Kriptografis SSH Key Ed25519](#6-autentikasi-kriptografis-ssh-key-ed25519)
+7. [Hardening Daemon SSH](#7-hardening-daemon-ssh)
+8. [Konfigurasi Firewall UFW Eksklusif Cloudflare](#8-konfigurasi-firewall-ufw-eksklusif-cloudflare)
+9. [Skrip Otomatis Pembaruan IP Cloudflare (Cronjob)](#9-skrip-otomatis-pembaruan-ip-cloudflare-cronjob)
+10. [Konfigurasi Fail2Ban Anti Brute-Force](#10-konfigurasi-fail2ban-anti-brute-force)
+11. [Hardening Kernel (Sysctl)](#11-hardening-kernel-sysctl)
+12. [Automatic Security Updates (Unattended Upgrades)](#12-automatic-security-updates-unattended-upgrades)
+13. [Verifikasi Akhir](#13-verifikasi-akhir)
 
 ---
 
@@ -158,7 +159,106 @@ timedatectl status
 
 ---
 
-## 4. Pembuatan User Operasional (Non-Root)
+## 4. Alokasi Swap File 4GB (Pencegahan OOM)
+
+### Mengapa Perlu Swap File?
+
+**Versi Formal:** Swap adalah mekanisme *virtual memory* di Linux yang menggunakan sebagian disk sebagai ekstensi RAM. Ketika physical RAM hampir penuh, kernel memindahkan (*page out*) data yang jarang diakses dari RAM ke swap space, membebaskan RAM untuk proses yang aktif. Pada VPS 8GB yang menjalankan Docker build (multi-stage compilation), PostgreSQL, dan PHP-FPM secara simultan, puncak penggunaan RAM dapat melampaui kapasitas fisik. Tanpa swap, Linux OOM Killer akan secara paksa membunuh (*kill*) proses dengan konsumsi RAM tertinggi — yang biasanya adalah database production. Swap memberikan *safety net* agar kernel punya opsi paging sebelum memicu OOM Killer.
+
+**Versi Sederhana:** RAM itu seperti meja kerja dokter — terbatas luasnya. Saat meja penuh dan ada berkas baru masuk, tanpa swap berarti berkas-berkas yang sedang dikerjakan dibuang ke lantai (proses di-kill). Swap seperti menyediakan laci tambahan di samping meja: berkas yang jarang dilihat disimpan di laci (disk), sehingga meja tetap punya ruang untuk tugas yang sedang aktif.
+
+### Mengapa 4GB?
+
+| Skenario | Estimasi Puncak RAM | Tanpa Swap | Dengan Swap 4GB |
+|----------|---------------------|------------|------------------|
+| Docker multi-stage build (Node + PHP + Composer) | ~6-7GB | OOM Kill saat kompilasi asset | Build selesai, sedikit lebih lambat |
+| Lonjakan traffic + PDF generation DOMPDF | ~7-8GB | PostgreSQL atau PHP-FPM di-kill | Sistem tetap responsif |
+| Operasi normal (idle/rendah) | ~3-4GB | Aman | Swap tidak terpakai (0% usage) |
+
+**Aturan praktis:** Untuk server dengan RAM 8GB yang bukan dedicated database server, swap 4GB (50% RAM) memberikan keseimbangan antara *safety margin* dan *disk I/O overhead*.
+
+### Eksekusi
+
+> **Konteks Eksekusi:** `User: root @ VPS`
+
+```bash
+# Periksa apakah swap sudah ada sebelumnya.
+# Jika output kosong, artinya belum ada swap — lanjutkan.
+# Jika sudah ada entri, evaluasi apakah ukurannya cukup.
+swapon --show
+
+# Buat swap file berukuran 4GB.
+# fallocate lebih cepat dari dd karena mengalokasikan blok disk
+# tanpa perlu menulis data (zero-copy allocation).
+fallocate -l 4G /swapfile
+
+# Set permission ketat: HANYA root yang boleh baca/tulis.
+# Swap file yang bisa dibaca user lain adalah kerentanan keamanan
+# karena bisa mengandung data sensitif yang di-page-out dari RAM
+# (potongan password, session token, data medis).
+chmod 600 /swapfile
+
+# Format file sebagai swap space.
+mkswap /swapfile
+
+# Aktifkan swap file.
+swapon /swapfile
+
+# Verifikasi swap sudah aktif.
+swapon --show
+# Output yang diharapkan:
+# NAME      TYPE  SIZE USED PRIO
+# /swapfile file    4G   0B   -2
+
+# Tampilkan ringkasan memori (RAM + Swap)
+free -h
+# Baris "Swap:" harus menunjukkan total 4.0Gi
+```
+
+### Persistensi Setelah Reboot
+
+```bash
+# Tanpa baris ini di /etc/fstab, swap file akan hilang setelah server reboot.
+# Kita menambahkan entri agar Linux otomatis mengaktifkan swap saat boot.
+echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
+
+# Verifikasi entri fstab
+grep swap /etc/fstab
+# Output: /swapfile none swap sw 0 0
+```
+
+### Tuning Kernel: Swappiness
+
+```bash
+# vm.swappiness mengontrol seberapa agresif kernel menggunakan swap.
+# Nilai 0-100:
+#   0  = kernel HAMPIR TIDAK PERNAH swap (hanya saat emergency)
+#   60 = default Ubuntu (terlalu agresif untuk server database)
+#   10 = kernel hanya swap jika RAM benar-benar hampir penuh
+#
+# Nilai 10 dipilih karena:
+# - PostgreSQL dan Redis sangat bergantung pada data di RAM
+# - Swapping data database ke disk menyebabkan latency 100-1000x lipat
+# - Swap hanya boleh dipakai sebagai safety net, BUKAN operasi normal
+
+# Terapkan langsung (berlaku sampai reboot)
+sysctl vm.swappiness=10
+
+# Persist ke konfigurasi kernel agar bertahan setelah reboot.
+# File ini akan dibaca oleh sysctl saat boot.
+echo 'vm.swappiness=10' | tee -a /etc/sysctl.d/99-mer-security.conf
+
+# Verifikasi nilai aktif
+sysctl vm.swappiness
+# Output: vm.swappiness = 10
+```
+
+> [!WARNING]
+> **Swap BUKAN pengganti RAM.** Disk I/O (bahkan SSD) 10-100x lebih lambat dari RAM. Jika `swapon --show` secara konsisten menunjukkan USED > 1GB saat operasi normal, ini adalah sinyal bahwa VPS membutuhkan upgrade RAM, bukan penambahan swap.
+
+---
+
+## 5. Pembuatan User Operasional (Non-Root)
 
 ### Mengapa Tidak Boleh Pakai Root?
 
@@ -200,7 +300,7 @@ Kombinasi ini menerapkan model *"key-only authentication"*:
 
 ---
 
-## 5. Autentikasi Kriptografis SSH Key Ed25519
+## 6. Autentikasi Kriptografis SSH Key Ed25519
 
 ### Mengapa Ed25519?
 
@@ -281,7 +381,7 @@ sudo whoami
 
 ---
 
-## 6. Hardening Daemon SSH
+## 7. Hardening Daemon SSH
 
 ### Mengapa Harus Di-hardening?
 
@@ -421,7 +521,7 @@ ssh mer-vps
 
 ---
 
-## 7. Konfigurasi Firewall UFW Eksklusif Cloudflare
+## 8. Konfigurasi Firewall UFW Eksklusif Cloudflare
 
 ### Mengapa UFW Harus Eksklusif Cloudflare?
 
@@ -483,7 +583,7 @@ sudo ufw status verbose
 
 ---
 
-## 8. Skrip Otomatis Pembaruan IP Cloudflare (Cronjob)
+## 9. Skrip Otomatis Pembaruan IP Cloudflare (Cronjob)
 
 ### Mengapa Perlu Otomatisasi?
 
@@ -596,7 +696,7 @@ sudo ufw status numbered
 
 ---
 
-## 9. Konfigurasi Fail2Ban Anti Brute-Force
+## 10. Konfigurasi Fail2Ban Anti Brute-Force
 
 ### Mengapa Fail2Ban?
 
@@ -673,7 +773,7 @@ Status for the jail: sshd
 
 ---
 
-## 10. Hardening Kernel (Sysctl)
+## 11. Hardening Kernel (Sysctl)
 
 ### Mengapa Perlu Tuning Kernel?
 
@@ -745,7 +845,7 @@ sudo sysctl -p /etc/sysctl.d/99-mer-security.conf
 
 ---
 
-## 11. Automatic Security Updates (Unattended Upgrades)
+## 12. Automatic Security Updates (Unattended Upgrades)
 
 ### Mengapa Auto-Update?
 
@@ -790,7 +890,7 @@ sudo unattended-upgrades --dry-run --debug 2>&1 | head -20
 
 ---
 
-## 12. Verifikasi Akhir
+## 13. Verifikasi Akhir
 
 Setelah semua langkah selesai, jalankan checklist verifikasi berikut:
 
@@ -823,21 +923,26 @@ echo "  Service      : $(systemctl is-active fail2ban)"
 echo "  SSH Jail     : $(sudo fail2ban-client status sshd 2>/dev/null | grep 'Currently banned' || echo 'NOT RUNNING')"
 echo ""
 
-echo "[5] Kernel Hardening"
+echo "[5] Swap File"
+echo "  Swap active  : $(swapon --show --noheadings | awk '{print $1, $3}' || echo 'NO SWAP')"
+echo "  Swappiness   : $(sysctl -n vm.swappiness)"
+echo ""
+
+echo "[6] Kernel Hardening"
 echo "  SYN cookies  : $(sysctl -n net.ipv4.tcp_syncookies)"
 echo "  RP filter    : $(sysctl -n net.ipv4.conf.all.rp_filter)"
 echo "  Redirects    : $(sysctl -n net.ipv4.conf.all.accept_redirects)"
 echo ""
 
-echo "[6] Auto Updates"
+echo "[7] Auto Updates"
 echo "  Service      : $(systemctl is-active unattended-upgrades)"
 echo ""
 
-echo "[7] Timezone"
+echo "[8] Timezone"
 echo "  Timezone     : $(timedatectl show -p Timezone --value)"
 echo ""
 
-echo "[8] Cloudflare Cronjob"
+echo "[9] Cloudflare Cronjob"
 sudo crontab -l 2>/dev/null | grep -c 'cloudflare' && echo "  Status: ACTIVE" || echo "  Status: NOT FOUND"
 echo ""
 echo "========================================="
@@ -853,12 +958,13 @@ echo "========================================="
 | 2 | SSH Port | `Port 49152` |
 | 3 | Root Login | `PermitRootLogin no` |
 | 4 | Password Auth | `PasswordAuthentication no` |
-| 5 | UFW Status | `active` dengan 15+ rules Cloudflare |
-| 6 | Fail2Ban | `active`, SSH jail running |
-| 7 | SYN cookies | `1` |
-| 8 | Auto Updates | `active` |
-| 9 | Timezone | `Asia/Jakarta` |
-| 10 | CF Cronjob | `ACTIVE` |
+| 5 | Swap File | `/swapfile 4G`, swappiness `10` |
+| 6 | UFW Status | `active` dengan 15+ rules Cloudflare |
+| 7 | Fail2Ban | `active`, SSH jail running |
+| 8 | SYN cookies | `1` |
+| 9 | Auto Updates | `active` |
+| 10 | Timezone | `Asia/Jakarta` |
+| 11 | CF Cronjob | `ACTIVE` |
 
 ---
 

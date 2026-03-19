@@ -72,10 +72,10 @@ Buat DNS record berikut:
 
 ### Mengapa Proxied dan Bukan DNS Only?
 
-**Saat Proxied aktif:**
-- Ketika user melakukan DNS lookup ke `mer-system.rs.id`, jawaban yang dikembalikan adalah IP Cloudflare, **bukan** IP VPS asli.
-- Semua traffic HTTP/HTTPS melewati infrastruktur Cloudflare terlebih dahulu.
-- IP VPS asli tersembunyi dari publik.
+**SBerdasarkan diagram arsitektur di atas:**
+- Ketika user melakukan DNS lookup ke `mers-rsryacudu.com`, jawaban yang dikembalikan adalah IP Cloudflare, **bukan** IP VPS asli.
+- Atacker tidak mengetahui IP VPS asli, sehingga tidak dapat menyerang server secara langsung melalui DDoS volumetrik.
+- Traffic berbahaya (SQLi, XSS, bot) diblokir di Edge (server Cloudflare) sebelum mencapai VPS.
 
 **Risiko DNS Only:**
 - IP VPS terekspos langsung.
@@ -106,8 +106,8 @@ Cloudflare menawarkan 4 mode SSL:
 Navigasi: Cloudflare Dashboard > Domain Anda > SSL/TLS > Overview
 ```
 
-1. Set **SSL/TLS encryption mode** ke **Full (Strict)**
-2. Pastikan toggle **Always Use HTTPS** di tab **Edge Certificates** dalam keadaan **ON**
+1.  Set **SSL/TLS encryption mode** ke **Full (Strict)**
+2.  Pastikan toggle **Always Use HTTPS** di tab **Edge Certificates** dalam keadaan **ON**
 
 ### Konfigurasi Tambahan SSL/TLS
 
@@ -142,19 +142,19 @@ Navigasi: Cloudflare Dashboard > Domain Anda > SSL/TLS > Edge Certificates
 Navigasi: Cloudflare Dashboard > Domain Anda > SSL/TLS > Origin Server
 ```
 
-1. Klik **Create Certificate**
-2. Pilih opsi berikut:
+1.  Klik **Create Certificate**
+2.  Pilih opsi berikut:
 
 | Setting | Nilai |
 |---------|-------|
 | **Private key type** | RSA (2048) |
-| **Hostnames** | `mer-system.rs.id`, `*.mer-system.rs.id` |
+| **Hostnames** | `mers-rsryacudu.com`, `*.mers-rsryacudu.com` |
 | **Certificate validity** | 15 years |
 
-3. Klik **Create**
-4. Cloudflare akan menampilkan dua blok teks:
-   - **Origin Certificate** (PEM) — Public certificate
-   - **Private Key** (PEM) — Kunci privat
+3.  Klik **Create**
+4.  Cloudflare akan menampilkan dua blok teks:
+    -   **Origin Certificate** (PEM) — Public certificate
+    -   **Private Key** (PEM) — Kunci privat
 
 > [!CAUTION]
 > **SALIN DAN SIMPAN PRIVATE KEY SEKARANG.** Cloudflare hanya menampilkan private key SEKALI. Jika tab ditutup sebelum disalin, Anda harus membuat sertifikat baru.
@@ -230,25 +230,11 @@ openssl x509 -in /etc/ssl/cloudflare/origin-cert.pem -noout -subject -dates
 
 ## 6. WAF Rules untuk Sistem Medis
 
-### Mengapa WAF Custom Rules?
+### Pendekatan "Living off the Land" (Free Tier)
 
-**Versi Formal:** WAF managed rules (OWASP CRS) memberikan perlindungan generik terhadap serangan umum. Namun untuk sistem medis yang menangani PHI (Protected Health Information), diperlukan custom rules tambahan yang menyesuaikan pola traffic spesifik aplikasi — seperti melindungi endpoint login, API, dan halaman yang menampilkan data sensitif.
+**Versi Formal:** Paket gratis Cloudflare tidak mensupport Managed WAF Ruleset (seperti OWASP Core Rule Set) yang terkunci di balik paywall Pro. Oleh karena itu, kita menggunakan pendekatan *Living off the Land* dengan memaksimalkan kuota 5 Custom Rules gratis. Rules ini didesain secara spesifik untuk mereplikasi arsitektur Enterprise dengan pola blocklist/challenge yang presisi terhadap aset sensitif dan layar autentikasi Laravel.
 
-**Versi Sederhana:** Managed rules seperti detektor logam di bandara — menangkap senjata umum. Custom rules seperti daftar VIP dan daftar hitam khusus rumah sakit — menolak orang tertentu dan memberikan perlakuan khusus untuk tamu tertentu.
-
-### Eksekusi — Aktifkan Managed Rulesets
-
-```
-Navigasi: Cloudflare Dashboard > Domain Anda > Security > WAF > Managed rules
-```
-
-Aktifkan ruleset berikut:
-
-| Ruleset | Status | Alasan |
-|---------|--------|--------|
-| **Cloudflare Managed Ruleset** | ON | Perlindungan dasar terhadap OWASP Top 10 |
-| **Cloudflare OWASP Core Rule Set** | ON | Deteksi SQL injection, XSS, RFI, LFI |
-| **Cloudflare Exposed Credentials Check** | ON | Deteksi login menggunakan credential yang bocor |
+**Versi Sederhana:** Karena fitur satpam otomatis (Managed WAF) berbayar, kita mendaftarkan 3 aturan khusus (Custom Rules) ke satpam gerbang depan kita (Cloudflare) secara manual. Aturan ini sama amannya, tapi dikhususkan hanya untuk menjaga pintu-pintu rahasia dan gerbang masuk aplikasi kita.
 
 ### Eksekusi — Buat Custom WAF Rules
 
@@ -256,129 +242,91 @@ Aktifkan ruleset berikut:
 Navigasi: Cloudflare Dashboard > Domain Anda > Security > WAF > Custom rules
 ```
 
-#### Rule 1: Blokir Akses Langsung ke File Sensitif
+Klik **Create rule** untuk masing-masing rule di bawah ini. Saat di halaman pembuatan, klik link **Edit expression** (di sebelah tombol "Use expression builder") untuk menempelkan sintaks teks secara eksplisit.
 
-Mencegah akses ke file konfigurasi, log, dan backup database.
+#### Rule 1: Laravel Shield (Block Sensitive Files)
+
+Mencegah akses publik ke file inti framework, repositori, dan sistem log.
 
 | Field | Value |
 |-------|-------|
-| **Rule name** | `Block Sensitive Files` |
+| **Rule name** | `Laravel Shield` |
 | **Expression** | *(lihat di bawah)* |
 | **Action** | Block |
 
-```
-(http.request.uri.path contains ".env") or
-(http.request.uri.path contains ".sql") or
-(http.request.uri.path contains ".log") or
-(http.request.uri.path contains ".bak") or
-(http.request.uri.path contains ".git") or
-(http.request.uri.path contains "storage/") or
-(http.request.uri.path contains "bootstrap/") or
-(http.request.uri.path contains "artisan") or
-(http.request.uri.path contains "composer") or
-(http.request.uri.path contains "phpinfo") or
-(http.request.uri.path contains "adminer") or
-(http.request.uri.path contains "phpmyadmin") or
-(http.request.uri.path contains "wp-admin") or
-(http.request.uri.path contains "wp-login")
+Gunakan sintaks berikut pada Expression Builder:
+```text
+(http.request.uri.path contains "/.env") or 
+(http.request.uri.path contains "/.git") or 
+(http.request.uri.path contains "/vendor/") or 
+(http.request.uri.path contains "/storage/logs/") or 
+(http.request.uri.path contains "composer.") or 
+(http.request.uri.path eq "/phpunit.xml")
 ```
 
-**Mengapa:** Attacker rutin melakukan automated scanning untuk mencari file `.env` (berisi kredensial), `.sql` (dump database), dan panel admin seperti phpMyAdmin. Rule ini memblokir semua request tersebut di edge bahkan sebelum mencapai server.
+**Mengapa:** Attacker menggunakan tool otomatis (scanner) untuk mencari file `.env` (berisi target password database) atau folder `/vendor/` (mencari celah aplikasi eksternal). Memblokir jalur ini di level jaringan (Edge) memastikan request berbahaya langsung di-drop tanpa menyentuh dan membebani server Nginx VPS kita.
 
-#### Rule 2: Rate Limit pada Endpoint Login
+#### Rule 2: Auth Challenge (Mitigasi Bot)
 
-Membatasi jumlah percobaan login berlebihan.
+Mencegah bot otomatis menebak password, namun mengizinkan login pengguna asli dengan transparan.
 
 | Field | Value |
 |-------|-------|
-| **Rule name** | `Rate Limit Login` |
+| **Rule name** | `Auth Challenge` |
 | **Expression** | *(lihat di bawah)* |
-| **Action** | Block (dengan response code 429) |
+| **Action** | Managed Challenge |
 
+Gunakan sintaks berikut pada Expression Builder:
+```text
+(http.request.uri.path contains "/login") or 
+(http.request.uri.path contains "/password")
 ```
-(http.request.uri.path eq "/login" and http.request.method eq "POST")
-```
 
-> [!NOTE]
-> Rate limiting with counting diatur terpisah di menu **Security > WAF > Rate limiting rules**. Buat rule dengan: 10 requests per 1 menit per IP pada path `/login` dengan method POST.
+**Mengapa:** Serangan credential stuffing dan dictionary attack masuk via form autentikasi. Dengan status "Managed Challenge", Cloudflare akan menyajikan *Turnstile* (pengganti CAPTCHA) yang tidak kasat mata bagi browser perawat/dokter, tetapi langsung mencekik eksekusi script Python/cURL jahat.
 
-#### Rule 3: Blokir User-Agent Mencurigakan
+#### Rule 3: Geo-Blocking (Opsional tapi Kuat)
 
-Memblokir bot, scanner, dan tools hacking yang teridentifikasi.
+Memfilter akses geografis sembari mempertahankan kelonggaran sistem bagi tenaga kesehatan yang sedang bertugas di luar negeri.
 
 | Field | Value |
 |-------|-------|
-| **Rule name** | `Block Malicious User-Agents` |
+| **Rule name** | `Geo-Protect Non-ID` |
 | **Expression** | *(lihat di bawah)* |
-| **Action** | Block |
+| **Action** | Managed Challenge |
 
-```
-(http.user_agent contains "sqlmap") or
-(http.user_agent contains "nikto") or
-(http.user_agent contains "nmap") or
-(http.user_agent contains "masscan") or
-(http.user_agent contains "dirbuster") or
-(http.user_agent contains "gobuster") or
-(http.user_agent contains "wpscan") or
-(http.user_agent contains "nuclei") or
-(http.user_agent contains "zgrab") or
-(http.user_agent contains "python-requests" and not http.request.uri.path contains "/api/")
-```
-
-**Mengapa:** Tools seperti `sqlmap` (SQL injection), `nikto` (vulnerability scanner), dan `nmap` (port scanner) secara jujur mengidentifikasi diri mereka di header User-Agent. Memblokir mereka di edge lebih efisien daripada menunggu sampai request mencapai server.
-
-#### Rule 4: Geo-Blocking (Opsional tapi Direkomendasikan)
-
-Jika sistem MER hanya diakses dari Indonesia:
-
-| Field | Value |
-|-------|-------|
-| **Rule name** | `Allow Indonesia Only` |
-| **Expression** | *(lihat di bawah)* |
-| **Action** | Block |
-
-```
+Gunakan sintaks berikut pada Expression Builder:
+```text
 (not ip.geoip.country eq "ID")
 ```
 
-**Mengapa:** Sistem pelaporan insiden medis rumah sakit biasanya hanya diakses oleh staf di Indonesia. Memblokir traffic dari negara lain mengeliminasi sebagian besar automated attacks yang berasal dari luar negeri.
-
-> [!WARNING]
-> Aktifkan geo-blocking HANYA jika Anda yakin tidak ada staf atau vendor yang mengakses dari luar Indonesia. Jika ada kebutuhan akses internasional, pertimbangkan untuk menggunakan Cloudflare Access (Zero Trust) sebagai pengganti geo-blocking.
+**Mengapa:** Sistem internal Rumah Sakit sewajarnya diakses dari dalam negeri. Meski demikian, kita tidak menggunakan "Block" melainkan "Managed Challenge". Ini berarti traffic dari China atau Rusia (mayoritas sumber botnet) akan tertahan *Turnstile*, namun jika Direktur RS sedang dinas ke Singapura dan ingin login, beliau tetap bisa masuk usai melewati verifikasi browser instan.
 
 ---
 
 ## 7. Rate Limiting
 
-### Eksekusi — Rate Limiting Rules
+### Eksekusi — Rate Limiting Rule (Pencegahan Brute-Force Spesifik)
+
+Akun Free Tier memberikan kuota komplementer berupa 1 (satu) Rate Limiting Rule. Kita mendedikasikan rule langka ini khusus mengamankan titik terlemah sistem: formulir Login.
 
 ```
 Navigasi: Cloudflare Dashboard > Domain Anda > Security > WAF > Rate limiting rules
 ```
 
-#### Rule: Login Brute Force Protection
+Klik **Create rule** dan atur konfigurasi murni berikut:
 
 | Setting | Value |
 |---------|-------|
-| **Rule name** | `Login Brute Force Protection` |
-| **If incoming requests match** | `URI Path equals /login AND Request Method equals POST` |
-| **Rate** | 10 requests per 1 minute |
+| **Rule name** | `Login Brute-Force Prevention` |
+| **If incoming requests match** | `URI Path` `contains` `/login` |
+| **Rate** | `10` requests per `1 minute` |
 | **Counting expression** | Same as rule expression |
-| **Mitigation timeout** | 600 seconds (10 menit) |
+| **Mitigation timeout** | `1 hour` |
 | **Action** | Block |
 | **Response code** | 429 |
 
-#### Rule: API Rate Limiting
-
-| Setting | Value |
-|---------|-------|
-| **Rule name** | `API Rate Limit` |
-| **If incoming requests match** | `URI Path starts with /api/` |
-| **Rate** | 60 requests per 1 minute |
-| **Counting expression** | Same as rule expression |
-| **Mitigation timeout** | 60 seconds |
-| **Action** | Block |
-| **Response code** | 429 |
+**Konteks Keamanan:**
+Andaikata peretas handal mampu mengakali "Managed Challenge" pada WAF Rule 2, mereka akan menggunakan software untuk meng-inject 10.000 kombinasi password. Kuota 10 percobaan per 1 menit ini sangat memadai bagi pengguna manula yang salah ketik password, namun sangat melumpuhkan eksekusi *brute-force*. Pelanggar aturan ini seketika dikerangkeng (Blocked) selama 1 jam penuh.
 
 ---
 
@@ -457,32 +405,37 @@ Navigasi: Cloudflare Dashboard > Domain Anda > Caching > Cache Rules
 
 Setelah semua konfigurasi selesai, jalankan verifikasi berikut:
 
-### Test 1: DNS Resolution
+### Verifikasi DNS Proxy Status
 
 > **Konteks Eksekusi:** `Terminal Komputer Lokal`
 
 ```bash
-# Verifikasi DNS mengembalikan IP Cloudflare, BUKAN IP VPS asli
-dig +short mer-system.rs.id
+# Opsional: Jika command 'dig' tidak ditemukan, install paket DNS Utils terlebih dahulu:
+# sudo apt install bind9-dnsutils -y
 
-# Output seharusnya IP dari range Cloudflare (104.x.x.x atau 172.x.x.x)
-# BUKAN IP VPS Anda dari Hostinger
+# Cek resolusi DNS dari komputer lokal Anda
+dig +short mers-rsryacudu.com
+
+# Alternatif tanpa install paket, Anda juga bisa menggunakan:
+# getent hosts mers-rsryacudu.com
+
+# Output HARUS BUKAN IP VPS Anda.
+# Harus menampilkan 2-3 IP milik Cloudflare (contoh: 104.21.x.x, 172.67.x.x)
 ```
 
-### Test 2: SSL/TLS Certificate Chain
+### Verifikasi SSL
 
 ```bash
-# Periksa certificate chain
-echo | openssl s_client -connect mer-system.rs.id:443 -servername mer-system.rs.id 2>/dev/null | openssl x509 -noout -issuer -subject
+# Paksa koneksi ke port 443 dan lihat subject/issuer sertifikat
+echo | openssl s_client -connect mers-rsryacudu.com:443 -servername mers-rsryacudu.com 2>/dev/null | openssl x509 -noout -issuer -subject
 
-# Output seharusnya menunjukkan issuer dari Cloudflare
+# Output yang diharapkan:
+# issuer=C = US, O = Google Trust Services LLC... ATAU O = Let's Encrypt... (Sertifikat edge Cloudflare)
+# subject=CN = mers-rsryacudu.com
 ```
-
-### Test 3: Security Headers
-
 ```bash
 # Periksa response headers
-curl -sI https://mer-system.rs.id | grep -iE '(strict-transport|x-frame|x-content|cf-ray|server)'
+curl -sI https://mers-rsryacudu.com | grep -iE '(strict-transport|x-frame|x-content|cf-ray|server)'
 
 # Output yang diharapkan:
 # strict-transport-security: max-age=...
@@ -492,20 +445,22 @@ curl -sI https://mer-system.rs.id | grep -iE '(strict-transport|x-frame|x-conten
 # server: cloudflare
 ```
 
-### Test 4: WAF Rules — File Sensitif
+> [!NOTE]
+> **Penting**: Jika output Anda pada tahap ini belum menampilkan `strict-transport-security` atau `x-content-type-options: nosniff`, ini **SANGAT WAJAR (Bukan Masalah)**.
+> 
+> Saat ini kita baru mengkonfigurasi pertahanan lapis terluar (Cloudflare). Header keamanan tambahan yang lebih rapat dan ketat akan diinjeksikan secara *hardcode* oleh Nginx dari dalam VPS Anda pada pelaksanaaan **Dokumen 04 (Nginx WAF & Laravel)**. Selama `server: cloudflare` sudah muncul, Cloudflare Anda sudah bekerja!
+
+### Verifikasi WAF Custom Rules
 
 ```bash
-# Test blokir akses ke .env
-curl -sI https://mer-system.rs.id/.env
-# Output: HTTP/2 403 (blocked by WAF)
+# Mencoba akses file .env (Harus mendapat 403 Forbidden)
+curl -sI https://mers-rsryacudu.com/.env
 
-# Test blokir akses ke .git
-curl -sI https://mer-system.rs.id/.git/config
-# Output: HTTP/2 403
+# Mencoba akses .git config (Harus mendapat 403 Forbidden)
+curl -sI https://mers-rsryacudu.com/.git/config
 
-# Test blokir akses ke phpMyAdmin
-curl -sI https://mer-system.rs.id/phpmyadmin
-# Output: HTTP/2 403
+# Mencoba akses endpoint sensitif yang diblokir (Harus mendapat 403 Forbidden)
+curl -sI https://mers-rsryacudu.com/vendor/
 ```
 
 ### Test 5: Direct IP Access Should Fail
@@ -526,12 +481,11 @@ curl -sk --connect-timeout 5 https://<IP_VPS_ANDA>
 | 4 | Always Use HTTPS | ON |
 | 5 | HSTS | Enabled, max-age 6 bulan |
 | 6 | Minimum TLS | 1.2 |
-| 7 | WAF Managed Rules | ON (3 ruleset) |
-| 8 | Custom WAF Rules | 3-4 rules aktif |
-| 9 | Rate Limiting Login | 10 req/min |
-| 10 | Bot Fight Mode | ON |
-| 11 | Security Level | High |
-| 12 | Direct IP access | Blocked/timeout |
+| 7 | Custom WAF Rules | 3 rules aktif (Shield, Auth, Geo) |
+| 8 | Rate Limiting Login | 10 req/min (1 rule aktif) |
+| 9 | Bot Fight Mode | ON |
+| 10 | Security Level | High |
+| 11 | Direct IP access | Blocked/timeout |
 
 ---
 

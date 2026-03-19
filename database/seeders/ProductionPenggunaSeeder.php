@@ -22,11 +22,11 @@ use Illuminate\Support\Facades\DB;
  * ├───────────────────┬──────────────────────────────┬─────────────────────────┤
  * │ Peran             │ Username (login)             │ Sandi Sementara         │
  * ├───────────────────┼──────────────────────────────┼─────────────────────────┤
- * │ Admin             │ admin.rsud                   │ Admin@Rsud2025!         │
- * │ Direktur          │ direktur.rsud                │ Direktur@Rsud2025!      │
- * │ Komite (Kes.)     │ komite.keselamatan           │ Komite@Rsud2025!        │
- * │ Komite (Mutu)     │ komite.mutu                  │ Komite@Rsud2025!        │
- * │ Komite (Medik)    │ komite.medik                 │ Komite@Rsud2025!        │
+ * │ Admin             │ admin.rsud                   │ password                │
+ * │ Direktur          │ direktur.rsud                │ password                │
+ * │ Komite (Kes.)     │ komite.keselamatan           │ password                │
+ * │ Komite (Mutu)     │ komite.mutu                  │ password                │
+ * │ Komite (Medik)    │ komite.medik                 │ password                │
  * │ Peneliti/Dosen    │ dosenpeneliti                │ Peneliti@2026!          │
  * ├───────────────────┴──────────────────────────────┴─────────────────────────┤
  * │ NAKES PIC (25) — Perawat/Bidan Pelaksana per Unit                          │
@@ -164,8 +164,8 @@ class ProductionPenggunaSeeder extends Seeder
         $this->seedStaff($tenant->id, self::NAKES_DATA, $peranNakes);
 
         // ── Step 3: Kepala Ruangan / Validator ───────────────────────────
-        $this->command->info('  ▶ Membuat 28 akun Kepala Ruangan (Validator per Unit) ...');
-        $this->seedStaff($tenant->id, self::KARU_DATA, $peranKaru);
+        $this->command->info('  ▶ Membuat 28 akun Kepala Ruangan (Didaftarkan sebagai Nakes awal) ...');
+        $this->seedStaff($tenant->id, self::KARU_DATA, $peranNakes, $peranKaru);
 
         $this->command->info('  ✔ ProductionPenggunaSeeder selesai: 60 akun production diproses.');
         $this->command->warn('  ⚠ Semua akun non-Admin diwajibkan ganti sandi pada login pertama.');
@@ -265,7 +265,7 @@ class ProductionPenggunaSeeder extends Seeder
                     'email'             => 'komite.mutu@rsudryacudu.go.id',
                     'nomor_hp'          => '082100000004',
                     'alamat'            => self::ALAMAT_RS,
-                    'kata_sandi'        => 'Komite@Rsud2025!',
+                    'kata_sandi'        => 'password',
                     'is_aktif'          => true,
                     'wajib_ganti_sandi' => true,
                 ],
@@ -283,7 +283,7 @@ class ProductionPenggunaSeeder extends Seeder
                     'email'             => 'komite.medik@rsudryacudu.go.id',
                     'nomor_hp'          => '082100000005',
                     'alamat'            => self::ALAMAT_RS,
-                    'kata_sandi'        => 'Komite@Rsud2025!',
+                    'kata_sandi'        => 'password',
                     'is_aktif'          => true,
                     'wajib_ganti_sandi' => true,
                 ],
@@ -354,7 +354,7 @@ class ProductionPenggunaSeeder extends Seeder
      *
      * @param array<int, array<int, string>> $staffData
      */
-    private function seedStaff(int $tenantId, array $staffData, Peran $peran): void
+    private function seedStaff(int $tenantId, array $staffData, Peran ...$peranList): void
     {
         // Ambil semua unit kerja sekaligus untuk menghindari query per-record.
         $unitMap = DB::table('master.unit_kerja')
@@ -363,13 +363,9 @@ class ProductionPenggunaSeeder extends Seeder
             ->pluck('id', 'kode_unit')
             ->all();
 
-        // Sandi berbeda per peran:
-        // - Kepala Ruangan: Karu@Rsud2025!
-        // - Nakes: Nakes@Rsud2025!
+        // Sandi default
         // Semua bersifat sementara dan wajib diganti pada login pertama.
-        $kata_sandi = ($peran->nama_peran === Peran::KEPALA_RUANGAN)
-            ? 'Karu@Rsud2025!'
-            : 'Nakes@Rsud2025!';
+        $kata_sandi = 'password';
 
         foreach ($staffData as [$kodeUnit, $nip, $username, $nama, $jabatan, $email, $hp]) {
             $unitId = $unitMap[$kodeUnit] ?? null;
@@ -409,13 +405,16 @@ class ProductionPenggunaSeeder extends Seeder
                 $p = Pengguna::create($values);
             }
 
-            $p->peran()->syncWithoutDetaching([$peran->id]);
+            // Sync seberapa banyak pun peran yang di-passing dengan spread operator
+            $peranIds = array_map(fn($r) => $r->id, $peranList);
+            $p->peran()->syncWithoutDetaching($peranIds);
         }
 
+        $namaPeranStr = implode(', ', array_map(fn($r) => $r->nama_peran, $peranList));
         $this->command->line(sprintf(
             '    ✓ %d akun %s diproses.',
             count($staffData),
-            $peran->nama_peran,
+            $namaPeranStr
         ));
     }
 }

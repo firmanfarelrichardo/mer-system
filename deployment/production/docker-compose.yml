@@ -2,57 +2,22 @@
 # MER System — Production Docker Compose
 # VPS: Ubuntu 24.04 LTS | RAM 8GB | CPU 2 Core
 # ===========================================
-#
-# ARSITEKTUR (4 services aktif):
-#   app    → PHP-FPM + Queue Worker + Scheduler (via Supervisord)
-#   web    → Nginx reverse proxy (pintu masuk langsung, port APP_PORT)
-#   db     → PostgreSQL 16 (TIDAK expose port — internal only)
-#   redis  → Redis 7 (TIDAK expose port — internal only)
-#
-# DINONAKTIFKAN SEMENTARA (profile: security):
-#   crowdsec         → Engine analisis log (deteksi intrusi)
-#   crowdsec-bouncer → Firewall Nginx yang menolak IP berbahaya
-#
-# Untuk mengaktifkan kembali:
-#   docker compose --profile security up -d
-#
-# SECURITY ISOLATION:
-#   DILARANG mengekspos port db (5432) dan redis (6379) ke host.
-#   Akses DB remote: gunakan SSH Tunnel → ssh -L 5432:db:5432 user@vps
-#
-# RESTART POLICY:
-#   'unless-stopped' → container restart otomatis kecuali di-stop manual
-#   oleh operator (misal: maintenance window).
-#
-# OBSERVABILITY:
-#   Stack monitoring (Prometheus, Grafana, Loki, Promtail, cAdvisor)
-#   berada di file TERPISAH: docker-compose.monitoring.yml.
-#   Dijalankan dengan:
-#     docker compose -f docker-compose.monitoring.yml up -d
-#   Kedua stack berkomunikasi via external network 'mer-prod-network'.
+# PRINSIP KEAMANAN:
+# - Hanya port 80 Nginx yang terexpose ke host (melalui Cloudflare)
+# - PostgreSQL di-bind ke 127.0.0.1 (loopback only)
+# - Redis tidak expose port sama sekali (internal only)
+# - Setiap container memiliki memory limit untuk mencegah OOM
 # ===========================================
 
 services:
   # -------------------------------------------
-  # PHP-FPM Application + Queue Worker + Scheduler
+  # PHP-FPM Application Server
   # -------------------------------------------
   app:
     build:
       context: ../..
       dockerfile: deployment/production/Dockerfile
-      # BuildKit diaktifkan via DOCKER_BUILDKIT=1 di deploy.sh.
-      # Cache layer tidak diatur di sini — dikelola oleh BuildKit.
     restart: unless-stopped
-    # LOG ROTATION:
-    #   Driver json-file dengan max-size + max-file mencegah disk penuh
-    #   akibat log PHP-FPM & supervisord yang tidak di-rotate.
-    #   max-size=10m : setiap file log maksimal 10 MB.
-    #   max-file=5   : hanya 5 file log tersimpan (total maks 50 MB).
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
     environment:
       APP_NAME: ${APP_NAME:-MER System}
       APP_ENV: production
@@ -75,6 +40,8 @@ services:
       SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}
       SESSION_SAME_SITE: ${SESSION_SAME_SITE:-lax}
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-redis}
+      SENTRY_LARAVEL_DSN: ${SENTRY_LARAVEL_DSN}
+      SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE}
     volumes:
       # Public assets shared dengan Nginx via named volume.
       # Entrypoint sync /var/www/html/public → /public-shared.
@@ -90,23 +57,16 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+        reservations:
+          memory: 512M
 
   # -------------------------------------------
-  # Nginx Web Server — SATU-SATUNYA port yang terbuka ke host
-  #
-  # LOCKDOWN VOLUME:
-  #   Direktori lockdown/ di-mount ke /etc/nginx/lockdown/ di dalam
-  #   container. Berisi:
-  #   - maintenance.html : halaman statis 503 untuk mode darurat
-  #   - .lockdown        : file trigger (hanya ada saat lockdown aktif)
-  #
-  #   Mount mode BUKAN :ro (read-only) karena file .lockdown
-  #   dibuat/dihapus dari host via bind mount. Namun container Nginx
-  #   sendiri hanya MEMBACA file ini — tidak pernah menulis.
-  #
-  # LOG VOLUME:
-  #   Log Nginx di-mount ke named volume agar bisa dibaca oleh
-  #   Promtail (stack monitoring) tanpa expose port tambahan.
+  # Nginx Reverse Proxy
+  # Satu-satunya container yang expose port ke host.
   # -------------------------------------------
   web:
     image: nginx:1.27-alpine
@@ -119,144 +79,27 @@ services:
         max-size: "10m"
         max-file: "5"
     ports:
-      - "${APP_PORT:-80}:80"
+      - "80:80"
       - "443:443"
     volumes:
       - shared-public:/var/www/html/public:ro
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-      - ./lockdown:/etc/nginx/lockdown:ro
-      # Log volume: dibaca oleh Promtail untuk parsing access/error log.
-      - nginx-logs:/var/log/nginx
+      - /etc/ssl/cloudflare:/etc/ssl/cloudflare:ro
     depends_on:
       - app
     networks:
       - mer-prod-network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 64M
 
   # -------------------------------------------
-  # CrowdSec Engine — Intrusion Detection System (IDS)
-  #
-  # CARA KERJA:
-  #   CrowdSec membaca log Nginx secara real-time, lalu menganalisis
-  #   pola serangan (brute force, path traversal, SQL injection, dll)
-  #   menggunakan "scenarios" dari komunitas (crowd-sourced intelligence).
-  #
-  #   Ketika IP terdeteksi berbahaya, CrowdSec menambahkannya ke
-  #   Local API decision list. CrowdSec Bouncer (di bawah) kemudian
-  #   membaca keputusan ini dan MENOLAK request dari IP tersebut
-  #   di level Nginx SEBELUM request mencapai PHP-FPM.
-  #
-  # COLLECTIONS (diinstall oleh entrypoint):
-  #   crowdsecurity/nginx : parser + scenario khusus pattern Nginx.
-  #
-  # PORT 8080:
-  #   Local API (LAPI) hanya di-bind ke internal network.
-  #   Bouncer berkomunikasi ke LAPI via Docker DNS (crowdsec:8080).
-  #   TIDAK ada ports: yang terekspos ke host.
-  # -------------------------------------------
-  crowdsec:
-    # =======================================================================
-    # DINONAKTIFKAN SEMENTARA
-    # Image bouncer (fbonalair/crowdsec-nginx-bouncer-standalone) tidak
-    # tersedia di Docker Hub. Service ini di-hold sampai image bouncer
-    # pengganti ditemukan dan diuji.
-    # Untuk mengaktifkan: docker compose --profile security up -d
-    # =======================================================================
-    profiles: ["security"]
-    image: crowdsecurity/crowdsec:latest
-    container_name: mer-crowdsec
-    restart: unless-stopped
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    environment:
-      # Collections yang otomatis diinstall saat pertama kali start.
-      # crowdsecurity/nginx: mendeteksi serangan umum pada Nginx
-      # (path traversal, bad user-agent, HTTP probe, dll).
-      COLLECTIONS: "crowdsecurity/nginx"
-      TZ: Asia/Jakarta
-      # AUTOPILOT — update hub (scenarios & parsers) secara otomatis.
-      # Nilai '0 */6 * * *' = setiap 6 jam CrowdSec menjalankan
-      # 'cscli hub update && cscli hub upgrade' secara internal.
-      # Ini memastikan deteksi selalu menggunakan signature terbaru
-      # dari komunitas tanpa intervensi admin.
-      CRON_EXPR: "0 */6 * * *"
-    volumes:
-      # Config & data CrowdSec dipersistensikan agar keputusan ban
-      # dan konfigurasi tidak hilang saat container restart.
-      - crowdsec-config:/etc/crowdsec
-      - crowdsec-data:/var/lib/crowdsec/data
-      # Membaca log Nginx (read-only) untuk analisis real-time.
-      - nginx-logs:/var/log/nginx:ro
-    networks:
-      - mer-prod-network
-
-  # -------------------------------------------
-  # CrowdSec Bouncer untuk Nginx — Firewall Layer 7
-  #
-  # CARA KERJA:
-  #   Bouncer berjalan sebagai reverse proxy RINGAN di depan Nginx.
-  #   Setiap request masuk melewati bouncer terlebih dahulu:
-  #
-  #     Internet → Bouncer (:80) → Nginx (:8080) → PHP-FPM
-  #
-  #   Bouncer mengecek IP pengirim ke CrowdSec LAPI.
-  #   - IP bersih   → request diteruskan ke Nginx.
-  #   - IP terlarang → bouncer langsung mengembalikan 403 Forbidden.
-  #                    Request TIDAK pernah sampai ke Nginx/PHP.
-  #
-  # KONFIGURASI PENTING:
-  #   CROWDSEC_BOUNCER_API_KEY harus digenerate dari CrowdSec container:
-  #     docker exec mer-crowdsec cscli bouncers add nginx-bouncer
-  #   Salin key yang dihasilkan ke file .env production.
-  #
-  # KENAPA bukan modul Nginx bawaan?
-  #   Nginx official image (nginx:alpine) tidak menyertakan modul
-  #   CrowdSec. Opsi compile ulang Nginx terlalu kompleks untuk
-  #   maintenance. Bouncer sebagai sidecar proxy lebih mudah di-update
-  #   dan di-rollback secara independen tanpa menyentuh Nginx.
-  # -------------------------------------------
-  crowdsec-bouncer:
-    # =======================================================================
-    # DINONAKTIFKAN SEMENTARA
-    # Image fbonalair/crowdsec-nginx-bouncer-standalone telah dihapus dari
-    # Docker Hub. Perlu diganti dengan image bouncer yang aktif sebelum
-    # service ini dapat dijalankan kembali.
-    # Untuk mengaktifkan: docker compose --profile security up -d
-    # =======================================================================
-    profiles: ["security"]
-    image: fbonalair/crowdsec-nginx-bouncer-standalone:latest
-    container_name: mer-crowdsec-bouncer
-    restart: unless-stopped
-    logging:
-      driver: json-file
-      options:
-        max-size: "5m"
-        max-file: "3"
-    environment:
-      # URL ke CrowdSec Local API — menggunakan Docker DNS.
-      CROWDSEC_BOUNCER_API_KEY: ${CROWDSEC_BOUNCER_API_KEY:-}
-      CROWDSEC_AGENT_HOST: "crowdsec:8080"
-      # Upstream: arahkan traffic bersih ke Nginx di port internal.
-      UPSTREAM_URL: "http://web:80"
-      # Port tempat bouncer mendengarkan request dari luar.
-      PORT: 8888
-    ports:
-      # Bouncer menggantikan Nginx sebagai pintu masuk publik.
-      # Nginx asli tetap di port 80 internal (tidak perlu diubah).
-      # Traffic flow: Internet:80 → Bouncer:8888 → Nginx:80 (internal)
-      - "${BOUNCER_PORT:-8888}:8888"
-    depends_on:
-      - web
-      - crowdsec
-    networks:
-      - mer-prod-network
-
-  # -------------------------------------------
-  # PostgreSQL 16 — TIDAK expose port ke host (internal only)
-  # Akses remote: SSH Tunnel → ssh -L 5432:localhost:5432 user@vps
+  # PostgreSQL 16 Database
+  # Port di-bind ke 127.0.0.1 (loopback) — BUKAN 0.0.0.0.
+  # Akses remote via SSH Tunnel saja.
   # -------------------------------------------
   db:
     image: postgres:16-alpine
@@ -282,23 +125,32 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+        reservations:
+          memory: 512M
+    command: >
+      postgres
+      -c shared_buffers=512MB
+      -c effective_cache_size=1536MB
+      -c work_mem=8MB
+      -c maintenance_work_mem=128MB
+      -c max_connections=100
+      -c log_min_duration_statement=1000
+      -c log_statement=ddl
 
   # -------------------------------------------
-  # Redis 7 — Cache, Session & Queue Store
-  #
-  # SECURITY: Tidak ada blok 'ports:' sama sekali.
-  # Port 6379 hanya bisa diakses dari internal bridge network.
-  # Tidak bisa dijangkau dari internet maupun dari host secara langsung.
+  # Redis 7 (Cache, Session, Queue)
+  # Tidak expose port - hanya akses internal docker network.
   # -------------------------------------------
   redis:
     image: redis:7-alpine
     container_name: mer-redis-prod
     restart: unless-stopped
-    logging:
-      driver: json-file
-      options:
-        max-size: "5m"
-        max-file: "3"
+    ports:
+      - "127.0.0.1:6379:6379"
     command: >
       redis-server
       --requirepass ${REDIS_PASSWORD}
@@ -332,25 +184,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 640M
+        reservations:
+          memory: 128M
 
-# ===========================================
-# Networks — External bridge agar stack monitoring
-# (docker-compose.monitoring.yml) dapat bergabung ke
-# network yang sama tanpa expose port ke host.
-#
-# PENTING: Network ini harus dibuat SEBELUM docker compose up:
-#   docker network create mer-prod-network
-#
-# Jika network belum ada, docker compose akan gagal dengan error:
-#   "network mer-prod-network declared as external, but could not be found"
-# ===========================================
 networks:
   mer-prod-network:
-    external: true
+    driver: bridge
 
-# ===========================================
-# Volumes — persistent data
-# ===========================================
 volumes:
   shared-public:
     driver: local
@@ -361,13 +205,4 @@ volumes:
   mer-db-data:
     driver: local
   mer-redis-data:
-    driver: local
-  # Log Nginx: shared antara container web (penulis) dan
-  # Promtail/CrowdSec (pembaca).
-  nginx-logs:
-    driver: local
-  # CrowdSec: persistensi config dan decision database.
-  crowdsec-config:
-    driver: local
-  crowdsec-data:
     driver: local

@@ -9,15 +9,41 @@
 
 ## Daftar Isi
 
+- [⚠️ SOP Implementasi (Wajib Dibaca)](#️-sop-implementasi-wajib-dibaca)
 1. [Strategi Monitoring untuk VPS Terbatas](#1-strategi-monitoring-untuk-vps-terbatas)
 2. [Grafana Loki + Promtail (Centralized Logging)](#2-grafana-loki--promtail-centralized-logging)
 3. [Uptime Kuma (Uptime & Health Monitoring)](#3-uptime-kuma-uptime--health-monitoring)
 4. [Netdata (Lightweight System Metrics)](#4-netdata-lightweight-system-metrics)
 5. [Log Audit Medis di Laravel](#5-log-audit-medis-di-laravel)
-6. [Backup Strategy — PostgreSQL Terenkripsi](#6-backup-strategy--postgresql-terenkripsi)
-7. [Skrip Backup Otomatis Harian](#7-skrip-backup-otomatis-harian)
-8. [Restore Prosedur](#8-restore-prosedur)
-9. [Verifikasi](#9-verifikasi)
+6. [Sentry — Exception & Error Tracking](#6-sentry--exception--error-tracking)
+7. [Backup Strategy — PostgreSQL Terenkripsi](#7-backup-strategy--postgresql-terenkripsi)
+8. [Skrip Backup Otomatis Harian](#8-skrip-backup-otomatis-harian)
+9. [Restore Prosedur](#9-restore-prosedur)
+10. [Verifikasi](#10-verifikasi)
+
+---
+
+## ⚠️ SOP Implementasi (Wajib Dibaca)
+
+Mengingat aplikasi `production` berstatus *live* dan menangani data medis (*High-Risk*), **SANGAT TIDAK DISARANKAN** untuk mengeksekusi langsung dokumen ini ke *environment production*. Spesifikasi VPS yang terbatas (8GB RAM) berisiko mengalami *Out of Memory* (OOM) yang dapat menyebabkan gangguan *downtime* berantai pada aplikasi jika set *monitoring* tidak diuji terlebih dahulu.
+
+**Alur Kerja (Workflow) Zero-Downtime yang Wajib Dilakukan:**
+
+1. **Kerjakan di Branch Khusus (`feature/monitoring`):**
+   * Di komputer lokal Anda, buat *branch* khusus dari `main` atau `development`: `git checkout -b feature/monitoring`.
+   * Pada *branch* ini, tambahkan file `docker-compose.monitoring.yml`, konfigurasi Loki/Promtail, rancangan skrip *backup*, dan edit konfigurasi Laravel (`logging.php`, `sentry.php`).
+   * *Push* *branch* `feature/monitoring` ke repositori Git pusat.
+2. **Deploy dan Uji Coba di `staging` (VPS):**
+   * Masuk ke direktori *staging* di VPS: `cd /var/www/mer-system/staging`
+   * Tarik (*pull*) dan ganti aktifkan *branch* tersebut: `git fetch origin && git checkout feature/monitoring`
+   * Terapkan konfigurasi *monitoring* (*docker compose up*). Pastikan Anda **menyesuaikan semua nilai direktori dan nama container di dalam script yang ada di dokumen ini** menjadi versi *staging* (contoh: ubah *path* `/production/` menjadi `/staging/`, dan container `mer-db-prod` menjadi `mer-db-staging`).
+   * Pantau penggunaan RAM dan CPU *server* menggunakan perintah `docker stats`. Pastikan OOM Killer tidak aktif.
+   * Uji coba simulasi pembuatan log medis, verifikasi sensor (*scrubbing*) PHP di Sentry, dan jalankan simulasi Skrip Backup serta Restore secara manual.
+3. **Deploy ke `production` (Hanya jika Staging Sukses):**
+   * Jika semua komponen sudah diverifikasi berjalan mulus di *staging* VPS tanpa membebani sistem pembatasan *resource*, gabungkan (*merge*) *branch* `feature/monitoring` ke `main`/`production`.
+   * Pindah ke direktori *production*: `cd /var/www/mer-system/production`
+   * Lakukan integrasi versi terbaru: `git pull origin main` (atau *branch production* yang relevan).
+   * Jalankan instruksi *monitoring* dan *backup* secara nyata di *production*.
 
 ---
 
@@ -124,8 +150,6 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
-      GF_SERVER_ROOT_URL: https://mer-system.rs.id/grafana/
-      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       GF_LOG_LEVEL: warn
     volumes:
       - grafana-data:/var/lib/grafana
@@ -147,12 +171,13 @@ services:
     image: louislam/uptime-kuma:1
     container_name: mer-uptime-kuma
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:3001:3001"
+    # Menggunakan network_mode host agar Kuma bisa langsung mem-ping localhost (127.0.0.1) DB/Redis di VPS
+    network_mode: "host"
+    environment:
+      - UPTIME_KUMA_HOST=127.0.0.1
+      - UPTIME_KUMA_PORT=3001
     volumes:
       - uptime-kuma-data:/app/data
-    networks:
-      - mer-monitoring-network
     deploy:
       resources:
         limits:
@@ -350,8 +375,8 @@ docker compose -f docker-compose.monitoring.yml ps
 curl -s http://127.0.0.1:3100/ready
 # Output: ready
 
-# Test Grafana login
-curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/login
+# Test Grafana login (menggunakan -L agar mengikuti redirect 301)
+curl -sL -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/login
 # Output: 200
 ```
 
@@ -402,23 +427,37 @@ ssh -L 3000:127.0.0.1:3000 -L 3001:127.0.0.1:3001 -p 49152 mer_ops@<IP_VPS_ANDA>
 Setelah akses Uptime Kuma via SSH tunnel (`http://localhost:3001`):
 
 1. Buat akun admin saat pertama kali akses
-2. Tambahkan monitors berikut:
+2. Navigasi ke tombol **+ Tambah Monitor** di kiri atas untuk setiap entri di bawah ini:
 
-| Monitor | Type | URL/Host | Interval | Alasan |
-|---------|------|----------|----------|--------|
-| **MER Production** | HTTP(S) | `https://mer-system.rs.id/health` | 60s | Health check aplikasi via Cloudflare |
-| **Nginx Direct** | HTTP | `http://127.0.0.1:80/health` | 30s | Health check Nginx langsung |
-| **PostgreSQL** | TCP Port | `127.0.0.1:5432` | 30s | Cek database reachable |
-| **Redis** | TCP Port | `mer-redis-prod:6379` | 30s | Cek Redis reachable (via Docker network) |
-| **SSH Port** | TCP Port | `127.0.0.1:49152` | 60s | Pastikan SSH masih accessible |
-| **Disk Usage** | HTTP | `http://127.0.0.1:19999/api/v1/data?chart=disk_space._` | 300s | Jika Netdata terpasang |
+| Nama Monitor (Ramah) | Tipe Monitor | Hostname | Port | Interval (Detik) | Alasan |
+|-----------------------|---------------|-------------|------|-------------------|--------|
+| **MER Production** | `TCP Port` | `127.0.0.1` | `80` | 60 | Deteksi Nginx lokal (Bypass blokir HTTP 403 WAF / Cloudflare). |
+| **MER Staging** | `TCP Port` | `127.0.0.1` | `8080` | 60 | Deteksi port web staging lokal tanpa filter strict HTTP. |
+| **PostgreSQL Live** | `TCP Port` | `127.0.0.1` | `5432` | 30 | Cek langsung denyut nadi database dari dalam VPS. |
+| **Redis Server** | `TCP Port` | `127.0.0.1` | `6379` | 30 | Cek port caching lokal (tanpa perlu repot bypass auth password). |
+| **SSH VPS Access**| `TCP Port` | `127.0.0.1` | `49152` | 60 | Cek gerbang remote akses custom VPS tetap terbuka. |
 
-### Setup Notifikasi
+*Catatan Penting:* 
+Karena Uptime Kuma kini diatur sebagai `network_mode: "host"`, ia berbagi jaringan persis seperti OS VPS aslinya. Oleh karena itu, kita **hanya perlu menggunakan IP `127.0.0.1` sebagai Hostname dan tipe `TCP Port`** untuk mengecek fungsionalitas langsung dari "jalur dalam" tanpa terhalang pertahanan eksternal.
 
-Uptime Kuma mendukung berbagai channel notifikasi. Konfigurasikan minimal:
+### Setup Notifikasi Alarm (Email Gmail)
 
-1. **Telegram Bot** — Untuk alert instant ke tim DevOps
-2. **Email** — Untuk notifikasi formal ke manajemen IT
+Uptime Kuma dapat mengirim peringatan seketika (alert) bila "Monitor" di atas berstatus **DOWN**:
+
+1. Klik tombol akun admin di sudut kanan atas > Pilih **Pengaturan** > Pilih **Notifikasi**
+2. Klik tombol **Setel Notifikasi**
+3. Isi parameter ini untuk Email via Gmail:
+   - **Tipe Notifikasi**: `Email (SMTP)`
+   - **Nama yang Ramah**: `Peringatan IT MER Server`
+   - **Nama Inang SMTP**: `smtp.gmail.com`
+   - **Port**: `465` (Secara SSL) atau `587`
+   - **Keamanan TLS**: Aktifkan (centang)
+   - **Pengguna Akun Email**: `[alamat.email.anda]@gmail.com`
+   - **Kata Sandi**: *(Gunakan Sandi Aplikasi / App Password Google, JANGAN sandi email asli!)*
+   - **Dari Surel (From)**: `[alamat.email.anda]@gmail.com`
+   - **Beralih Kepada (To)**: Email IT Manager/Penerima Alert
+4. Klik tombol **Uji Coba**, bila ada notifikasi sukses, simpan pengaturannya.
+5. Kaitkan notifikasi ini di tab *Umum* setiap Monitor yang telah dibuat.
 
 ---
 
@@ -520,7 +559,70 @@ Log ini otomatis dikumpulkan oleh Promtail (via Docker container log atau file m
 
 ---
 
-## 6. Backup Strategy — PostgreSQL Terenkripsi
+## 6. Sentry — Exception & Error Tracking
+
+### Mengapa Sentry Berbeda dari Loki?
+
+**Versi Sederhana:** Loki adalah CCTV yang merekam aktivitas orang keluar-masuk (log server/infrastruktur). Sentry adalah dokter spesialis yang menganalisis penyebab dokter pingsan saat operasi, lengkap dengan gejalanya (error aplikasi/exception). Keduanya bekerja saling melengkapi.
+
+**Versi Formal:** 
+- **Loki** mencatat *audit trail*, *access logs* Nginx, dan *stdout/stderr* container. Fokusnya pada telemetri infrastruktur dan rekam jejak operasional sistem.
+- **Sentry** (via SDK Laravel) menangkap *unhandled exceptions*, mencakup *stack trace* kode PHP, merekam state aplikasi (variabel), dan menghitung impact pengguna. Fokusnya pada penyelesaian bug (error tracking).
+
+### Peringatan Kebocoran Data / PHI
+
+> [!CAUTION]
+> **POTENSI KEBOCORAN PROTECTED HEALTH INFORMATION (PHI) DI SENTRY** 
+> Sentry secara default mengambil *context* (isi variabel, HTTP payload, request header) saat exception terjadi. Jika payload request berisi data pasien, data klinis tersebut **akan terkirim dan tersimpan di server Sentry** saat terjadi crash. Hal ini merupakan pelanggaran berat terhadap standar kerahasiaan medis.
+
+### Konfigurasi Laravel Sentry (Sensor Data Otomatis)
+
+Untuk mencegah kebocoran PHI, `send_default_pii` harus dinonaktifkan dan field medis yang rentan terekspos dimasukkan ke dalam opsi `scrub_fields` agar digantikan oleh label `[Filtered]` secara otomatis oleh SDK Sentry.
+
+> **Lokasi file:** `config/sentry.php`
+
+```php
+<?php
+
+return [
+
+    // DSN dari .env Production/Staging
+    'dsn' => env('SENTRY_LARAVEL_DSN', env('SENTRY_DSN')),
+    
+    // SANGAT PENTING: Matikan pengiriman Personally Identifiable Information
+    // (PII) secara default seperti alamat IP pasien, cookie sesi, dan user ID.
+    'send_default_pii' => false,
+
+    'traces_sample_rate' => env('SENTRY_TRACES_SAMPLE_RATE', 1.0),
+
+    // Sensor parameter berisiko otomatis saat crash
+    'scrub_fields' => [
+        // Keamanan dasar
+        'password',
+        'password_confirmation',
+        'token',
+        
+        // Data PHI (Protected Health Information) Rumah Sakit
+        'nik',
+        'nama_pasien',
+        'rekam_medis',
+        'no_rm',
+        'diagnosis',
+        'tanggal_lahir',
+        'alamat_pasien',
+        'no_telp',
+        'hasil_lab',
+        'tindakan_medis',
+        'obat_diresepkan',
+        'catatan_klinis'
+    ],
+
+];
+```
+
+---
+
+## 7. Backup Strategy — PostgreSQL Terenkripsi
 
 ### Prinsip Backup 3-2-1
 
@@ -538,7 +640,7 @@ Log ini otomatis dikumpulkan oleh Promtail (via Docker container log atau file m
 
 ---
 
-## 7. Skrip Backup Otomatis Harian
+## 8. Skrip Backup Otomatis Harian
 
 ### Buat Skrip Backup
 
@@ -708,7 +810,7 @@ cat /var/log/mer-system/backup.log
 
 ---
 
-## 8. Restore Prosedur
+## 9. Restore Prosedur
 
 ### Restore dari Backup Terenkripsi
 
@@ -757,7 +859,7 @@ docker exec -i mer-db-staging psql -U mer_staging_user -d mer_staging < /tmp/mer
 
 ---
 
-## 9. Verifikasi
+## 10. Verifikasi
 
 ### Checklist Monitoring & Backup
 
@@ -775,17 +877,17 @@ echo "  Status: $LOKI_STATUS"
 
 echo ""
 echo "[2] Grafana"
-GRAFANA_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/login 2>/dev/null || echo "NOT RUNNING")
+GRAFANA_STATUS=$(curl -sfL -o /dev/null -w "%{http_code}" http://127.0.0.1:3000/login 2>/dev/null || echo "NOT RUNNING")
 echo "  HTTP Status: $GRAFANA_STATUS"
 
 echo ""
 echo "[3] Uptime Kuma"
-KUMA_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://127.0.0.1:3001 2>/dev/null || echo "NOT RUNNING")
+KUMA_STATUS=$(curl -sfL -o /dev/null -w "%{http_code}" http://127.0.0.1:3001 2>/dev/null || echo "NOT RUNNING")
 echo "  HTTP Status: $KUMA_STATUS"
 
 echo ""
 echo "[4] Netdata"
-NETDATA_STATUS=$(curl -sf -o /dev/null -w "%{http_code}" http://127.0.0.1:19999 2>/dev/null || echo "NOT RUNNING")
+NETDATA_STATUS=$(curl -sfL -o /dev/null -w "%{http_code}" http://127.0.0.1:19999 2>/dev/null || echo "NOT RUNNING")
 echo "  HTTP Status: $NETDATA_STATUS"
 
 echo ""

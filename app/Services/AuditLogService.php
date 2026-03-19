@@ -57,6 +57,17 @@ class AuditLogService
             'data_baru'   => $dataBaru,
         ];
 
+        // LOGGING KE FILE (MEDICAL AUDIT TRAIL)
+        // Wajib memiliki backup jejak rekam berbentuk teks selain di Database
+        if (in_array($namaTabel, ['pelaporan.insiden', 'pelaporan.detail_pasien', 'pelaporan.tindak_lanjut'])) {
+            \Illuminate\Support\Facades\Log::channel('medical_audit')->info("Medical Audit | Tabel: {$namaTabel} | Aksi: {$aksi}", [
+                'id_data'     => $idData,
+                'id_pengguna' => $payload['id_pengguna'],
+                'alamat_ip'   => $payload['alamat_ip'],
+                'user_agent'  => $payload['user_agent'],
+            ]);
+        }
+
         // Mode async (production): lempar ke queue, respons user tidak tertahan
         if (config('audit.async', false)) {
             CatatLogAktivitasJob::dispatch($payload);
