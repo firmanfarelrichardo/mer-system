@@ -1,0 +1,114 @@
+# ===========================================
+# MER System - Monitoring Stack
+# ===========================================
+# Dijalankan terpisah dari stack utama agar bisa di-restart
+# tanpa mengganggu production application.
+# Jalankan: docker compose -f docker-compose.monitoring.yml up -d
+# ===========================================
+
+services:
+  # -------------------------------------------
+  # Grafana Loki — Log Aggregation Engine
+  # -------------------------------------------
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: mer-loki
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      - loki-data:/loki
+      - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - mer-monitoring-network
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+        reservations:
+          memory: 64M
+
+  # -------------------------------------------
+  # Promtail — Log Collector
+  # Membaca log dari Docker containers dan file sistem,
+  # lalu mengirimnya ke Loki.
+  # -------------------------------------------
+  promtail:
+    image: grafana/promtail:2.9.4
+    container_name: mer-promtail
+    restart: unless-stopped
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - mer-monitoring-network
+    depends_on:
+      - loki
+    deploy:
+      resources:
+        limits:
+          memory: 96M
+        reservations:
+          memory: 32M
+
+  # -------------------------------------------
+  # Grafana — Dashboard & Visualization
+  # -------------------------------------------
+  grafana:
+    image: grafana/grafana:10.3.1
+    container_name: mer-grafana
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_LOG_LEVEL: warn
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks:
+      - mer-monitoring-network
+    depends_on:
+      - loki
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+        reservations:
+          memory: 64M
+
+  # -------------------------------------------
+  # Uptime Kuma — Health & Uptime Monitoring
+  # -------------------------------------------
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: mer-uptime-kuma
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    networks:
+      - mer-monitoring-network
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+        reservations:
+          memory: 64M
+
+networks:
+  mer-monitoring-network:
+    driver: bridge
+
+volumes:
+  loki-data:
+    driver: local
+  grafana-data:
+    driver: local
+  uptime-kuma-data:
+    driver: local
