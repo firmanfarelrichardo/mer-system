@@ -41,9 +41,6 @@ return [
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#send_default_pii
     'send_default_pii' => false, // MATIKAN DEFAULT PII UNTUK RUMAH SAKIT
 
-        'obat_diresepkan',
-        'catatan_klinis'
-    ],
 
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#ignore_exceptions
     // 'ignore_exceptions' => [],
