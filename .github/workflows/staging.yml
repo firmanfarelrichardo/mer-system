@@ -43,7 +43,7 @@ jobs:
           # Menghapus source khusus build untuk mengurangi ukuran upload
           rm -rf node_modules
           rm -rf .git
-          tar -czf release.tar.gz .
+          tar --exclude='./release.tar.gz' -czf release.tar.gz .
 
       - name: Upload Artifact to VPS
         uses: appleboy/scp-action@v0.1.7
