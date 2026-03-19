@@ -41,25 +41,6 @@ return [
     // @see: https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/#send_default_pii
     'send_default_pii' => false, // MATIKAN DEFAULT PII UNTUK RUMAH SAKIT
 
-    // Sensor parameter berisiko otomatis saat crash (PHI / Medical Data Protection)
-    'scrub_fields' => [
-        // Keamanan dasar
-        'password',
-        'password_confirmation',
-        'token',
-        
-        // Data PHI (Protected Health Information) Rumah Sakit
-        'nik',
-        'nama_pasien',
-        'rekam_medis',
-        'no_rm',
-        'diagnosis',
-        'tanggal_lahir',
-        'alamat_pasien',
-        'no_telp',
-        'no_telepon',
-        'hasil_lab',
-        'tindakan_medis',
         'obat_diresepkan',
         'catatan_klinis'
     ],
