@@ -429,17 +429,16 @@ Setelah akses Uptime Kuma via SSH tunnel (`http://localhost:3001`):
 1. Buat akun admin saat pertama kali akses
 2. Navigasi ke tombol **+ Tambah Monitor** di kiri atas untuk setiap entri di bawah ini:
 
-| Nama Monitor (Ramah) | Tipe Monitor | URL / Host | Port | Interval (Detik) | Alasan |
+| Nama Monitor (Ramah) | Tipe Monitor | Hostname | Port | Interval (Detik) | Alasan |
 |-----------------------|---------------|-------------|------|-------------------|--------|
-| **MER Production** | `HTTP(s)` | `https://mers-rsryacudu.com/login` | - | 60 | Tambahkan **Header** (Advanced): `User-Agent` dengan isi `Mozilla/5.0` agar tidak diblokir (403) oleh Cloudflare/WAF. |
-| **MER Staging** | `HTTP(s)` | `http://127.0.0.1:8080/login` | - | 60 | Health check staging langsung via port lokal VPS yang di-forward. |
-| **PostgreSQL Live** | `TCP Port` | `127.0.0.1` | `5432` | 30 | Cek langsung binding port localhost PostgreSQL dari internal VPS. |
-| **Redis Server** | `Redis` | `redis://:secret_redis_staging@127.0.0.1:6379`| `6379` | 30 | Cek konektivitas node caching di environment lokal VPS. |
-| **SSH VPS Access**| `TCP Port` | `127.0.0.1` | `49152` | 60 | Cek service custom SSH VPS berjalan melalui loopback VPS itu sendiri. |
+| **MER Production** | `TCP Port` | `127.0.0.1` | `80` | 60 | Deteksi Nginx lokal (Bypass blokir HTTP 403 WAF / Cloudflare). |
+| **MER Staging** | `TCP Port` | `127.0.0.1` | `8080` | 60 | Deteksi port web staging lokal tanpa filter strict HTTP. |
+| **PostgreSQL Live** | `TCP Port` | `127.0.0.1` | `5432` | 30 | Cek langsung denyut nadi database dari dalam VPS. |
+| **Redis Server** | `TCP Port` | `127.0.0.1` | `6379` | 30 | Cek port caching lokal (tanpa perlu repot bypass auth password). |
+| **SSH VPS Access**| `TCP Port` | `127.0.0.1` | `49152` | 60 | Cek gerbang remote akses custom VPS tetap terbuka. |
 
 *Catatan Penting:* 
-1. Pastikan mengubah Nilai "Kode Status yang Diterima" pada bagian HTTP/S menjadi `200-299` atau kosongkan.
-2. Karena Uptime Kuma kini diatur sebagai `network_mode: "host"`, ia berbagi jaringan persis seperti OS VPS aslinya. Oleh karena itu, kita **hanya perlu menggunakan IP `127.0.0.1`** tanpa terhalang isolasi network Docker (menghindari error _ECONNREFUSED_).
+Karena Uptime Kuma kini diatur sebagai `network_mode: "host"`, ia berbagi jaringan persis seperti OS VPS aslinya. Oleh karena itu, kita **hanya perlu menggunakan IP `127.0.0.1` sebagai Hostname dan tipe `TCP Port`** untuk mengecek fungsionalitas langsung dari "jalur dalam" tanpa terhalang pertahanan eksternal.
 
 ### Setup Notifikasi Alarm (Email Gmail)
 
