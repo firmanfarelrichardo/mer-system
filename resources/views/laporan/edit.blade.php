@@ -144,7 +144,7 @@
                 
                 @if ($i < 3)
                     <div id="step-line-{{ $i + 1 }}"
-                         class="mx-1 mt-5 h-0.5 flex-auto rounded-full bg-slate-200 transition-colors duration-300 sm:mx-2 sm:max-w-[6rem]"></div>
+                         class="mx-1 h-0.5 w-full rounded-full bg-slate-200 transition-colors duration-300 sm:mx-2 sm:max-w-[6rem]" style="margin-top: 19px;"></div>
                 @endif
             @endforeach
         </div>
@@ -820,7 +820,7 @@
                     if (i < TOTAL_TAHAP) {
                         const line = document.getElementById('step-line-' + i);
                         if (line) {
-                            line.className = 'mx-1 mt-5 h-0.5 flex-auto rounded-full transition-colors duration-300 sm:mx-2 sm:max-w-[6rem] ' 
+                            line.className = 'mx-1 h-0.5 w-full rounded-full transition-colors duration-300 sm:mx-2 sm:max-w-[6rem] ' 
                                 + (i < tahapBaru ? 'bg-brand' : 'bg-slate-200');
                         }
                     }
