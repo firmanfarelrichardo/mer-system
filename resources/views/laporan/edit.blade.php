@@ -121,31 +121,39 @@
     {{-- ================================================================
          STEP INDICATOR
          ================================================================ --}}
-    <div id="step-indicator" class="mb-8">
-        <div class="flex items-center justify-center gap-0">
+    <div id="step-indicator" class="mb-8 px-2 sm:px-0">
+        <div class="relative flex w-full justify-between z-0">
+            <!-- Garis belakang (Background Track) agar terhubung sempurna -->
+            <div class="absolute left-0 top-5 -z-10 w-full px-10 sm:px-16" aria-hidden="true">
+                <div class="h-1 w-full bg-slate-200"></div>
+            </div>
+
             @foreach (['Data Demografis', 'Detail Insiden', 'Kronologi', 'Konfirmasi'] as $i => $label)
-                <div class="flex items-center">
-                    <div class="flex flex-col items-center">
-                        <div id="step-circle-{{ $i + 1 }}"
-                             class="flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300
-                                    {{ $i === 0
-                                        ? 'border-brand bg-brand text-white'
-                                        : 'border-slate-300 bg-white text-slate-400' }}">
-                            <span class="step-number">{{ $i + 1 }}</span>
-                            <svg class="step-check hidden h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-                            </svg>
-                        </div>
-                        <span id="step-label-{{ $i + 1 }}"
-                              class="mt-2 text-xs font-medium transition-colors duration-300
-                                     {{ $i === 0 ? 'text-brand' : 'text-slate-400' }}">
-                            {{ $label }}
-                        </span>
-                    </div>
+                <div class="relative flex flex-1 flex-col items-center">
+                    
+                    <!-- Garis Pengisi Aktif (Progress Track) -->
                     @if ($i < 3)
-                        <div id="step-line-{{ $i + 1 }}"
-                             class="mx-2 h-0.5 w-16 rounded-full bg-slate-200 transition-colors duration-300 sm:w-24"></div>
+                        <div class="absolute left-1/2 top-5 -z-10 w-full flex items-center pr-2 pl-2">
+                            <div id="step-line-{{ $i + 1 }}" 
+                                 class="h-1 w-full transition-colors duration-300 {{ $i === 0 ? 'bg-slate-200' : 'bg-slate-200' }}">
+                            </div>
+                        </div>
                     @endif
+
+                    <div id="step-circle-{{ $i + 1 }}"
+                         class="z-10 flex h-10 w-10 shrink-0 items-center justify-center ring-4 ring-white rounded-full border-2 text-sm font-bold transition-all duration-300 
+                                {{ $i === 0 ? 'border-brand bg-brand text-white' : 'border-slate-300 bg-white text-slate-400' }}">
+                        <span class="step-number">{{ $i + 1 }}</span>
+                        <svg class="step-check hidden h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                        </svg>
+                    </div>
+                    
+                    <span id="step-label-{{ $i + 1 }}"
+                          class="mt-2 text-center text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-300 
+                                 {{ $i === 0 ? 'text-brand' : 'text-slate-400' }}">
+                        {{ $label }}
+                    </span>
                 </div>
             @endforeach
         </div>
@@ -800,21 +808,23 @@
                     const selesai = i < tahapBaru;
                     const aktif   = i === tahapBaru;
 
-                    lingkaran.className = 'flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300 '
+                    lingkaran.className = 'z-10 flex h-10 w-10 shrink-0 items-center justify-center ring-4 ring-white rounded-full border-2 text-sm font-bold transition-all duration-300 '
                         + (selesai || aktif
                             ? 'border-brand bg-brand text-white'
                             : 'border-slate-300 bg-white text-slate-400');
 
-                    label.className = 'mt-2 text-xs font-medium transition-colors duration-300 '
+                    label.className = 'mt-2 text-center text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-300 '
                         + (selesai || aktif ? 'text-brand' : 'text-slate-400');
 
                     nomor.classList.toggle('hidden', selesai);
                     centang.classList.toggle('hidden', !selesai);
 
                     if (i < TOTAL_TAHAP) {
-                        document.getElementById('step-line-' + i).className =
-                            'mx-2 h-0.5 w-16 rounded-full transition-colors duration-300 sm:w-24 '
-                            + (i < tahapBaru ? 'bg-brand' : 'bg-slate-200');
+                        const line = document.getElementById('step-line-' + i);
+                        if (line) {
+                            line.className = 'h-1 w-full transition-colors duration-300 ' 
+                                + (i < tahapBaru ? 'bg-brand' : 'bg-slate-200');
+                        }
                     }
                 }
             }
