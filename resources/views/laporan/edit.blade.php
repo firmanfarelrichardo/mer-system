@@ -148,13 +148,6 @@
                 @endif
             @endforeach
         </div>
-    </div> 
-                                 {{ $i === 0 ? 'text-brand' : 'text-slate-400' }}">
-                        {{ $label }}
-                    </span>
-                </div>
-            @endforeach
-        </div>
     </div>
 
     {{-- ================================================================
