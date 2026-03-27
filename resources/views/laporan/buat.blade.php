@@ -643,20 +643,22 @@
             </div>
 
             {{-- Baris Tombol Navigasi --}}
-            <div class="order-1 flex flex-col gap-2 sm:order-2 sm:flex-row sm:items-center sm:justify-between">
+            <div class="mt-4 flex flex-col-reverse gap-3 sm:mt-6 sm:flex-row sm:items-center sm:justify-between">
                 {{-- Tombol Kembali --}}
-                <button type="button" id="btn-kembali"
-                        class="hidden w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5
-                               text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 sm:w-auto"
-                        onclick="ubahTahap(-1)">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
-                    </svg>
-                    Kembali
-                </button>
+                <div class="flex w-full sm:w-auto">
+                    <button type="button" id="btn-kembali"
+                            class="hidden w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5
+                                   text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 sm:w-auto sm:inline-flex"
+                            onclick="ubahTahap(-1)">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
+                        </svg>
+                        Kembali
+                    </button>
+                </div>
 
                 {{-- Tombol Aksi Utama (Simpan Draf, Selanjutnya, Kirim) --}}
-                <div class="flex flex-col gap-2 sm:ml-auto sm:flex-row sm:items-center sm:gap-3">
+                <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
                     <button type="submit" name="action" value="simpan_draf" id="btn-draf"
                             class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-brand bg-white px-5 py-2.5
                                    text-sm font-medium text-brand shadow-sm transition-colors hover:bg-brand/5 sm:w-auto">
@@ -733,7 +735,17 @@
                 document.getElementById('btn-selanjutnya').style.display  = tahapAktif < TOTAL_TAHAP ? 'inline-flex' : 'none';
                 document.getElementById('btn-kirim').style.display        = tahapAktif === TOTAL_TAHAP ? 'inline-flex' : 'none';
 
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const mainContainer = document.querySelector('main');
+                if (mainContainer) {
+                    mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    const mainContainer = document.querySelector('main');
+                if (mainContainer) {
+                    mainContainer.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                }
             };
 
             /** Perbarui tampilan step indicator. */
