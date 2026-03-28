@@ -643,12 +643,11 @@
             </div>
 
             {{-- Baris Tombol Navigasi --}}
-            <div class="mt-4 flex flex-col-reverse gap-3 sm:mt-6 sm:flex-row sm:items-center sm:justify-between">
-                {{-- Tombol Kembali --}}
-                <div class="flex w-full sm:w-auto">
-                    <button type="button" id="btn-kembali"
-                            class="hidden w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5
-                                   text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 sm:w-auto sm:inline-flex"
+            <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                {{-- Tombol Kembali (Mobile: Bawah/Order 3, Desktop: Kiri/Order 1) --}}
+                <div class="order-3 sm:order-1 sm:w-auto">
+                    <button type="button" id="btn-kembali" class="hidden w-full items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5
+                                   text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 sm:inline-flex whitespace-nowrap"
                             onclick="ubahTahap(-1)">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
@@ -657,21 +656,21 @@
                     </button>
                 </div>
 
-                {{-- Tombol Aksi Utama (Simpan Draf, Selanjutnya, Kirim) --}}
-                <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
-                    <button type="submit" name="action" value="simpan_draf" id="btn-draf"
-                            class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-brand bg-white px-5 py-2.5
-                                   text-sm font-medium text-brand shadow-sm transition-colors hover:bg-brand/5 sm:w-auto">
+                {{-- Tombol Aksi Utama (Simpan Draf, Selanjutnya) --}}
+                <div class="order-1 flex flex-col gap-3 sm:order-2 sm:flex-row sm:items-center">
+                    {{-- Simpan Draf (Mobile: Tengah/Order 2, Desktop: Kanan/Tengah) --}}
+                    <button type="submit" name="action" value="simpan_draf" id="btn-draf" class="order-2 inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-brand bg-white px-5 py-2.5
+                                   text-sm font-medium text-brand shadow-sm transition-colors hover:bg-brand/5 sm:order-1 sm:w-auto whitespace-nowrap">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"/>
                         </svg>
                         Simpan Draf
                     </button>
 
-                    <button type="button" id="btn-selanjutnya"
-                            class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand px-5 py-2.5 text-sm font-medium
+                    {{-- Selanjutnya / Kirim (Mobile: Atas/Order 1, Desktop: Paling Kanan) --}}
+                    <button type="button" id="btn-selanjutnya" class="order-1 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand px-5 py-2.5 text-sm font-medium
                                    text-white shadow-sm transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2
-                                   focus:ring-brand/50 focus:ring-offset-2 sm:w-auto"
+                                   focus:ring-brand/50 focus:ring-offset-2 sm:order-2 sm:w-auto whitespace-nowrap"
                             onclick="ubahTahap(1)">
                         Selanjutnya
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -679,10 +678,9 @@
                         </svg>
                     </button>
 
-                    <button type="submit" name="action" value="kirim_laporan" id="btn-kirim"
-                            class="hidden w-full items-center justify-center gap-1.5 rounded-lg bg-brand px-5 py-2.5 text-sm font-medium
+                    <button type="submit" name="action" value="kirim_laporan" id="btn-kirim" class="order-1 hidden w-full items-center justify-center gap-1.5 rounded-lg bg-brand px-5 py-2.5 text-sm font-medium
                                    text-white shadow-sm transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2
-                                   focus:ring-brand/50 focus:ring-offset-2 sm:w-auto">
+                                   focus:ring-brand/50 focus:ring-offset-2 sm:order-3 sm:w-auto whitespace-nowrap">
                         Kirim Laporan
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
