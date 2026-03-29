@@ -42,11 +42,11 @@ COMPOSE_PROJECT="mer-system"
 DC="docker compose -p ${COMPOSE_PROJECT} --project-directory ${COMPOSE_DIR}"
 
 # Container names
-APP_CONTAINER="mer-app-dev"
-WEB_CONTAINER="mer-web-dev"
-VITE_CONTAINER="mer-vite-dev"
-DB_CONTAINER="mer-db-dev"
-REDIS_CONTAINER="mer-redis-dev"
+APP_CONTAINER="mer-app-staging"
+WEB_CONTAINER="mer-web-staging"
+VITE_CONTAINER="mer-vite-staging"
+DB_CONTAINER="mer-db-staging"
+REDIS_CONTAINER="mer-redis-staging"
 
 # ---------------------------------------------------------------------------
 # Helper: cek apakah container MILIK PROJECT INI sedang running
@@ -502,8 +502,8 @@ app_init() {
         --format '{{.Names}}' 2>/dev/null | grep -q "."; do
         sleep 2
         waited=$((waited + 2))
-        if [ "$waited" -ge 60 ]; then
-            echo -e "${RED}✗ App container did not start within 60s. Check logs: Option 15.${NC}"
+        if [ "$waited" -ge 180 ]; then
+            echo -e "${RED}✗ App container did not start within 180s. Check logs: Option 15.${NC}"
             return 1
         fi
         echo -n "."

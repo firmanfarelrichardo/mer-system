@@ -122,31 +122,30 @@
          STEP INDICATOR
          ================================================================ --}}
     <div id="step-indicator" class="mb-8">
-        <div class="flex items-center justify-center gap-0">
+        <div class="mx-auto flex w-full max-w-3xl items-start justify-center px-2 sm:px-0">
             @foreach (['Data Demografis', 'Detail Insiden', 'Kronologi', 'Konfirmasi'] as $i => $label)
-                <div class="flex items-center">
-                    <div class="flex flex-col items-center">
-                        <div id="step-circle-{{ $i + 1 }}"
-                             class="flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300
-                                    {{ $i === 0
-                                        ? 'border-brand bg-brand text-white'
-                                        : 'border-slate-300 bg-white text-slate-400' }}">
-                            <span class="step-number">{{ $i + 1 }}</span>
-                            <svg class="step-check hidden h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-                            </svg>
-                        </div>
-                        <span id="step-label-{{ $i + 1 }}"
-                              class="mt-2 text-xs font-medium transition-colors duration-300
-                                     {{ $i === 0 ? 'text-brand' : 'text-slate-400' }}">
-                            {{ $label }}
-                        </span>
+                <div class="flex w-16 shrink-0 flex-col items-center sm:w-24">
+                    <div id="step-circle-{{ $i + 1 }}"
+                         class="flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300
+                                {{ $i === 0
+                                    ? 'border-brand bg-brand text-white'
+                                    : 'border-slate-300 bg-white text-slate-400' }}">
+                        <span class="step-number">{{ $i + 1 }}</span>
+                        <svg class="step-check hidden h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                        </svg>
                     </div>
-                    @if ($i < 3)
-                        <div id="step-line-{{ $i + 1 }}"
-                             class="mx-2 h-0.5 w-16 rounded-full bg-slate-200 transition-colors duration-300 sm:w-24"></div>
-                    @endif
+                    <span id="step-label-{{ $i + 1 }}"
+                          class="mt-2 text-center text-[10px] font-medium leading-tight transition-colors duration-300 sm:text-xs
+                                 {{ $i === 0 ? 'text-brand' : 'text-slate-400' }}">
+                        {{ $label }}
+                    </span>
                 </div>
+                
+                @if ($i < 3)
+                    <div id="step-line-{{ $i + 1 }}"
+                         class="mx-1 h-0.5 w-full rounded-full bg-slate-200 transition-colors duration-300 sm:mx-2 sm:max-w-[6rem]" style="margin-top: 19px;"></div>
+                @endif
             @endforeach
         </div>
     </div>
@@ -805,16 +804,18 @@
                             ? 'border-brand bg-brand text-white'
                             : 'border-slate-300 bg-white text-slate-400');
 
-                    label.className = 'mt-2 text-xs font-medium transition-colors duration-300 '
+                    label.className = 'mt-2 text-center text-[10px] font-medium leading-tight transition-colors duration-300 sm:text-xs '
                         + (selesai || aktif ? 'text-brand' : 'text-slate-400');
 
                     nomor.classList.toggle('hidden', selesai);
                     centang.classList.toggle('hidden', !selesai);
 
                     if (i < TOTAL_TAHAP) {
-                        document.getElementById('step-line-' + i).className =
-                            'mx-2 h-0.5 w-16 rounded-full transition-colors duration-300 sm:w-24 '
-                            + (i < tahapBaru ? 'bg-brand' : 'bg-slate-200');
+                        const line = document.getElementById('step-line-' + i);
+                        if (line) {
+                            line.className = 'mx-1 h-0.5 w-full rounded-full transition-colors duration-300 sm:mx-2 sm:max-w-[6rem] ' 
+                                + (i < tahapBaru ? 'bg-brand' : 'bg-slate-200');
+                        }
                     }
                 }
             }
