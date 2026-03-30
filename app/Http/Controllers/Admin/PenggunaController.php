@@ -98,7 +98,7 @@ class PenggunaController extends Controller
 
         $daftarUnit = UnitKerja::where('tenant_id', $tenantId)->orderBy('nama_unit')->get();
 
-        return view('admin.pengguna.buat', compact('daftarPeran', 'daftarUnit'));
+        return view('admin.pengguna.form', compact('daftarPeran', 'daftarUnit'));
     }
 
     /* ------------------------------------------------------------------
@@ -144,7 +144,7 @@ class PenggunaController extends Controller
 
         $daftarUnit = UnitKerja::where('tenant_id', $tenantId)->orderBy('nama_unit')->get();
 
-        return view('admin.pengguna.edit', compact(
+        return view('admin.pengguna.form', compact(
             'dataPengguna',
             'daftarPeran',
             'daftarUnit',
