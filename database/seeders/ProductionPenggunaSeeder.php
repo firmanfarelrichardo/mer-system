@@ -45,34 +45,38 @@ class ProductionPenggunaSeeder extends Seeder
         DB::beginTransaction();
 
         try {
-            while (($data = fgetcsv($file, 1000, ',')) !== false) {
+            while (($line = fgets($file)) !== false) {
                 $baris++;
 
-                // Lewati 4 baris pertama (baris kosong dan baris header kolom)
-                if ($baris <= 4) {
+                if ($baris <= 1) {
                     continue;
                 }
 
-                // Ambil data dan bersihkan dari karakter non-UTF8 tersembunyi
-                $namaLengkap = isset($data[1]) ? trim(mb_convert_encoding($data[1], 'UTF-8', 'UTF-8')) : '';
-                $usernameRaw = isset($data[2]) ? trim(mb_convert_encoding($data[2], 'UTF-8', 'UTF-8')) : '';
-                $unitKerja   = isset($data[3]) ? trim(mb_convert_encoding($data[3], 'UTF-8', 'UTF-8')) : '';
-                $peran       = isset($data[4]) ? trim(mb_convert_encoding($data[4], 'UTF-8', 'UTF-8')) : '';
+                // Deteksi otomatis pembatas (Koma atau Titik Koma)
+                $delimiter = str_contains($line, ';') ? ';' : ',';
+                $data = str_getcsv($line, $delimiter);
 
-                // Jika nama kosong atau baris rusak, lewati
-                if (empty($namaLengkap) || str_contains($namaLengkap, '')) {
+                // PEMUTAKHIRAN INDEKS SESUAI GAMBAR TABEL KAMU
+                $namaLengkap = isset($data[0]) ? trim($data[0]) : ''; // Kolom A
+                $usernameRaw = isset($data[1]) ? trim($data[1]) : ''; // Kolom B
+                $unitKerja   = isset($data[2]) ? trim($data[2]) : ''; // Kolom C
+                $peran       = isset($data[3]) ? trim($data[3]) : ''; // Kolom D
+
+                // Jika nama lengkap kosong atau berisi baris rusak, abaikan
+                if (empty($namaLengkap) || $namaLengkap === '-' || trim($namaLengkap) === '') {
                     continue;
                 }
 
-                // Generasi Username Otomatis
-                if (empty($usernameRaw) || $usernameRaw === '-') {
+                // Logika pembuatan Username otomatis jika kolom B kosong (seperti data Ruang VK)
+                if (empty($usernameRaw) || $usernameRaw === '-' || trim($usernameRaw) === '') {
+                    // Mengubah "Tania Cantika, A. Md. Keb" menjadi "tania.cantika"
                     $cleanName = preg_replace('/[^a-zA-Z\s]/', '', $namaLengkap);
                     $username = Str::slug(trim($cleanName), '.');
                 } else {
-                    $username = strtolower($usernameRaw);
+                    $username = strtolower(trim($usernameRaw));
                 }
 
-                // Kata sandi default sesuai instruksi pelaku industri
+                // Kata sandi default instansiasi awal: password
                 $passwordHashed = Hash::make('password');
 
                 // Kueri Relasi Peran
@@ -88,7 +92,7 @@ class ProductionPenggunaSeeder extends Seeder
                     $peranId = $peranModel->id;
                 }
 
-                // Kueri Relasi Unit Kerja (Sesuai skema master.unit_kerja)
+                // Kueri Relasi Unit Kerja
                 $masterUnitKerjaId = null;
                 if (!empty($unitKerja) && $unitKerja !== '-') {
                     $unitModel = UnitKerja::where(DB::raw('lower(nama_unit)'), strtolower($unitKerja))->first();
@@ -102,11 +106,11 @@ class ProductionPenggunaSeeder extends Seeder
                     $masterUnitKerjaId = $unitModel->id;
                 }
 
-                // Query Insert menggunakan kolom yang tepat: master_unit_kerja_id
+                // Suntik data ke database PostgreSQL
                 DB::table('akun.pengguna')->insert([
                     'nama_lengkap'         => $namaLengkap,
                     'username'             => $username,
-                    'master_unit_kerja_id' => $masterUnitKerjaId, // <<< PEMBETULAN NAMA KOLOM
+                    'master_unit_kerja_id' => $masterUnitKerjaId,
                     'peran_id'             => $peranId,
                     'password'             => $passwordHashed,
                     'wajib_ganti_sandi'    => true,
