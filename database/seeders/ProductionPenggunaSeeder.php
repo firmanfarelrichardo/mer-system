@@ -18,25 +18,30 @@ class ProductionPenggunaSeeder extends Seeder
      */
     public function run(): void
     {
-        // Jalur file CSV di dalam container Docker
+        // Jalur file CSV di dalam container Docker Staging
         $filePath = database_path('seeders/data/pengguna-staging.csv');
 
         if (!file_exists($filePath)) {
-            $this->command->error("File CSV tidak ditemukan di: {$filePath}");
+            $this->command->error("❌ File CSV tidak ditemukan di: {$filePath}");
             return;
         }
 
         $this->command->info('🧹 Membersihkan database staging sebelum import...');
 
-        // 1. CLEANSING DATABASE (Truncate dengan CASCADE untuk PostgreSQL)
-        // RESTART IDENTITY digunakan untuk mengembalikan Auto-Increment ID ke angka 1
+        // Membersihkan tabel pengguna secara aman dengan CASCADE di PostgreSQL
         DB::statement('TRUNCATE TABLE akun.pengguna RESTART IDENTITY CASCADE');
+
+        // Mengambil tenant_id default dari organisasi yang sudah di-seed sebelumnya
+        $tenantId = DB::table('tenant.organisasi')->value('id');
+        if (!$tenantId) {
+            $this->command->error("❌ Tenant ID tidak ditemukan. Jalankan OrganisasiSeeder terlebih dahulu.");
+            return;
+        }
 
         $file = fopen($filePath, 'r');
         $baris = 0;
         $berhasil = 0;
 
-        // Gunakan DB Transaction demi keamanan data mutlak
         DB::beginTransaction();
 
         try {
@@ -48,33 +53,31 @@ class ProductionPenggunaSeeder extends Seeder
                     continue;
                 }
 
-                // Sanitasi data dasar dari kolom CSV
-                $namaLengkap = isset($data[1]) ? trim($data[1]) : '';
-                $usernameRaw = isset($data[2]) ? trim($data[2]) : '';
-                $unitKerja   = isset($data[3]) ? trim($data[3]) : '';
-                $peran       = isset($data[4]) ? trim($data[4]) : '';
+                // Ambil data dan bersihkan dari karakter non-UTF8 tersembunyi
+                $namaLengkap = isset($data[1]) ? trim(mb_convert_encoding($data[1], 'UTF-8', 'UTF-8')) : '';
+                $usernameRaw = isset($data[2]) ? trim(mb_convert_encoding($data[2], 'UTF-8', 'UTF-8')) : '';
+                $unitKerja   = isset($data[3]) ? trim(mb_convert_encoding($data[3], 'UTF-8', 'UTF-8')) : '';
+                $peran       = isset($data[4]) ? trim(mb_convert_encoding($data[4], 'UTF-8', 'UTF-8')) : '';
 
-                // Jika nama lengkap kosong, lewati baris ini
-                if (empty($namaLengkap)) {
+                // Jika nama kosong atau baris rusak, lewati
+                if (empty($namaLengkap) || str_contains($namaLengkap, '')) {
                     continue;
                 }
 
-                // 2. LOGIKA USERNAME OTOMATIS (Jika di Excel kosong)
-                if (empty($usernameRaw)) {
-                    // Mengubah "Tania Cantika, A. Md. Keb" menjadi "tania.cantika"
+                // Generasi Username Otomatis
+                if (empty($usernameRaw) || $usernameRaw === '-') {
                     $cleanName = preg_replace('/[^a-zA-Z\s]/', '', $namaLengkap);
                     $username = Str::slug(trim($cleanName), '.');
                 } else {
                     $username = strtolower($usernameRaw);
                 }
 
-                // 3. ATURAN KATA SANDI DEFAULT SESUAI PERMINTAAN
-                // Semua user tanpa terkecuali menggunakan kata sandi: "password"
+                // Kata sandi default sesuai instruksi pelaku industri
                 $passwordHashed = Hash::make('password');
 
-                // 4. KUERI RELASI PERAN
+                // Kueri Relasi Peran
                 $peranId = null;
-                if (!empty($peran)) {
+                if (!empty($peran) && $peran !== '-') {
                     $peranModel = Peran::where(DB::raw('lower(nama_peran)'), strtolower($peran))->first();
                     if (!$peranModel) {
                         $peranModel = Peran::create([
@@ -85,32 +88,38 @@ class ProductionPenggunaSeeder extends Seeder
                     $peranId = $peranModel->id;
                 }
 
-                // 5. KUERI RELASI UNIT KERJA
-                $unitKerjaId = null;
-                if (!empty($unitKerja)) {
+                // Kueri Relasi Unit Kerja (Sesuai skema master.unit_kerja)
+                $masterUnitKerjaId = null;
+                if (!empty($unitKerja) && $unitKerja !== '-') {
                     $unitModel = UnitKerja::where(DB::raw('lower(nama_unit)'), strtolower($unitKerja))->first();
                     if (!$unitModel) {
-                        $unitModel = UnitKerja::create(['nama_unit' => $unitKerja]);
+                        $unitModel = UnitKerja::create([
+                            'tenant_id' => $tenantId,
+                            'kode_unit' => strtoupper(Str::slug($unitKerja, '_')),
+                            'nama_unit' => $unitKerja
+                        ]);
                     }
-                    $unitKerjaId = $unitModel->id;
+                    $masterUnitKerjaId = $unitModel->id;
                 }
 
-                // 6. INSERT DATA KE DATABASE
-                Pengguna::create([
-                    'nama_lengkap'      => $namaLengkap,
-                    'username'          => $username,
-                    'unit_kerja_id'     => $unitKerjaId,
-                    'peran_id'          => $peranId,
-                    'password'          => $passwordHashed,
-                    'wajib_ganti_sandi' => true, // <<< KUNCI UTAMA INDIKATOR PAKSA UBAH SANDI
-                    'is_aktif'          => true,
+                // Query Insert menggunakan kolom yang tepat: master_unit_kerja_id
+                DB::table('akun.pengguna')->insert([
+                    'nama_lengkap'         => $namaLengkap,
+                    'username'             => $username,
+                    'master_unit_kerja_id' => $masterUnitKerjaId, // <<< PEMBETULAN NAMA KOLOM
+                    'peran_id'             => $peranId,
+                    'password'             => $passwordHashed,
+                    'wajib_ganti_sandi'    => true,
+                    'is_aktif'             => true,
+                    'created_at'           => now(),
+                    'updated_at'           => now()
                 ]);
 
                 $berhasil++;
             }
 
             DB::commit();
-            $this->command->info("🎉 Sukses! Database dibersihkan dan {$berhasil} pengguna baru berhasil di-seed.");
+            $this->command->info("🎉 Sukses! Database dibersihkan dan {$berhasil} pengguna baru berhasil dikonversi.");
 
         } catch (Exception $e) {
             DB::rollBack();
