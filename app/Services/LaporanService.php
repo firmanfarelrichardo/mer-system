@@ -9,8 +9,10 @@ use App\Events\InsidenStatusBerubah;
 use App\Models\DetailPasien;
 use App\Models\Insiden;
 use App\Models\Pengguna;
+use App\Models\UnitKerja;
 use App\Repositories\InsidenRepository;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Database\Seeders\Concerns\NormalizesUnitKerjaNames;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -28,6 +30,8 @@ use Illuminate\Support\Facades\DB;
  */
 class LaporanService
 {
+    use NormalizesUnitKerjaNames;
+
     public function __construct(
         private readonly InsidenRepository $repository,
         private readonly AuditLogService   $auditLog,
@@ -52,12 +56,13 @@ class LaporanService
             if ($dto->waktuKejadian) {
                 $tglKejadian .= ' ' . $dto->waktuKejadian . ':00';
             }
+            [$unitId, $namaUnitKerja] = $this->resolveUnitKerjaUntukLaporan($pengguna->tenant_id, $dto->unitKerja);
 
             $dataInsiden = [
                 'tenant_id'       => $pengguna->tenant_id,
                 'pelapor_id'      => $pengguna->id,
-                'unit_id'         => null,
-                'nama_unit_kerja' => $dto->unitKerja,
+                'unit_id'         => $unitId,
+                'nama_unit_kerja' => $namaUnitKerja,
                 'tipe_insiden'    => $dto->jenisInsiden,
                 'fase_kesalahan'  => $dto->faseKesalahan,
                 'status_saat_ini' => $statusBaru,
@@ -162,12 +167,13 @@ class LaporanService
             }
 
             $isAnonim = empty($dto->namaPelapor);
+            [$unitId, $namaUnitKerja] = $this->resolveUnitKerjaUntukLaporan($pengguna->tenant_id, $dto->unitKerja);
 
             $dataInsiden = [
                 'tenant_id'       => $pengguna->tenant_id,
                 'pelapor_id'      => $pengguna->id,
-                'unit_id'         => null,
-                'nama_unit_kerja' => $dto->unitKerja,
+                'unit_id'         => $unitId,
+                'nama_unit_kerja' => $namaUnitKerja,
                 'tipe_insiden'    => $dto->jenisInsiden,
                 'fase_kesalahan'  => $dto->faseKesalahan,
                 'status_saat_ini' => 'DRAF',
@@ -292,5 +298,24 @@ class LaporanService
             ->setOption('isPhpEnabled', true);
 
         return $pdf;
+    }
+
+    /**
+     * @return array{0: int|null, 1: string|null}
+     */
+    private function resolveUnitKerjaUntukLaporan(int $tenantId, ?string $namaUnit): array
+    {
+        $namaKanonis = $this->normalizeUnitKerjaName($namaUnit);
+
+        if ($namaKanonis === null) {
+            return [null, null];
+        }
+
+        $unit = UnitKerja::query()
+            ->where('tenant_id', $tenantId)
+            ->where('nama_unit', $namaKanonis)
+            ->first();
+
+        return [$unit?->id, $unit?->nama_unit ?? $namaKanonis];
     }
 }

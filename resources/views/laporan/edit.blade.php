@@ -215,18 +215,6 @@
                         <label for="unit_kerja" class="mb-1 block text-xs font-medium text-slate-500">
                             Unit Kerja <span class="text-red-500">*</span>
                         </label>
-                        @php
-                            $daftarUnitKerja = [
-                                'Poli Anak', 'Poli Kulit Kelamin', 'Poli Saraf', 'Poli Penyakit Dalam',
-                                'Poli Gigi', 'Poli Mata', 'Poli THT', 'Poli Kebidanan', 'Poli Bedah',
-                                'Poli Paru', 'Poli Tumbuh Kembang Anak', 'Poli Orthopedi', 'Poli Anestesi',
-                                'Poli Jiwa', 'Ruang Saraf', 'Ruang Anak', 'Ruang Kebidanan',
-                                'Instalasi Bedah Sentral (IBS)', 'Ruang Anestesi', 'Ruang Bedah',
-                                'Ruang Penyakit Dalam', 'Ruang VIP', 'Instalasi Farmasi', 'ICU', 'IGD',
-                                'Ruang Neonatus', 'Ruang Paru', 'Ruang PONEK', 'Ruang HD', 'Ruang VK',
-                                'Ruang Isolasi B',
-                            ];
-                        @endphp
                         <select name="unit_kerja" id="unit_kerja" required
                                 class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700
                                        focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">

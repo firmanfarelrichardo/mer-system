@@ -11,6 +11,7 @@ use App\Models\DetailPasien;
 use App\Models\Insiden;
 use App\Models\Pengguna;
 use App\Models\Peran;
+use App\Models\UnitKerja;
 use App\Models\TindakLanjut;
 use App\Notifications\InsidenNotifikasi;
 use App\Repositories\InsidenRepository;
@@ -21,6 +22,7 @@ use App\Services\JenisKesalahanService;
 use App\Services\LaporanService;
 use App\Services\TipeCederaService;
 use App\Support\Paginasi;
+use Database\Seeders\Concerns\NormalizesUnitKerjaNames;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,6 +51,8 @@ use Illuminate\View\View;
  */
 class LaporanController extends Controller
 {
+    use NormalizesUnitKerjaNames;
+
     public function __construct(
         private readonly LaporanService          $laporanService,
         private readonly InsidenRepository       $insidenRepository,
@@ -129,12 +133,14 @@ class LaporanController extends Controller
         $masterTipeCedera      = $this->tipeCederaService->getAktifUntukForm($tenantId);
         $masterFaktorPenyebab  = $this->faktorPenyebabService->getAktifUntukForm($tenantId);
         $masterIntervensi      = $this->intervensiService->getAktifUntukForm($tenantId);
+        $daftarUnitKerja       = $this->daftarUnitKerjaUntukForm($tenantId);
 
         return view('laporan.buat', compact(
             'masterJenisKesalahan',
             'masterTipeCedera',
             'masterFaktorPenyebab',
             'masterIntervensi',
+            'daftarUnitKerja',
         ));
     }
 
@@ -306,12 +312,18 @@ class LaporanController extends Controller
             abort(404, 'Draf laporan tidak ditemukan.');
         }
 
+        $namaUnitDraf = $this->normalizeUnitKerjaName($insiden->nama_unit_kerja);
+        if ($namaUnitDraf !== null) {
+            $insiden->setAttribute('nama_unit_kerja', $namaUnitDraf);
+        }
+
         $tenantId = $pengguna->tenant_id;
 
         $masterJenisKesalahan  = $this->jenisKesalahanService->getAktifUntukForm($tenantId);
         $masterTipeCedera      = $this->tipeCederaService->getAktifUntukForm($tenantId);
         $masterFaktorPenyebab  = $this->faktorPenyebabService->getAktifUntukForm($tenantId);
         $masterIntervensi      = $this->intervensiService->getAktifUntukForm($tenantId);
+        $daftarUnitKerja       = $this->daftarUnitKerjaUntukForm($tenantId);
 
         return view('laporan.edit', compact(
             'insiden',
@@ -320,7 +332,20 @@ class LaporanController extends Controller
             'masterTipeCedera',
             'masterFaktorPenyebab',
             'masterIntervensi',
+            'daftarUnitKerja',
         ));
+    }
+
+    /**
+     * @return \Illuminate\Support\Collection<int, string>
+     */
+    private function daftarUnitKerjaUntukForm(int $tenantId)
+    {
+        return UnitKerja::where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->orderBy('nama_unit')
+            ->pluck('nama_unit')
+            ->values();
     }
 
     /* ==================================================================
