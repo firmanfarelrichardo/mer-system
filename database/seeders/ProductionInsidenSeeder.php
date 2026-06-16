@@ -9,6 +9,7 @@ use App\Models\Organisasi;
 use App\Models\Pengguna;
 use App\Models\Peran;
 use Carbon\Carbon;
+use Database\Seeders\Concerns\NormalizesUnitKerjaNames;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +47,7 @@ use Illuminate\Support\Facades\DB;
 class ProductionInsidenSeeder extends Seeder
 {
     use WithoutModelEvents;
+    use NormalizesUnitKerjaNames;
 
     /* ---------------------------------------------------------------
      | Konstanta Domain
@@ -159,7 +161,7 @@ class ProductionInsidenSeeder extends Seeder
         'Implementasi sistem barcode scanning untuk verifikasi identitas pasien dan obat sebelum setiap tindakan pemberian obat.',
         'Mewajibkan prosedur double-check oleh dua perawat untuk seluruh obat high-alert sesuai daftar ISMP yang berlaku.',
         'Pisahkan penyimpanan obat LASA dengan tall-man lettering berwarna dan label peringatan yang mencolok.',
-        'Pengaturan ulang beban kerja serta penambahan tenaga perawat pada shift malam, terutama di unit kritis (ICU, IGD, IBS).',
+        'Pengaturan ulang beban kerja serta penambahan tenaga perawat pada shift malam, terutama di unit kritis (ICU, IGD, Instalasi Bedah Sentral).',
         'Pelatihan dan simulasi penanganan medication error secara berkala setiap 6 bulan untuk seluruh staf klinis.',
         'Penerapan sistem CPOE (Computerized Physician Order Entry) terintegrasi untuk meminimalkan kesalahan transkripsi resep.',
         'Audit berkala manajemen penyimpanan obat di semua unit dan penerapan sistem 5R di area farmasi.',
@@ -193,6 +195,9 @@ class ProductionInsidenSeeder extends Seeder
     {
         $tenant = Organisasi::where('kode_organisasi', 'default')->firstOrFail();
 
+        $this->command->info('  ▶ Menormalkan nama unit kerja production...');
+        $this->normalizeExistingUnitKerja($tenant->id);
+
         $this->command->info('  ▶ Memuat master data (unit kerja, kategori, matriks)...');
         [$unitKerja, $kategori, $dampakList, $probabilitasList] = $this->loadMasterData($tenant->id);
 
@@ -224,6 +229,86 @@ class ProductionInsidenSeeder extends Seeder
     /* ---------------------------------------------------------------
      | 1. Load Master Data
      | ------------------------------------------------------------*/
+
+    private function normalizeExistingUnitKerja(int $tenantId): void
+    {
+        $unitRows = DB::table('master.unit_kerja')
+            ->where('tenant_id', $tenantId)
+            ->whereNull('deleted_at')
+            ->orderBy('id')
+            ->get();
+
+        $canonicalGroups = [];
+
+        foreach ($unitRows as $unit) {
+            $canonicalName = $this->normalizeUnitKerjaName($unit->nama_unit);
+
+            if ($canonicalName === null) {
+                continue;
+            }
+
+            $canonicalGroups[strtolower($canonicalName)][] = [$unit, $canonicalName];
+        }
+
+        $renamed = 0;
+        $merged = 0;
+
+        foreach ($canonicalGroups as $group) {
+            [$primaryUnit, $canonicalName] = $group[0];
+
+            if ($primaryUnit->nama_unit !== $canonicalName) {
+                DB::table('master.unit_kerja')
+                    ->where('id', $primaryUnit->id)
+                    ->update([
+                        'nama_unit' => $canonicalName,
+                        'updated_at' => now(),
+                    ]);
+                $renamed++;
+            }
+
+            foreach ($group as [$unit, $rawCanonicalName]) {
+                DB::table('pelaporan.insiden')
+                    ->where('tenant_id', $tenantId)
+                    ->where('nama_unit_kerja', $unit->nama_unit)
+                    ->update([
+                        'nama_unit_kerja' => $rawCanonicalName,
+                        'updated_at' => now(),
+                    ]);
+
+                if ($unit->id === $primaryUnit->id) {
+                    continue;
+                }
+
+                DB::table('akun.pengguna')
+                    ->where('tenant_id', $tenantId)
+                    ->where('unit_id', $unit->id)
+                    ->update([
+                        'unit_id' => $primaryUnit->id,
+                        'updated_at' => now(),
+                    ]);
+
+                DB::table('pelaporan.insiden')
+                    ->where('tenant_id', $tenantId)
+                    ->where('unit_id', $unit->id)
+                    ->update([
+                        'unit_id' => $primaryUnit->id,
+                        'nama_unit_kerja' => $canonicalName,
+                        'updated_at' => now(),
+                    ]);
+
+                DB::table('master.unit_kerja')
+                    ->where('id', $unit->id)
+                    ->update([
+                        'deleted_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                $merged++;
+            }
+        }
+
+        $this->command->line("    ✓ Normalisasi unit kerja selesai ({$renamed} nama diperbarui, {$merged} duplikat digabung).");
+    }
 
     private function loadMasterData(int $tenantId): array
     {

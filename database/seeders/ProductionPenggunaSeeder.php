@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Models\Peran;
 use App\Models\UnitKerja;
+use Database\Seeders\Concerns\NormalizesUnitKerjaNames;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -23,6 +24,8 @@ use Throwable;
  */
 class ProductionPenggunaSeeder extends Seeder
 {
+    use NormalizesUnitKerjaNames;
+
     private const ALAMAT_RS = 'RSUD HM. Ryacudu, Jl. HM. Ryacudu No. 1, Kotabumi, Lampung Utara';
 
     /**
@@ -493,7 +496,11 @@ class ProductionPenggunaSeeder extends Seeder
         return UnitKerja::query()
             ->where('tenant_id', $tenantId)
             ->get(['id', 'nama_unit'])
-            ->mapWithKeys(fn (UnitKerja $unit): array => [strtolower($unit->nama_unit) => $unit->id])
+            ->mapWithKeys(function (UnitKerja $unit): array {
+                $namaUnit = $this->normalizeUnitKerjaName($unit->nama_unit) ?? $unit->nama_unit;
+
+                return [strtolower($namaUnit) => $unit->id];
+            })
             ->all();
     }
 
@@ -502,9 +509,9 @@ class ProductionPenggunaSeeder extends Seeder
      */
     private function resolveUnitId(int $tenantId, array &$unitMap, string $unitKerja): ?int
     {
-        $unitKerja = trim($unitKerja);
+        $unitKerja = $this->normalizeUnitKerjaName($unitKerja);
 
-        if ($unitKerja === '' || $unitKerja === '-') {
+        if ($unitKerja === null) {
             return null;
         }
 
