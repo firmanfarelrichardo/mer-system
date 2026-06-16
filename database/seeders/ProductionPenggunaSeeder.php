@@ -401,7 +401,7 @@ class ProductionPenggunaSeeder extends Seeder
         try {
             DB::beginTransaction();
 
-            $this->command->info('🧹 Membersihkan database staging sebelum import pengguna...');
+            $this->command->info('🧹 Membersihkan database sebelum import pengguna...');
             DB::statement('TRUNCATE TABLE akun.pengguna RESTART IDENTITY CASCADE');
 
             $peranMap = $this->ensurePeran($tenantId);
