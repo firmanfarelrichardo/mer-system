@@ -544,10 +544,40 @@ class ProductionPenggunaSeeder extends Seeder
 
     private function usernameFromName(string $namaLengkap): string
     {
-        $cleanName = preg_replace('/[^a-zA-Z\s]/', '', $namaLengkap) ?: $namaLengkap;
+        $namaTanpaGelar = $this->nameWithoutTitles($namaLengkap);
+        $cleanName = preg_replace('/[^a-zA-Z\s]/', ' ', $namaTanpaGelar) ?? $namaTanpaGelar;
+        $cleanName = preg_replace('/\s+/', ' ', $cleanName) ?? $cleanName;
         $username = Str::slug(trim($cleanName), '.');
 
         return $username !== '' ? $username : 'pengguna';
+    }
+
+    private function nameWithoutTitles(string $namaLengkap): string
+    {
+        $nama = trim(preg_replace('/\s+/', ' ', $namaLengkap) ?? $namaLengkap);
+        $gelarDepanPattern = '/^(?:drg?|ns|prof|apt|hi|hj|h)(?:\.|,|\s+)/i';
+
+        while (preg_match($gelarDepanPattern, $nama) === 1) {
+            $nama = trim(preg_replace($gelarDepanPattern, '', $nama) ?? $nama);
+        }
+
+        $nama = trim(explode(',', $nama, 2)[0]);
+
+        $gelarBelakangPatterns = [
+            '/(?:\s|\.)+(?:A\.?\s*Md\.?(?:\s*\.?\s*(?:Kep|Keb|KG|Farm))?|AMKG|S\.?\s*Tr\.?\s*(?:Kep|Keb|Kes|KG)?|S\.?\s*Kep\.?|S\.?\s*Far(?:m)?\.?|S\.?\s*Farm\.?|S\.?\s*Si\.?|SST|STT|M\.?\s*Kes\.?|M\.?\s*Sc\.?|M\.?\s*Biomed\.?|Sp\.?\s*[A-Za-z.]+(?:\s*[A-Za-z.]+)?|Apt|Bd|Ns)\.?$/i',
+        ];
+
+        do {
+            $sebelum = $nama;
+
+            foreach ($gelarBelakangPatterns as $pattern) {
+                $nama = trim(preg_replace($pattern, '', $nama) ?? $nama);
+            }
+        } while ($nama !== $sebelum);
+
+        $nama = trim(preg_replace('/\s+/', ' ', $nama) ?? $nama);
+
+        return $nama !== '' ? $nama : $namaLengkap;
     }
 
     private function makeUniqueUsername(string $username): string
