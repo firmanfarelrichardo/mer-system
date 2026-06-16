@@ -405,6 +405,8 @@ class ProductionPenggunaSeeder extends Seeder
             DB::statement('TRUNCATE TABLE akun.pengguna RESTART IDENTITY CASCADE');
 
             $peranMap = $this->ensurePeran($tenantId);
+            $unitSeedResult = $this->ensureCanonicalUnitKerja($tenantId);
+            $this->command->line("    ✓ Unit kerja kanonis tersedia ({$unitSeedResult['created']} baru, {$unitSeedResult['updated']} diperbarui).");
             $unitMap = $this->existingUnitMap($tenantId);
 
             foreach (self::PENGGUNA_DATA as [$namaLengkap, $usernameRaw, $unitKerja, $peran, $kataSandi]) {
@@ -493,15 +495,22 @@ class ProductionPenggunaSeeder extends Seeder
      */
     private function existingUnitMap(int $tenantId): array
     {
-        return UnitKerja::query()
-            ->where('tenant_id', $tenantId)
-            ->get(['id', 'nama_unit'])
-            ->mapWithKeys(function (UnitKerja $unit): array {
-                $namaUnit = $this->normalizeUnitKerjaName($unit->nama_unit) ?? $unit->nama_unit;
+        $unitMap = [];
 
-                return [strtolower($namaUnit) => $unit->id];
-            })
-            ->all();
+        UnitKerja::query()
+            ->where('tenant_id', $tenantId)
+            ->get(['id', 'kode_unit', 'nama_unit'])
+            ->each(function (UnitKerja $unit) use (&$unitMap): void {
+                $namaUnit = $this->normalizeUnitKerjaName($unit->nama_unit) ?? $unit->nama_unit;
+                $key = $this->unitKerjaLookupKey($namaUnit);
+                $officialCode = $this->canonicalUnitKerjaCodeForName($namaUnit);
+
+                if (!isset($unitMap[$key]) || ($officialCode !== null && $unit->kode_unit === $officialCode)) {
+                    $unitMap[$key] = $unit->id;
+                }
+            });
+
+        return $unitMap;
     }
 
     /**
@@ -515,7 +524,7 @@ class ProductionPenggunaSeeder extends Seeder
             return null;
         }
 
-        $key = strtolower($unitKerja);
+        $key = $this->unitKerjaLookupKey($unitKerja);
 
         if (isset($unitMap[$key])) {
             return $unitMap[$key];

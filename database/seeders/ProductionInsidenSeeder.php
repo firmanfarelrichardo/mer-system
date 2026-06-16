@@ -195,6 +195,10 @@ class ProductionInsidenSeeder extends Seeder
     {
         $tenant = Organisasi::where('kode_organisasi', 'default')->firstOrFail();
 
+        $this->command->info('  ▶ Memastikan daftar unit kerja kanonis tersedia...');
+        $unitSeedResult = $this->ensureCanonicalUnitKerja($tenant->id);
+        $this->command->line("    ✓ Unit kerja kanonis tersedia ({$unitSeedResult['created']} baru, {$unitSeedResult['updated']} diperbarui).");
+
         $this->command->info('  ▶ Menormalkan nama unit kerja production...');
         $this->normalizeExistingUnitKerja($tenant->id);
 
@@ -247,14 +251,14 @@ class ProductionInsidenSeeder extends Seeder
                 continue;
             }
 
-            $canonicalGroups[strtolower($canonicalName)][] = [$unit, $canonicalName];
+            $canonicalGroups[$this->unitKerjaLookupKey($canonicalName)][] = [$unit, $canonicalName];
         }
 
         $renamed = 0;
         $merged = 0;
 
         foreach ($canonicalGroups as $group) {
-            [$primaryUnit, $canonicalName] = $group[0];
+            [$primaryUnit, $canonicalName] = $this->choosePrimaryUnitKerja($group);
 
             if ($primaryUnit->nama_unit !== $canonicalName) {
                 DB::table('master.unit_kerja')
@@ -308,6 +312,23 @@ class ProductionInsidenSeeder extends Seeder
         }
 
         $this->command->line("    ✓ Normalisasi unit kerja selesai ({$renamed} nama diperbarui, {$merged} duplikat digabung).");
+    }
+
+    /**
+     * @param  array<int, array{0: object, 1: string}>  $group
+     * @return array{0: object, 1: string}
+     */
+    private function choosePrimaryUnitKerja(array $group): array
+    {
+        foreach ($group as [$unit, $canonicalName]) {
+            $officialCode = $this->canonicalUnitKerjaCodeForName($canonicalName);
+
+            if ($officialCode !== null && $unit->kode_unit === $officialCode) {
+                return [$unit, $canonicalName];
+            }
+        }
+
+        return $group[0];
     }
 
     private function loadMasterData(int $tenantId): array

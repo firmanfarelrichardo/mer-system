@@ -30,7 +30,7 @@ class ProductionSeeder extends Seeder
             OrganisasiSeeder::class,           // 1. Fondasi Tenant (Wajib Pertama)
             UnitKerjaSeeder::class,            // 2. Daftar Ruangan/Unit medis
             MasterFormSeeder::class,           // 3. Data Dropdown Formulir Laporan (Tipe Cedera, dll)
-            ProductionPenggunaSeeder::class,   // 4. Data 59 Pengguna Rumah Sakit beserta Dosen Peneliti
+            ProductionPenggunaSeeder::class,   // 4. Data Pengguna Rumah Sakit beserta Dosen Peneliti
         ]);
 
         $this->command->info('=============================================');
