@@ -144,7 +144,7 @@
                 
                 @if ($i < 3)
                     <div id="step-line-{{ $i + 1 }}"
-                         class="mx-1 h-0.5 w-full rounded-full bg-slate-200 transition-colors duration-300 sm:mx-2 sm:max-w-[6rem]" style="margin-top: 19px;"></div>
+                         class="mx-1 h-0.5 flex-1 rounded-full bg-slate-200 transition-colors duration-300 sm:mx-2 sm:max-w-[6rem]" style="margin-top: 19px;"></div>
                 @endif
             @endforeach
         </div>
