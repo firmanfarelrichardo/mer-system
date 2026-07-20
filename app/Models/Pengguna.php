@@ -13,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 /**
- * Model Pengguna — memetakan tabel `akun.pengguna`.
+ * Model Pengguna - memetakan tabel `akun.pengguna`.
  *
  * Mewarisi Authenticatable agar guard Auth Laravel dapat menggunakannya
  * untuk autentikasi berbasis sesi secara langsung.
@@ -248,7 +248,7 @@ class Pengguna extends Authenticatable
         $peran = $this->daftarPeran()[0] ?? null;
         $unit  = $this->unitKerja?->nama_unit;
 
-        return collect([$peran, $unit])->filter()->implode(' ') ?: '—';
+        return collect([$peran, $unit])->filter()->implode(' ') ?: '-';
     }
 
     /**
@@ -259,7 +259,7 @@ class Pengguna extends Authenticatable
     public function labelPelapor(): string
     {
         $jabatan = $this->jabatan ?? null;
-        $nama    = $this->nama_lengkap ?? '—';
+        $nama    = $this->nama_lengkap ?? '-';
 
         return $jabatan ? "{$jabatan} - {$nama}" : $nama;
     }
@@ -269,7 +269,7 @@ class Pengguna extends Authenticatable
      *
      * Sumber kebenaran tunggal: peran di database.
      * Untuk mencabut akses, cukup hapus akun atau cabut peran Peneliti
-     * melalui UI Admin — tanpa perlu mengubah .env atau kode.
+     * melalui UI Admin - tanpa perlu mengubah .env atau kode.
      */
     public function isPeneliti(): bool
     {
@@ -309,11 +309,11 @@ class Pengguna extends Authenticatable
                 ->first(fn (Peran $p) => $p->nama_peran !== Peran::KEPALA_RUANGAN)
                 ->nama_peran
                 ?? $this->peran->first()->nama_peran
-                ?? '—';
+                ?? '-';
         }
 
         // Pengguna biasa (1 peran) → peran dari database
-        return $this->peran->first()->nama_peran ?? '—';
+        return $this->peran->first()->nama_peran ?? '-';
     }
 
     /**

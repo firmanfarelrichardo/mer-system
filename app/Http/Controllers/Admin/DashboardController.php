@@ -10,7 +10,7 @@ use App\Services\PenggunaService;
 use Illuminate\Contracts\View\View;
 
 /**
- * Controller Dashboard Admin — menampilkan ringkasan statistik sistem.
+ * Controller Dashboard Admin - menampilkan ringkasan statistik sistem.
  */
 class DashboardController extends Controller
 {

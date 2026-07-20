@@ -15,7 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Controller Manajemen Unit Kerja — CRUD master unit kerja oleh Admin.
+ * Controller Manajemen Unit Kerja - CRUD master unit kerja oleh Admin.
  *
  * Alur: Controller → Service → Repository → Database
  * Audit log dicatat otomatis oleh Observer.
@@ -27,7 +27,7 @@ class UnitKerjaController extends Controller
     ) {}
 
     /* ------------------------------------------------------------------
-     | INDEX — Daftar Unit Kerja + Filter
+     | INDEX - Daftar Unit Kerja + Filter
      | ----------------------------------------------------------------*/
 
     public function index(Request $request): View
@@ -44,7 +44,7 @@ class UnitKerjaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | CREATE — Form Tambah Unit Kerja
+     | CREATE - Form Tambah Unit Kerja
      | ----------------------------------------------------------------*/
 
     public function buat(): View
@@ -53,7 +53,7 @@ class UnitKerjaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | STORE — Simpan Unit Kerja Baru
+     | STORE - Simpan Unit Kerja Baru
      | ----------------------------------------------------------------*/
 
     public function simpan(SimpanUnitKerjaRequest $request): RedirectResponse
@@ -69,7 +69,7 @@ class UnitKerjaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | EDIT — Form Edit Unit Kerja
+     | EDIT - Form Edit Unit Kerja
      | ----------------------------------------------------------------*/
 
     public function edit(int $unit_kerja): View
@@ -83,7 +83,7 @@ class UnitKerjaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | UPDATE — Perbarui Data Unit Kerja
+     | UPDATE - Perbarui Data Unit Kerja
      | ----------------------------------------------------------------*/
 
     public function perbarui(PerbaruiUnitKerjaRequest $request, int $unit_kerja): RedirectResponse
@@ -102,7 +102,7 @@ class UnitKerjaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | DESTROY — Hapus Unit Kerja (Soft Delete)
+     | DESTROY - Hapus Unit Kerja (Soft Delete)
      | ----------------------------------------------------------------*/
 
     public function hapus(int $unit_kerja): RedirectResponse

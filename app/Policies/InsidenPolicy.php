@@ -9,7 +9,7 @@ use App\Models\Pengguna;
 use App\Models\Peran;
 
 /**
- * InsidenPolicy — Otorisasi aksi terhadap laporan insiden.
+ * InsidenPolicy - Otorisasi aksi terhadap laporan insiden.
  *
  * Prinsip:
  *   - Direktur hanya READ-ONLY (monitoring).
@@ -51,8 +51,8 @@ class InsidenPolicy
      | Tindak Lanjut & Ubah Status
      | -----------------------------------------------------------------
      | HANYA Kepala Ruangan dan Komite yang diizinkan.
-     | Direktur TIDAK boleh — read-only monitoring.
-     | Nakes TIDAK boleh — hanya membuat laporan.
+     | Direktur TIDAK boleh - read-only monitoring.
+     | Nakes TIDAK boleh - hanya membuat laporan.
      | ----------------------------------------------------------------*/
 
     /**

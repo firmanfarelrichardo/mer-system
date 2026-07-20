@@ -42,7 +42,7 @@ class AppServiceProvider extends ServiceProvider
         // ----------------------------------------------------------------
         // Timezone & Locale: Asia/Jakarta (WIB), Bahasa Indonesia
         // Memastikan Carbon menggunakan bahasa Indonesia untuk semua output
-        // waktu relatif — diffForHumans() → "2 menit yang lalu", dll.
+        // waktu relatif - diffForHumans() → "2 menit yang lalu", dll.
         // Zona waktu ditangani oleh config/app.php (env APP_TIMEZONE).
         // ----------------------------------------------------------------
         Carbon::setLocale('id');
@@ -68,7 +68,7 @@ class AppServiceProvider extends ServiceProvider
         // ----------------------------------------------------------------
         // Gate: Peran Manajemen
         // Shorthand untuk mengecek apakah pengguna merupakan manajemen
-        // (Karu/Komite/Direktur) — digunakan di sidebar & views.
+        // (Karu/Komite/Direktur) - digunakan di sidebar & views.
         // ----------------------------------------------------------------
         Gate::define('manajemen', function ($pengguna) {
             return $pengguna->memilikiPeran(Peran::KEPALA_RUANGAN)
@@ -77,7 +77,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // ----------------------------------------------------------------
-        // Gate::before — Bypass Universal untuk Akun Peneliti
+        // Gate::before - Bypass Universal untuk Akun Peneliti
         // ----------------------------------------------------------------
         // Memberikan seluruh izin Gate kepada pengguna yang memiliki
         // peran Peneliti di database.
@@ -97,10 +97,10 @@ class AppServiceProvider extends ServiceProvider
         // ----------------------------------------------------------------
         // View Composer: isPeneliti (global)
         // Flag boolean untuk mengidentifikasi akun peneliti/auditor.
-        // Tersedia di SEMUA view — digunakan oleh sidebar (menu bypass),
+        // Tersedia di SEMUA view - digunakan oleh sidebar (menu bypass),
         // tampil.blade.php (bypass anonimitas), dll.
         // Menggunakan metode model isPeneliti() sebagai satu-satunya
-        // sumber kebenaran — tidak duplikasi logika pengecekan NIP.
+        // sumber kebenaran - tidak duplikasi logika pengecekan NIP.
         // ----------------------------------------------------------------
         View::composer('*', function (\Illuminate\View\View $view): void {
             $pengguna = auth()->user();
@@ -111,7 +111,7 @@ class AppServiceProvider extends ServiceProvider
         // ----------------------------------------------------------------
         // View Composer: Sidebar Navigation
         // Menyuntikkan data menu ke layouts.sidebar agar tidak bergantung
-        // pada @php block scope — lebih andal dan mudah diuji.
+        // pada @php block scope - lebih andal dan mudah diuji.
         // ----------------------------------------------------------------
         View::composer('layouts.sidebar', function (\Illuminate\View\View $view): void {
             $pengguna = auth()->user();
@@ -192,7 +192,7 @@ class AppServiceProvider extends ServiceProvider
 
                 // Kepala Ruangan & Komite: menerima & menindaklanjuti laporan.
                 // 'Laporan Masuk' menggunakan rute yang sama (laporan.index)
-                // — data di-scope otomatis via scopeUntukPeran() di model.
+                // - data di-scope otomatis via scopeUntukPeran() di model.
                 [
                     'label' => 'Laporan Masuk',
                     'route' => 'laporan.index',
@@ -293,7 +293,7 @@ class AppServiceProvider extends ServiceProvider
             ];
 
             // ── Menu Direktur ─────────────────────────────────────────
-            // Direktur: monitoring read-only — tidak ada feedback/tindak lanjut.
+            // Direktur: monitoring read-only - tidak ada feedback/tindak lanjut.
             $menuDirektur = [
                 [
                     'label' => 'Semua Laporan',

@@ -5,8 +5,8 @@
 | Menampilkan 4 kartu ringkasan angka utama.
 |
 | Props:
-|   $ringkasanAngka — array dari StatistikController::hitungRingkasanAngka()
-|   $bisaLihatSemua — bool, true jika direktur/komite
+|   $ringkasanAngka - array dari StatistikController::hitungRingkasanAngka()
+|   $bisaLihatSemua - bool, true jika direktur/komite
 |
 | Akses: Semua peran (Kepala Ruangan, Komite, Direktur)
 |--------------------------------------------------------------------------

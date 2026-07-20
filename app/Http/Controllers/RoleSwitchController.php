@@ -9,11 +9,11 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * RoleSwitchController — Fitur "Ganti Peran" untuk pengguna multi-role.
+ * RoleSwitchController - Fitur "Ganti Peran" untuk pengguna multi-role.
  *
  * Mendukung dua skenario:
- * 1. Akun peneliti — dapat simulasi semua peran untuk pengujian.
- * 2. Pengguna dual-role — misal Nakes yang juga menjabat sebagai Karu.
+ * 1. Akun peneliti - dapat simulasi semua peran untuk pengujian.
+ * 2. Pengguna dual-role - misal Nakes yang juga menjabat sebagai Karu.
  *
  * Peran aktif disimpan di sesi; tidak ada perubahan ke database.
  *
@@ -43,7 +43,7 @@ class RoleSwitchController extends Controller
         // ── Keamanan: hanya pengguna multi-role yang boleh mengakses ──
         abort_unless($pengguna->bisaGantiPeran(), 403, 'Akses ditolak.');
 
-        // ── Validasi input — peran harus ada di daftar yang diizinkan ──
+        // ── Validasi input - peran harus ada di daftar yang diizinkan ──
         $peranTersedia = $pengguna->peranYangDapatDipilih();
 
         $validated = $request->validate([

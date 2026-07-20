@@ -1,8 +1,8 @@
-# 01 — Arsitektur Sistem & Hardening OS
+# 01 - Arsitektur Sistem & Hardening OS
 
-> **Sistem**: Medication Error Reporting (MER) — Rumah Sakit  
+> **Sistem**: Medication Error Reporting (MER) - Rumah Sakit  
 > **Klasifikasi**: HIGH-RISK (Data Medis Sensitif / PHI)  
-> **Server**: VPS Ubuntu 24.04 LTS — 2 Core CPU, 8GB RAM, 100GB SSD (Hostinger)  
+> **Server**: VPS Ubuntu 24.04 LTS - 2 Core CPU, 8GB RAM, 100GB SSD (Hostinger)  
 > **Tanggal**: Maret 2026
 
 ---
@@ -42,16 +42,16 @@ Bayangkan MER System sebagai **brankas rekam medis digital** di dalam gedung rum
 
 ### Versi Formal (Standar Industri)
 
-Arsitektur ini menerapkan **Defense in Depth** — strategi keamanan berlapis dimana setiap lapisan berfungsi independen sehingga kompromi pada satu lapisan tidak otomatis membahayakan lapisan lain.
+Arsitektur ini menerapkan **Defense in Depth** - strategi keamanan berlapis dimana setiap lapisan berfungsi independen sehingga kompromi pada satu lapisan tidak otomatis membahayakan lapisan lain.
 
 **Lapisan keamanan (dari luar ke dalam):**
 
-1. **Edge Layer (Cloudflare)** — WAF, DDoS mitigation, TLS termination, bot filtering
-2. **Network Layer (UFW + iptables)** — Allowlist IP Cloudflare pada port 80/443, deny-all default policy
-3. **Transport Layer (SSH Hardening)** — Ed25519 key-only auth, non-standard port, Fail2Ban IPS
-4. **Container Layer (Docker Network)** — Bridge network isolation, loopback port binding untuk database
-5. **Application Layer (Laravel)** — CSRF protection, input validation, encrypted sessions
-6. **Data Layer (PostgreSQL)** — Network-isolated, credential-based auth, encrypted backups
+1. **Edge Layer (Cloudflare)** - WAF, DDoS mitigation, TLS termination, bot filtering
+2. **Network Layer (UFW + iptables)** - Allowlist IP Cloudflare pada port 80/443, deny-all default policy
+3. **Transport Layer (SSH Hardening)** - Ed25519 key-only auth, non-standard port, Fail2Ban IPS
+4. **Container Layer (Docker Network)** - Bridge network isolation, loopback port binding untuk database
+5. **Application Layer (Laravel)** - CSRF protection, input validation, encrypted sessions
+6. **Data Layer (PostgreSQL)** - Network-isolated, credential-based auth, encrypted backups
 
 ---
 
@@ -163,9 +163,9 @@ timedatectl status
 
 ### Mengapa Perlu Swap File?
 
-**Versi Formal:** Swap adalah mekanisme *virtual memory* di Linux yang menggunakan sebagian disk sebagai ekstensi RAM. Ketika physical RAM hampir penuh, kernel memindahkan (*page out*) data yang jarang diakses dari RAM ke swap space, membebaskan RAM untuk proses yang aktif. Pada VPS 8GB yang menjalankan Docker build (multi-stage compilation), PostgreSQL, dan PHP-FPM secara simultan, puncak penggunaan RAM dapat melampaui kapasitas fisik. Tanpa swap, Linux OOM Killer akan secara paksa membunuh (*kill*) proses dengan konsumsi RAM tertinggi — yang biasanya adalah database production. Swap memberikan *safety net* agar kernel punya opsi paging sebelum memicu OOM Killer.
+**Versi Formal:** Swap adalah mekanisme *virtual memory* di Linux yang menggunakan sebagian disk sebagai ekstensi RAM. Ketika physical RAM hampir penuh, kernel memindahkan (*page out*) data yang jarang diakses dari RAM ke swap space, membebaskan RAM untuk proses yang aktif. Pada VPS 8GB yang menjalankan Docker build (multi-stage compilation), PostgreSQL, dan PHP-FPM secara simultan, puncak penggunaan RAM dapat melampaui kapasitas fisik. Tanpa swap, Linux OOM Killer akan secara paksa membunuh (*kill*) proses dengan konsumsi RAM tertinggi - yang biasanya adalah database production. Swap memberikan *safety net* agar kernel punya opsi paging sebelum memicu OOM Killer.
 
-**Versi Sederhana:** RAM itu seperti meja kerja dokter — terbatas luasnya. Saat meja penuh dan ada berkas baru masuk, tanpa swap berarti berkas-berkas yang sedang dikerjakan dibuang ke lantai (proses di-kill). Swap seperti menyediakan laci tambahan di samping meja: berkas yang jarang dilihat disimpan di laci (disk), sehingga meja tetap punya ruang untuk tugas yang sedang aktif.
+**Versi Sederhana:** RAM itu seperti meja kerja dokter - terbatas luasnya. Saat meja penuh dan ada berkas baru masuk, tanpa swap berarti berkas-berkas yang sedang dikerjakan dibuang ke lantai (proses di-kill). Swap seperti menyediakan laci tambahan di samping meja: berkas yang jarang dilihat disimpan di laci (disk), sehingga meja tetap punya ruang untuk tugas yang sedang aktif.
 
 ### Mengapa 4GB?
 
@@ -183,7 +183,7 @@ timedatectl status
 
 ```bash
 # Periksa apakah swap sudah ada sebelumnya.
-# Jika output kosong, artinya belum ada swap — lanjutkan.
+# Jika output kosong, artinya belum ada swap - lanjutkan.
 # Jika sudah ada entri, evaluasi apakah ukurannya cukup.
 swapon --show
 
@@ -262,7 +262,7 @@ sysctl vm.swappiness
 
 ### Mengapa Tidak Boleh Pakai Root?
 
-**Versi Formal:** Prinsip *Least Privilege* (PoLP) mengharuskan setiap aktor hanya memiliki hak akses minimum yang dibutuhkan untuk menjalankan tugasnya. User `root` memiliki UID 0 dengan akses tak terbatas ke seluruh filesystem, proses, dan kernel — menjadikannya target utama attacker. Jika SSH session sebagai root dikompromikan, attacker mendapat kontrol penuh tanpa eskalasi tambahan.
+**Versi Formal:** Prinsip *Least Privilege* (PoLP) mengharuskan setiap aktor hanya memiliki hak akses minimum yang dibutuhkan untuk menjalankan tugasnya. User `root` memiliki UID 0 dengan akses tak terbatas ke seluruh filesystem, proses, dan kernel - menjadikannya target utama attacker. Jika SSH session sebagai root dikompromikan, attacker mendapat kontrol penuh tanpa eskalasi tambahan.
 
 **Versi Sederhana:** Menggunakan root sehari-hari seperti membawa kunci master gedung kemana-mana. Jika dicuri, pencuri bisa membuka semua ruangan. Lebih aman membuat kunci khusus staf (user `mer_ops`) yang hanya bisa membuka ruangan tertentu dengan izin (`sudo`).
 
@@ -294,7 +294,7 @@ visudo -c
 **Mengapa `--disabled-password` dan `NOPASSWD:ALL`?**
 
 Kombinasi ini menerapkan model *"key-only authentication"*:
-- User `mer_ops` tidak memiliki password sama sekali (bukan password kosong — password *disabled*).
+- User `mer_ops` tidak memiliki password sama sekali (bukan password kosong - password *disabled*).
 - Autentikasi sepenuhnya bergantung pada SSH Key Ed25519 (langkah berikutnya).
 - `NOPASSWD:ALL` pada sudoers diperlukan karena tanpa password, sudo tidak bisa meminta verifikasi. Ini aman selama SSH Key dijaga dengan baik.
 
@@ -308,7 +308,7 @@ Kombinasi ini menerapkan model *"key-only authentication"*:
 
 **Versi Sederhana:** Ed25519 adalah "gembok sidik jari" generasi terbaru. Lebih kecil dari gembok lama (RSA), tapi justru lebih kuat dan lebih cepat membuka/mengunci.
 
-### Eksekusi — Generate Key di Komputer Lokal
+### Eksekusi - Generate Key di Komputer Lokal
 
 > **Konteks Eksekusi:** `Terminal Komputer Lokal`
 
@@ -325,10 +325,10 @@ ssh-keygen -t ed25519 -C "devops@mer-system.rs" -f ~/.ssh/mer_ops_ed25519
 ```
 
 Hasil generate:
-- `~/.ssh/mer_ops_ed25519` — **Private Key** (RAHASIA, tidak boleh dibagikan)
-- `~/.ssh/mer_ops_ed25519.pub` — **Public Key** (aman untuk disalin ke server)
+- `~/.ssh/mer_ops_ed25519` - **Private Key** (RAHASIA, tidak boleh dibagikan)
+- `~/.ssh/mer_ops_ed25519.pub` - **Public Key** (aman untuk disalin ke server)
 
-### Eksekusi — Transfer Public Key ke VPS
+### Eksekusi - Transfer Public Key ke VPS
 
 > **Konteks Eksekusi:** `Terminal Komputer Lokal`
 
@@ -360,9 +360,9 @@ chmod 700 /home/mer_ops/.ssh
 chmod 600 /home/mer_ops/.ssh/authorized_keys
 ```
 
-### Verifikasi — Login dengan Key dari Terminal Baru
+### Verifikasi - Login dengan Key dari Terminal Baru
 
-> **Konteks Eksekusi:** `Terminal Komputer Lokal (TERMINAL BARU — jangan tutup terminal lama)`
+> **Konteks Eksekusi:** `Terminal Komputer Lokal (TERMINAL BARU - jangan tutup terminal lama)`
 
 ```bash
 # Test login sebagai mer_ops menggunakan SSH Key
@@ -385,7 +385,7 @@ sudo whoami
 
 ### Mengapa Harus Di-hardening?
 
-**Versi Formal:** Daemon SSH (sshd) adalah satu-satunya entry point remote ke server. Konfigurasi default mengizinkan root login dan password authentication — dua vektor yang paling sering dieksploitasi melalui brute-force dan credential stuffing attack. Hardening sshd mengeliminasi kedua vektor ini.
+**Versi Formal:** Daemon SSH (sshd) adalah satu-satunya entry point remote ke server. Konfigurasi default mengizinkan root login dan password authentication - dua vektor yang paling sering dieksploitasi melalui brute-force dan credential stuffing attack. Hardening sshd mengeliminasi kedua vektor ini.
 
 **Versi Sederhana:** Pintu SSH default-nya terbuka lebar dan menerima siapa saja yang tahu password. Kita ganti pintunya: pindahkan ke lokasi rahasia (port custom), ganti gemboknya jadi sidik jari (key-only), dan tutup pintu untuk boss besar (root).
 
@@ -527,7 +527,7 @@ ssh mer-vps
 
 **Versi Formal:** Jika UFW mengizinkan port 80/443 dari semua IP (`0.0.0.0/0`), maka attacker dapat mem-bypass Cloudflare WAF dengan mengakses server langsung menggunakan IP asli VPS. Ini meniadakan seluruh investasi keamanan di edge layer. Dengan membatasi allowlist hanya pada ASN Cloudflare (AS13335), kita memastikan 100% traffic HTTP/HTTPS melewati inspeksi WAF.
 
-**Versi Sederhana:** Jika pintu lobi menerima semua tamu — bukan hanya yang diantar satpam — maka satpam (Cloudflare) jadi percuma. Kita program pintunya agar hanya mau terbuka jika tamu menunjukkan tanda pengenal dari satpam.
+**Versi Sederhana:** Jika pintu lobi menerima semua tamu - bukan hanya yang diantar satpam - maka satpam (Cloudflare) jadi percuma. Kita program pintunya agar hanya mau terbuka jika tamu menunjukkan tanda pengenal dari satpam.
 
 ### Penting: Jebakan Docker & UFW
 
@@ -591,7 +591,7 @@ sudo ufw status verbose
 
 **Versi Sederhana:** Satpam Cloudflare kadang mengganti seragam (IP baru). Kalau pintu tidak diupdate daftar seragam yang dikenali, satpam yang pakai seragam baru akan ditolak masuk. Skrip ini otomatis mengupdate daftar setiap minggu.
 
-### Eksekusi — Buat Skrip
+### Eksekusi - Buat Skrip
 
 > **Konteks Eksekusi:** `User: mer_ops @ VPS`
 
@@ -670,7 +670,7 @@ SCRIPT
 sudo chmod 700 /opt/mer-system/scripts/update-cloudflare-ufw.sh
 ```
 
-### Eksekusi — Daftarkan Cronjob
+### Eksekusi - Daftarkan Cronjob
 
 ```bash
 # Tambahkan cronjob yang berjalan setiap hari Minggu pukul 03:00 WIB.
@@ -726,7 +726,7 @@ findtime = 600
 
 # Jumlah percobaan gagal sebelum di-ban.
 # 3 kali dipilih (bukan 5) karena SSH sudah di-hardening dengan key-only.
-# Percobaan password seharusnya 0 — jadi 3 kali mencoba artinya pasti attacker.
+# Percobaan password seharusnya 0 - jadi 3 kali mencoba artinya pasti attacker.
 maxretry = 3
 
 # Abaikan IP loopback dan private network agar tidak mem-ban diri sendiri.
@@ -744,7 +744,7 @@ port = 49152
 filter = sshd
 # Sumber log autentikasi SSH.
 logpath = /var/log/auth.log
-# Override: SSH lebih agresif — ban 8 jam untuk repeated offenders.
+# Override: SSH lebih agresif - ban 8 jam untuk repeated offenders.
 bantime = 28800
 maxretry = 3
 JAIL_CONFIG
@@ -866,7 +866,7 @@ Unattended-Upgrade::Allowed-Origins {
     "${distro_id}ESM:${distro_codename}-infra-security";
 };
 
-// Tidak auto-reboot — sistem medis harus dijadwalkan maintenance window.
+// Tidak auto-reboot - sistem medis harus dijadwalkan maintenance window.
 Unattended-Upgrade::Automatic-Reboot "false";
 
 // Bersihkan paket lama yang tidak terpakai setelah upgrade
@@ -968,4 +968,4 @@ echo "========================================="
 
 ---
 
-> **Dokumen selanjutnya:** [02-cloudflare-dan-edge-security.md](./02-cloudflare-dan-edge-security.md) — Setup DNS Proxied, Full Strict SSL, Origin Certificate, dan WAF Rules untuk sistem medis.
+> **Dokumen selanjutnya:** [02-cloudflare-dan-edge-security.md](./02-cloudflare-dan-edge-security.md) - Setup DNS Proxied, Full Strict SSL, Origin Certificate, dan WAF Rules untuk sistem medis.

@@ -9,7 +9,7 @@ use App\Support\Paginasi;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
- * InsidenRepository — akses data insiden yang terpisah per kebutuhan peran.
+ * InsidenRepository - akses data insiden yang terpisah per kebutuhan peran.
  *
  * Separation of Concern:
  *   - getDraftLaporan()   → Nakes: hanya draf miliknya.
@@ -153,7 +153,7 @@ class InsidenRepository
      *
      * Aturan query:
      *   - Filter berdasarkan tgl_kejadian (whereBetween).
-     *   - Abaikan status DRAF — hanya laporan yang sudah dikirim.
+     *   - Abaikan status DRAF - hanya laporan yang sudah dikirim.
      *   - Eager-load relasi untuk mencegah N+1: unitKerja, detailPasien, kategoriKesalahans.
      *   - Diurutkan ASC berdasarkan tgl_kejadian agar tampil kronologis di PDF.
      *

@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Model Insiden — memetakan tabel `pelaporan.insiden`.
+ * Model Insiden - memetakan tabel `pelaporan.insiden`.
  *
  * Merepresentasikan satu laporan insiden medication error
  * yang diajukan oleh pelapor (nakes).
@@ -84,7 +84,7 @@ class Insiden extends Model
      | ----------------------------------------------------------------*/
 
     /**
-     * Pelapor — pengguna yang membuat laporan.
+     * Pelapor - pengguna yang membuat laporan.
      *
      * @return BelongsTo<Pengguna, $this>
      */
@@ -150,7 +150,7 @@ class Insiden extends Model
     }
 
     /* ------------------------------------------------------------------
-     | Local Scopes — Filter data berdasarkan peran pengguna
+     | Local Scopes - Filter data berdasarkan peran pengguna
      | -----------------------------------------------------------------
      | Digunakan oleh controller agar query SELALU dibatasi sesuai peran.
      | Karu   → hanya insiden dari unit kerja miliknya.
@@ -214,7 +214,7 @@ class Insiden extends Model
             'KTC'      => 'KTC',
             'KTD'      => 'KTD',
             'SENTINEL' => 'Sentinel',
-            default    => $this->tipe_insiden ?? '—',
+            default    => $this->tipe_insiden ?? '-',
         };
     }
 
@@ -244,7 +244,7 @@ class Insiden extends Model
             'investigasi'  => 'Investigasi',
             'tindak_lanjut' => 'Tindak Lanjut',
             'selesai'      => 'Selesai',
-            default        => $this->status_saat_ini ?? '—',
+            default        => $this->status_saat_ini ?? '-',
         };
     }
 
@@ -299,7 +299,7 @@ class Insiden extends Model
      * Status tindak lanjut terakhir yang dibuat oleh pengguna dengan peran tertentu.
      *
      * Digunakan untuk memastikan Karu dan Komite memiliki alur status
-     * yang INDEPENDEN — status salah satu tidak memblokir yang lain.
+     * yang INDEPENDEN - status salah satu tidak memblokir yang lain.
      *
      * Jika relasi `tindakLanjut` sudah di-eager-load (beserta
      * `pengguna.peran`), method ini menggunakan collection tersebut

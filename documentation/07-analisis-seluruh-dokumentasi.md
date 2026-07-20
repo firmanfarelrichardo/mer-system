@@ -1,6 +1,6 @@
-# 07 — Analisis End-to-End: Rekonsiliasi & Master Workflow
+# 07 - Analisis End-to-End: Rekonsiliasi & Master Workflow
 
-> **Sistem**: Medication Error Reporting (MER) — Rumah Sakit  
+> **Sistem**: Medication Error Reporting (MER) - Rumah Sakit  
 > **Klasifikasi**: HIGH-RISK (Data Medis Sensitif / PHI)  
 > **Tujuan Dokumen**: Analisis kesiapan 6 dokumen sebelumnya untuk eksekusi *Zero-to-Launch* tanpa interupsi, identifikasi celah (gaps), dan penyediaan *Master Workflow* yang mengikat semuanya.
 

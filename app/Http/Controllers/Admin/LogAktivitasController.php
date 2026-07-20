@@ -12,7 +12,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
 /**
- * Controller Log Aktivitas — dashboard audit trail oleh Admin.
+ * Controller Log Aktivitas - dashboard audit trail oleh Admin.
  *
  * Read-only: hanya menampilkan log yang sudah dicatat oleh Observer & Service.
  * Dipisah menjadi 2 halaman: Log Pengguna (non-admin) dan Log Admin.
@@ -42,7 +42,7 @@ class LogAktivitasController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | Private: Logika bersama — DRY
+     | Private: Logika bersama - DRY
      | ----------------------------------------------------------------*/
 
     private function tampilkanLog(Request $request, string $tipePeran): View

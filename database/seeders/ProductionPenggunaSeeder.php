@@ -12,7 +12,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * ProductionPenggunaSeeder — Akun pengguna resmi RSUD HM. Ryacudu Kotabumi.
+ * ProductionPenggunaSeeder - Akun pengguna resmi RSUD HM. Ryacudu Kotabumi.
  *
  * Sumber data: SK UPTD RSUD HM. Ryacudu Kabupaten Lampung Utara Tahun 2025.
  *
@@ -29,13 +29,13 @@ use Illuminate\Support\Facades\DB;
  * │ Komite (Medik)    │ komite.medik                 │ password                │
  * │ Peneliti/Dosen    │ dosenpeneliti                │ Peneliti@2026!          │
  * ├───────────────────┴──────────────────────────────┴─────────────────────────┤
- * │ NAKES PIC (25) — Perawat/Bidan Pelaksana per Unit                          │
- * │ KEPALA RUANGAN (28) — Validator per Unit                                   │
+ * │ NAKES PIC (25) - Perawat/Bidan Pelaksana per Unit                          │
+ * │ KEPALA RUANGAN (28) - Validator per Unit                                   │
  * │ Semua non-admin: wajib_ganti_sandi = true (ganti sandi saat login pertama) │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * IDEMPOTENT: menggunakan updateOrCreate dengan (tenant_id, email) sebagai kunci
- * pencarian — kolom yang memiliki unique constraint di database.
+ * pencarian - kolom yang memiliki unique constraint di database.
  *
  * Jalankan secara mandiri:
  *   php artisan db:seed --class=ProductionPenggunaSeeder
@@ -235,7 +235,7 @@ class ProductionPenggunaSeeder extends Seeder
                 'peran' => $peranDirektur,
             ],
 
-            // ── Komite 1 — Keselamatan Pasien ─────────────────────────────
+            // ── Komite 1 - Keselamatan Pasien ─────────────────────────────
             [
                 'data'  => [
                     'tenant_id'         => $tenantId,
@@ -253,7 +253,7 @@ class ProductionPenggunaSeeder extends Seeder
                 'peran' => $peranKomite,
             ],
 
-            // ── Komite 2 — Mutu dan Keselamatan ───────────────────────────
+            // ── Komite 2 - Mutu dan Keselamatan ───────────────────────────
             [
                 'data'  => [
                     'tenant_id'         => $tenantId,
@@ -271,7 +271,7 @@ class ProductionPenggunaSeeder extends Seeder
                 'peran' => $peranKomite,
             ],
 
-            // ── Komite 3 — Medik ───────────────────────────────────────────
+            // ── Komite 3 - Medik ───────────────────────────────────────────
             [
                 'data'  => [
                     'tenant_id'         => $tenantId,

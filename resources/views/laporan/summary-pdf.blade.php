@@ -5,7 +5,7 @@
     <title>Rekapitulasi Laporan Insiden</title>
     <style>
         /* ═══════════════════════════════════════════════════════════════
-           1. ZONA AMAN KERTAS — margin top diperbesar untuk kop surat,
+           1. ZONA AMAN KERTAS - margin top diperbesar untuk kop surat,
               semua sisi diberi jarak 2 cm agar tidak terlalu dekat tepi.
            ═══════════════════════════════════════════════════════════════ */
         @page {
@@ -25,7 +25,7 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════
-           2. KOP SURAT PERMANEN — fixed position, berulang di setiap halaman
+           2. KOP SURAT PERMANEN - fixed position, berulang di setiap halaman
            top: -4.5cm agar masuk ke zona margin-top: 5cm tanpa menabrak konten.
            ═══════════════════════════════════════════════════════════════ */
         .kop-surat {
@@ -55,7 +55,7 @@
         }
 
         /* ═══════════════════════════════════════════════════════════════
-           3. TABEL REKAPITULASI — bordered, dengan aturan page-break
+           3. TABEL REKAPITULASI - bordered, dengan aturan page-break
            ═══════════════════════════════════════════════════════════════ */
         .tbl-bordered {
             border: 1px solid #000;
@@ -116,7 +116,7 @@
     @endphp
 
     {{-- ================================================================
-         FIXED HEADER (KOP SURAT) — berulang di setiap halaman
+         FIXED HEADER (KOP SURAT) - berulang di setiap halaman
          ================================================================ --}}
     <div class="kop-surat">
         <table width="100%" cellpadding="0" cellspacing="0">
@@ -198,19 +198,19 @@
                             @if($insiden->tgl_kejadian)
                                 {{ \Carbon\Carbon::parse($insiden->tgl_kejadian)->translatedFormat('d M Y') }}
                             @else
-                                —
+                                -
                             @endif
                         </td>
-                        <td>{{ $insiden->nomor_laporan ?? '—' }}</td>
-                        <td>{{ $insiden->detailPasien?->nomor_rekam_medis ?? '—' }}</td>
+                        <td>{{ $insiden->nomor_laporan ?? '-' }}</td>
+                        <td>{{ $insiden->detailPasien?->nomor_rekam_medis ?? '-' }}</td>
                         <td>
                             @if ($insiden->is_anonim)
                                 <em style="color: #666;">Anonim</em>
                             @else
-                                {{ $insiden->detailPasien?->nama_pasien ?? '—' }}
+                                {{ $insiden->detailPasien?->nama_pasien ?? '-' }}
                             @endif
                         </td>
-                        <td>{{ $insiden->nama_unit_kerja ?? $insiden->unitKerja?->nama_unit ?? '—' }}</td>
+                        <td>{{ $insiden->nama_unit_kerja ?? $insiden->unitKerja?->nama_unit ?? '-' }}</td>
                         <td class="text-center">{{ $insiden->labelTipeInsiden() }}</td>
                         <td>{{ $insiden->labelStatus() }}</td>
                     </tr>

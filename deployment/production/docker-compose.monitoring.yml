@@ -8,7 +8,7 @@
 
 services:
   # -------------------------------------------
-  # Grafana Loki — Log Aggregation Engine
+  # Grafana Loki - Log Aggregation Engine
   # -------------------------------------------
   loki:
     image: grafana/loki:2.9.4
@@ -30,7 +30,7 @@ services:
           memory: 64M
 
   # -------------------------------------------
-  # Promtail — Log Collector
+  # Promtail - Log Collector
   # Membaca log dari Docker containers dan file sistem,
   # lalu mengirimnya ke Loki.
   # -------------------------------------------
@@ -56,7 +56,7 @@ services:
           memory: 32M
 
   # -------------------------------------------
-  # Grafana — Dashboard & Visualization
+  # Grafana - Dashboard & Visualization
   # -------------------------------------------
   grafana:
     image: grafana/grafana:10.3.1
@@ -82,7 +82,7 @@ services:
           memory: 64M
 
   # -------------------------------------------
-  # Uptime Kuma — Health & Uptime Monitoring
+  # Uptime Kuma - Health & Uptime Monitoring
   # -------------------------------------------
   uptime-kuma:
     image: louislam/uptime-kuma:1

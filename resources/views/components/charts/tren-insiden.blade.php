@@ -2,11 +2,11 @@
 |--------------------------------------------------------------------------
 | Komponen: x-charts.tren-insiden
 |--------------------------------------------------------------------------
-| Line Chart — tren jumlah insiden per bulan (6 bulan terakhir).
+| Line Chart - tren jumlah insiden per bulan (6 bulan terakhir).
 | Menggunakan Chart.js via CDN.
 |
 | Props:
-|   $trenBulanan — array{labels: list<string>, data: list<int>}
+|   $trenBulanan - array{labels: list<string>, data: list<int>}
 |
 | Akses: Semua peran
 |--------------------------------------------------------------------------
@@ -41,7 +41,7 @@
 @push('scripts')
 <script>
 (function () {
-    // Data dari server — encode PHP → JSON yang aman.
+    // Data dari server - encode PHP → JSON yang aman.
     const labels = @json($trenBulanan['labels']);
     const data   = @json($trenBulanan['data']);
 

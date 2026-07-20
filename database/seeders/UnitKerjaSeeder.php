@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * UnitKerjaSeeder — Seed 31 unit kerja rumah sakit.
+ * UnitKerjaSeeder - Seed 31 unit kerja rumah sakit.
  *
  * Sumber data: Referensi struktur organisasi RS.
  * Idempotent: menggunakan firstOrCreate berdasarkan kode_unit per tenant.

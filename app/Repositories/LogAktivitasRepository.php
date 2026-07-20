@@ -12,9 +12,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 
 /**
- * Repository LogAktivitas — akses data ke tabel `audit.log_aktivitas`.
+ * Repository LogAktivitas - akses data ke tabel `audit.log_aktivitas`.
  *
- * Hanya query (read-only). Tidak ada persistensi — insert dilakukan
+ * Hanya query (read-only). Tidak ada persistensi - insert dilakukan
  * oleh AuditLogService dan Observer secara otomatis.
  */
 class LogAktivitasRepository

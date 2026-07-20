@@ -7,7 +7,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * ExportSummaryRequest — validasi input rentang tanggal untuk cetak laporan rekapitulasi.
+ * ExportSummaryRequest - validasi input rentang tanggal untuk cetak laporan rekapitulasi.
  *
  * Aturan:
  *   - tanggal_mulai : wajib, format tanggal valid.
@@ -16,7 +16,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class ExportSummaryRequest extends FormRequest
 {
     /**
-     * Hanya Komite & Direktur yang boleh mengakses — otorisasi dilakukan di controller.
+     * Hanya Komite & Direktur yang boleh mengakses - otorisasi dilakukan di controller.
      */
     public function authorize(): bool
     {

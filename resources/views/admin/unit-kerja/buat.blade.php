@@ -8,7 +8,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Tambah Unit Kerja — Sistem MER')
+@section('judul', 'Tambah Unit Kerja - Sistem MER')
 
 @section('konten')
 

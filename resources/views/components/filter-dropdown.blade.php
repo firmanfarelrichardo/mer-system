@@ -1,15 +1,15 @@
 {{--
 |--------------------------------------------------------------------------
-| Filter Dialog Component  —  components/filter-dropdown.blade.php
+| Filter Dialog Component  -  components/filter-dropdown.blade.php
 |--------------------------------------------------------------------------
 | Modal tertengah yang muncul di atas backdrop blur.
 | Responsif di semua ukuran layar (mobile-first).
 |
 | Props:
-|   $action   — form action URL            (default: current URL)
-|   $method   — HTTP method                (default: 'GET')
-|   $title    — heading teks di dialog     (default: 'Filter')
-|   $maxWidth — max lebar panel Tailwind   (default: 'max-w-md')
+|   $action   - form action URL            (default: current URL)
+|   $method   - HTTP method                (default: 'GET')
+|   $title    - heading teks di dialog     (default: 'Filter')
+|   $maxWidth - max lebar panel Tailwind   (default: 'max-w-md')
 |
 | Contoh:
 |   <x-filter-dropdown :action="route('laporan.index')" title="Filter Laporan">

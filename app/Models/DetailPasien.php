@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Model DetailPasien — memetakan tabel `pelaporan.detail_pasien`.
+ * Model DetailPasien - memetakan tabel `pelaporan.detail_pasien`.
  *
  * Menyimpan data pasien terkait insiden serta detail klasifikasi
  * kesalahan obat (jenis kesalahan, cedera, faktor penyebab, dll.).

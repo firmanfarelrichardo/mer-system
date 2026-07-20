@@ -2,11 +2,11 @@
 |--------------------------------------------------------------------------
 | Komponen: x-charts.severity-bar
 |--------------------------------------------------------------------------
-| Bar Chart — distribusi insiden per tipe/tingkat keparahan.
+| Bar Chart - distribusi insiden per tipe/tingkat keparahan.
 | Menampilkan: KPC, KNC, KTC, KTD, SENTINEL.
 |
 | Props:
-|   $distribusiTipe — array{labels: list<string>, data: list<int>, colors: list<string>}
+|   $distribusiTipe - array{labels: list<string>, data: list<int>, colors: list<string>}
 |
 | Akses: Semua peran
 |--------------------------------------------------------------------------

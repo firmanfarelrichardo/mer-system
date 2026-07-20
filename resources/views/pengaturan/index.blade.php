@@ -12,7 +12,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Pengaturan — Sistem MER')
+@section('judul', 'Pengaturan - Sistem MER')
 
 @section('konten')
 
@@ -173,7 +173,7 @@
                         </svg>
                         <div>
                             <p class="text-sm font-medium text-slate-700">Perangkat ini</p>
-                            <p class="text-xs text-slate-400">{{ request()->ip() }} · {{ request()->header('User-Agent') ? Str::limit(request()->header('User-Agent'), 60) : '—' }}</p>
+                            <p class="text-xs text-slate-400">{{ request()->ip() }} · {{ request()->header('User-Agent') ? Str::limit(request()->header('User-Agent'), 60) : '-' }}</p>
                         </div>
                     </div>
                     <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5

@@ -5,16 +5,16 @@
 | Sidebar navigasi utama yang TERPUSAT dan data-driven.
 |
 | Variabel disuntikkan via View Composer di AppServiceProvider::boot():
-|   $pengguna        — Auth::user()
-|   $punyaPeran      — closure: fn(array) => bool, respects $peranAktif
-|   $isPeneliti      — bool, true jika pengguna adalah auditor/peneliti
-|   $peranAktif      — string|null, peran simulasi aktif (null = mode penuh)
-|   $menuUtama       — menu dashboard (semua peran)
-|   $menuPelaporan   — menu laporan (Nakes / Kepala Ruangan / Komite)
-|   $menuNotifikasi  — menu notifikasi (semua peran)
-|   $menuAdmin       — menu administrasi (Admin)
-|   $menuDirektur    — menu eksekutif (Direktur)
-|   $menuBawah       — profil & pengaturan
+|   $pengguna        - Auth::user()
+|   $punyaPeran      - closure: fn(array) => bool, respects $peranAktif
+|   $isPeneliti      - bool, true jika pengguna adalah auditor/peneliti
+|   $peranAktif      - string|null, peran simulasi aktif (null = mode penuh)
+|   $menuUtama       - menu dashboard (semua peran)
+|   $menuPelaporan   - menu laporan (Nakes / Kepala Ruangan / Komite)
+|   $menuNotifikasi  - menu notifikasi (semua peran)
+|   $menuAdmin       - menu administrasi (Admin)
+|   $menuDirektur    - menu eksekutif (Direktur)
+|   $menuBawah       - profil & pengaturan
 |
 | Untuk menambah menu baru → edit AppServiceProvider, bukan file ini.
 |--------------------------------------------------------------------------
@@ -36,7 +36,7 @@
                 <p class="text-[11px] text-white/60">Sistem Pelaporan Kesalahan Pengobatan</p>
             </div>
         </div>
-        {{-- Tombol tutup sidebar — hanya tampil di mobile --}}
+        {{-- Tombol tutup sidebar - hanya tampil di mobile --}}
         <button type="button"
                 class="rounded-lg p-1 text-white/60 hover:bg-white/10 hover:text-white lg:hidden"
                 onclick="toggleSidebar()"
@@ -53,7 +53,7 @@
     <nav class="mt-4 flex-1 space-y-1 overflow-y-auto px-3" aria-label="Menu utama">
 
         {{-- $isPenelitiPenuh = peneliti belum memilih simulasi peran.
-             Dalam mode ini hanya Dashboard yang ditampilkan — menu lain
+             Dalam mode ini hanya Dashboard yang ditampilkan - menu lain
              disembunyikan agar peneliti diarahkan untuk memakai dropdown
              "Lihat Sebagai" terlebih dahulu.
              Saat peneliti memilih peran simulasi, $isPenelitiPenuh = false
@@ -65,7 +65,7 @@
             @include('layouts.partials.sidebar-item', $item)
         @endforeach
 
-        {{-- === Notifikasi (tepat di bawah Dashboard — bukan Admin) === --}}
+        {{-- === Notifikasi (tepat di bawah Dashboard - bukan Admin) === --}}
         @if (! $isPenelitiPenuh && ! $punyaPeran(['Admin']))
             @foreach ($menuNotifikasi as $item)
                 @include('layouts.partials.sidebar-item', $item)

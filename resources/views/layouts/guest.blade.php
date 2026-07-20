@@ -29,14 +29,14 @@
     <link rel="icon" type="image/jpeg" href="{{ asset('images/icon-rmh_sakit.jpg') }}">
     <link rel="shortcut icon" type="image/jpeg" href="{{ asset('images/icon-rmh_sakit.jpg') }}">
 
-    {{-- Aset Vite — memuat theme.css (palet warna) + Tailwind --}}
+    {{-- Aset Vite - memuat theme.css (palet warna) + Tailwind --}}
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body class="flex min-h-screen flex-col bg-page-bg font-sans text-text-base antialiased">
 
     {{-- ============================================================
-         HERO BACKGROUND — foto rumah sakit + overlay lengkung
+         HERO BACKGROUND - foto rumah sakit + overlay lengkung
          ============================================================ --}}
     <div class="relative flex flex-1 flex-col items-center justify-center">
 
@@ -63,7 +63,7 @@
             {{-- ========== KARTU LOGIN ========== --}}
             <div class="w-full max-w-[420px] overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
 
-                {{-- Header dengan gradien brand — dimulai dari warna utama #3AE3DC --}}
+                {{-- Header dengan gradien brand - dimulai dari warna utama #3AE3DC --}}
                 <div class="bg-gradient-to-br from-primary-400 to-primary-800 px-8 pb-6 pt-8 text-center">
                     <img
                         src="{{ asset('images/icon-mer_system.jpg') }}"

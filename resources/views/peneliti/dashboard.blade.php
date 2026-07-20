@@ -10,7 +10,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Dashboard Peneliti — Sistem MER')
+@section('judul', 'Dashboard Peneliti - Sistem MER')
 
 @section('konten')
 
@@ -20,7 +20,7 @@
     @endphp
 
     {{-- ================================================================
-         BANNER PENELITI — mengarahkan untuk menggunakan dropdown
+         BANNER PENELITI - mengarahkan untuk menggunakan dropdown
          "Lihat Sebagai" di navbar.
          ================================================================ --}}
     <div class="mb-6 flex gap-4 rounded-xl border border-indigo-200 bg-indigo-50 p-5">
@@ -116,7 +116,7 @@
     </div>
 
     {{-- ================================================================
-         LAPORAN TERBARU — insiden yang baru disubmit ke sistem
+         LAPORAN TERBARU - insiden yang baru disubmit ke sistem
          ================================================================ --}}
     <div class="mb-8 rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="flex items-center justify-between border-b border-slate-100 px-5 py-4">
@@ -160,13 +160,13 @@
                                     </span>
                                 </td>
                                 <td class="px-5 py-3 text-slate-500">
-                                    {{ $laporan->nama_unit_kerja ?? '—' }}
+                                    {{ $laporan->nama_unit_kerja ?? '-' }}
                                 </td>
                                 <td class="px-5 py-3">
-                                    <p class="text-slate-700">{{ $laporan->pelapor?->nama_lengkap ?? '—' }}</p>
+                                    <p class="text-slate-700">{{ $laporan->pelapor?->nama_lengkap ?? '-' }}</p>
                                 </td>
                                 <td class="px-5 py-3 text-slate-500">
-                                    {{ $laporan->tgl_lapor?->format('d M Y, H:i') ?? '—' }}
+                                    {{ $laporan->tgl_lapor?->format('d M Y, H:i') ?? '-' }}
                                 </td>
                             </tr>
                         @endforeach

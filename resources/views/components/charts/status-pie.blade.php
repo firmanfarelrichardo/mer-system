@@ -2,10 +2,10 @@
 |--------------------------------------------------------------------------
 | Komponen: x-charts.status-pie
 |--------------------------------------------------------------------------
-| Doughnut Chart — distribusi status penanganan insiden.
+| Doughnut Chart - distribusi status penanganan insiden.
 |
 | Props:
-|   $distribusiStatus — array{labels: list<string>, data: list<int>, colors: list<string>}
+|   $distribusiStatus - array{labels: list<string>, data: list<int>, colors: list<string>}
 |
 | Akses: Semua peran
 |--------------------------------------------------------------------------

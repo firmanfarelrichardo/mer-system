@@ -9,7 +9,7 @@ use App\Repositories\LogAktivitasRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 /**
- * Service LogAktivitas — logika bisnis untuk dashboard audit trail.
+ * Service LogAktivitas - logika bisnis untuk dashboard audit trail.
  *
  * Read-only service. Insert dilakukan oleh AuditLogService & Observer.
  * Menerima DTO dari Controller, meneruskan ke Repository.

@@ -2,14 +2,14 @@
 |--------------------------------------------------------------------------
 | Komponen: x-confirm-modal
 |--------------------------------------------------------------------------
-| Modal konfirmasi global bergaya — menggantikan dialog bawaan browser.
+| Modal konfirmasi global bergaya - menggantikan dialog bawaan browser.
 |
 | Dipicu otomatis oleh form yang memiliki atribut data-confirm="...":
 |   <form data-confirm="Yakin ingin menghapus data ini?" ...>
 |
 | Atribut opsional pada <form>:
-|   data-confirm-label      — teks tombol konfirmasi (default: 'Ya, Lanjutkan')
-|   data-confirm-destructive="true" — mengubah tombol konfirmasi menjadi merah
+|   data-confirm-label      - teks tombol konfirmasi (default: 'Ya, Lanjutkan')
+|   data-confirm-destructive="true" - mengubah tombol konfirmasi menjadi merah
 |
 | Dipicu manual dari JavaScript:
 |   window.dispatchEvent(new CustomEvent('confirm-modal', {

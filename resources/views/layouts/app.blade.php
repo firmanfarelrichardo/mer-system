@@ -11,8 +11,8 @@
 |   - Mobile (<lg):   sidebar tersembunyi, ditampilkan via hamburger
 |
 | Slot yang tersedia:
-|   @section('judul')   — judul tab browser
-|   @section('konten')  — konten halaman utama
+|   @section('judul')   - judul tab browser
+|   @section('konten')  - konten halaman utama
 |--------------------------------------------------------------------------
 --}}
 <!DOCTYPE html>
@@ -54,7 +54,7 @@
              class="fixed inset-0 z-30 hidden bg-black/50 transition-opacity lg:hidden"
              onclick="toggleSidebar()"></div>
 
-        {{-- Sidebar — komponen terpisah untuk modularitas --}}
+        {{-- Sidebar - komponen terpisah untuk modularitas --}}
         <div id="sidebar-container"
              class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full transition-transform duration-300
                     lg:static lg:z-auto lg:translate-x-0 lg:transition-none">
@@ -72,7 +72,7 @@
                 @yield('konten')
             </main>
 
-            {{-- Footer global —— konsisten di seluruh halaman --}}
+            {{-- Footer global -- konsisten di seluruh halaman --}}
             @include('layouts.footer')
         </div>
     </div>
@@ -97,7 +97,7 @@
     </script>
 
     {{-- ================================================================
-         Auto-Logout on Idle (Alpine.js — 5 menit tanpa aktivitas)
+         Auto-Logout on Idle (Alpine.js - 5 menit tanpa aktivitas)
 
          ARSITEKTUR:
            - updateActivity() hanya meng-update variabel lastActivity.
@@ -122,7 +122,7 @@
                 _intervalId   : null,
 
                 init() {
-                    // Pengecekan setiap 10 detik — jauh lebih hemat daripada setiap event.
+                    // Pengecekan setiap 10 detik - jauh lebih hemat daripada setiap event.
                     this._intervalId = setInterval(() => this.checkIdle(), 10_000);
                 },
 
@@ -157,7 +157,7 @@
                         },
                     })
                     .catch(() => {
-                        // Abaikan error jaringan — logout tetap dilakukan di sisi klien.
+                        // Abaikan error jaringan - logout tetap dilakukan di sisi klien.
                     })
                     .finally(() => {
                         // Paksa redirect ke halaman login tanpa menunggu respons server.
@@ -177,7 +177,7 @@
     <x-confirm-modal />
 
     {{-- ================================================================
-         Alpine.data — toastManager
+         Alpine.data - toastManager
          Mengelola stack toast notifikasi (sukses, error, warning, info).
          ================================================================ --}}
     <script>
@@ -311,7 +311,7 @@
                     },
                 },
             }));
-        }, true); // capture phase — sebelum handler lain
+        }, true); // capture phase - sebelum handler lain
     </script>
 
     {{-- Script yang di-push oleh halaman/komponen individual (mis. Chart.js) --}}

@@ -2,7 +2,7 @@
 |--------------------------------------------------------------------------
 | Edit Pengguna (admin/pengguna/edit.blade.php)
 |--------------------------------------------------------------------------
-| Formulir edit data pengguna. Kata sandi bersifat opsional —
+| Formulir edit data pengguna. Kata sandi bersifat opsional -
 | hanya diisi jika ingin mengubah kata sandi.
 | Variabel: $dataPengguna, $daftarPeran, $daftarUnit
 |--------------------------------------------------------------------------
@@ -10,7 +10,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Edit Pengguna — Sistem MER')
+@section('judul', 'Edit Pengguna - Sistem MER')
 
 @section('konten')
 
@@ -151,7 +151,7 @@
                     <select id="unit_id" name="unit_id"
                             class="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700
                                    focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
-                        <option value="">— Pilih Unit Kerja —</option>
+                        <option value="">- Pilih Unit Kerja -</option>
                         @foreach ($daftarUnit as $unit)
                             <option value="{{ $unit->id }}"
                                     @selected(old('unit_id', $dataPengguna->unit_id) == $unit->id)>
@@ -164,7 +164,7 @@
                     @enderror
                 </div>
 
-                {{-- Peran Utama (radio — satu peran per pengguna) --}}
+                {{-- Peran Utama (radio - satu peran per pengguna) --}}
                 <div>
                     <label class="mb-1 block text-sm font-medium text-slate-700">
                         Peran <span class="text-red-500">*</span>

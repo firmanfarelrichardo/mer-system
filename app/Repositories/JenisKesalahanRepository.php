@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Repository JenisKesalahan — akses data ke tabel `master.jenis_kesalahan`.
+ * Repository JenisKesalahan - akses data ke tabel `master.jenis_kesalahan`.
  *
  * Layer ini hanya bertanggung jawab pada query & persistensi.
  * TIDAK boleh mengandung logika bisnis apapun.

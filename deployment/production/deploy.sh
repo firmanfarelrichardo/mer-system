@@ -63,7 +63,7 @@ if ! grep -q "APP_KEY=base64:" .env 2>/dev/null; then
 fi
 
 echo -e "\n${BOLD}${GREEN}╔══════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${GREEN}║     MER System — Production Deploy    ║${NC}"
+echo -e "${BOLD}${GREEN}║     MER System - Production Deploy    ║${NC}"
 echo -e "${BOLD}${GREEN}╚══════════════════════════════════════╝${NC}"
 echo -e "  Direktori  : ${SCRIPT_DIR}"
 echo -e "  Timestamp  : $(date '+%Y-%m-%d %H:%M:%S %Z')"
@@ -73,7 +73,7 @@ echo -e "  Timestamp  : $(date '+%Y-%m-%d %H:%M:%S %Z')"
 # Pastikan kode di VPS selalu sinkron dengan branch main.
 # git pull akan gagal jika ada untracked changes (set -e menangkap ini).
 # -------------------------------------------
-step "Step 1/6 — git pull origin main"
+step "Step 1/6 - git pull origin main"
 # cd ke root project (2 level di atas deployment/production/)
 cd "$(dirname "$(dirname "$SCRIPT_DIR")")"
 git pull origin main
@@ -88,7 +88,7 @@ cd "$SCRIPT_DIR"
 # Tidak menggunakan --no-cache agar build lebih cepat dengan layer cache,
 # tapi --pull memastikan base image (php:8.2-fpm-alpine) selalu terbaru.
 # -------------------------------------------
-step "Step 2/6 — docker compose build"
+step "Step 2/6 - docker compose build"
 docker compose build --pull
 success "Docker images berhasil dibangun"
 
@@ -99,7 +99,7 @@ success "Docker images berhasil dibangun"
 # --wait: tunggu sampai semua healthcheck PASS sebelum lanjut.
 #   Ini memastikan db dan redis sudah ready sebelum migration dijalankan.
 # -------------------------------------------
-step "Step 3/6 — docker compose up -d"
+step "Step 3/6 - docker compose up -d"
 docker compose up -d --remove-orphans --wait
 success "Semua services berhasil dijalankan dan healthcheck passed"
 
@@ -109,7 +109,7 @@ success "Semua services berhasil dijalankan dan healthcheck passed"
 # migration tanpa flag ini sebagai proteksi dari eksekusi tidak sengaja.
 # Jalankan di dalam container 'app' yang sudah pasti running.
 # -------------------------------------------
-step "Step 4/6 — php artisan migrate --force"
+step "Step 4/6 - php artisan migrate --force"
 docker compose exec app php artisan migrate --force
 success "Database migration selesai"
 
@@ -117,10 +117,10 @@ success "Database migration selesai"
 # STEP 5: Clear & rebuild application cache
 # optimize:clear: hapus semua cache lama (config, route, view, event).
 # optimize: rebuild config cache, route cache, dan view cache sekaligus.
-# Urutan ini penting—clear dulu, baru rebuild—agar tidak ada stale cache.
+# Urutan ini penting-clear dulu, baru rebuild-agar tidak ada stale cache.
 # OPcache juga di-clear secara implisit melalui restart proses PHP-FPM.
 # -------------------------------------------
-step "Step 5/6 — optimize:clear → optimize"
+step "Step 5/6 - optimize:clear → optimize"
 docker compose exec app php artisan optimize:clear
 docker compose exec app php artisan optimize
 success "Application cache berhasil di-rebuild"
@@ -131,7 +131,7 @@ success "Application cache berhasil di-rebuild"
 # Worker akan menyelesaikan job aktif dulu (grace period = stopwaitsecs di supervisord),
 # lalu supervisord otomatis respawn worker baru dengan kode terbaru.
 # -------------------------------------------
-step "Step 6/6 — php artisan queue:restart"
+step "Step 6/6 - php artisan queue:restart"
 docker compose exec app php artisan queue:restart
 success "Queue worker restart signal terkirim"
 

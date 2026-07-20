@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * ProductionSeeder — Menggabungkan semua seeder yang diperlukan
+ * ProductionSeeder - Menggabungkan semua seeder yang diperlukan
  * untuk inisialisasi lingkungan Production secara urut dan otomatis.
  *
  * Seeder ini memastikan fondasi database tecipta dengan benar sebelum

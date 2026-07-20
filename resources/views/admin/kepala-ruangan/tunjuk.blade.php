@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('judul', 'Pilih Kepala Ruangan — Sistem MER')
+@section('judul', 'Pilih Kepala Ruangan - Sistem MER')
 
 @section('konten')
 

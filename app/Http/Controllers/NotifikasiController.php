@@ -12,16 +12,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
- * NotifikasiController — menangani halaman & aksi notifikasi pengguna.
+ * NotifikasiController - menangani halaman & aksi notifikasi pengguna.
  *
  * Mengikuti pola layered architecture:
  *   Controller → Service → Repository → Model/DB
  *
  * Fitur:
- *   1. Index           — daftar notifikasi (paginasi)
- *   2. Baca & Arahkan  — tandai dibaca + redirect ke URL tujuan
- *   3. Tandai Dibaca   — tandai satu notifikasi dibaca (PATCH)
- *   4. Tandai Semua    — tandai semua notifikasi dibaca (POST)
+ *   1. Index           - daftar notifikasi (paginasi)
+ *   2. Baca & Arahkan  - tandai dibaca + redirect ke URL tujuan
+ *   3. Tandai Dibaca   - tandai satu notifikasi dibaca (PATCH)
+ *   4. Tandai Semua    - tandai semua notifikasi dibaca (POST)
  */
 class NotifikasiController extends Controller
 {
@@ -59,7 +59,7 @@ class NotifikasiController extends Controller
     }
 
     /**
-     * Tandai satu notifikasi sebagai dibaca (PATCH — tanpa redirect).
+     * Tandai satu notifikasi sebagai dibaca (PATCH - tanpa redirect).
      */
     public function tandaiDibaca(string $notifikasi): RedirectResponse
     {

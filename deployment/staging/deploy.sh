@@ -510,7 +510,7 @@ app_init() {
     done
     echo ""
 
-    echo -e "${GREEN}✓ Container is running — running initialization tasks...${NC}"
+    echo -e "${GREEN}✓ Container is running - running initialization tasks...${NC}"
     echo ""
 
     # 1. Composer install
@@ -537,7 +537,7 @@ app_init() {
     if docker exec "$APP_CONTAINER" php artisan migrate --no-interaction --force; then
         echo -e "  ${GREEN}✓${NC} migrate selesai"
     else
-        echo -e "  ${RED}✗${NC} migrate gagal — cek logs: Option 15"
+        echo -e "  ${RED}✗${NC} migrate gagal - cek logs: Option 15"
         return 1
     fi
 
@@ -551,8 +551,8 @@ app_init() {
 # MENGAPA DIBUTUHKAN:
 #   Di WSL2, setiap restart WSL/komputer, IP gateway berubah secara dinamis
 #   (contoh: 172.24.80.1, 172.28.208.1, dst). Jika Laravel/PHP dijalankan
-#   langsung di host WSL (bukan di dalam container) — misalnya saat debug
-#   atau menjalankan `php artisan` dari terminal WSL — DB_HOST harus berisi
+#   langsung di host WSL (bukan di dalam container) - misalnya saat debug
+#   atau menjalankan `php artisan` dari terminal WSL - DB_HOST harus berisi
 #   IP gateway ini agar bisa mencapai PostgreSQL yang port-nya di-forward
 #   ke host oleh Docker.
 #
@@ -1109,7 +1109,7 @@ while true; do
                 echo -e "${GREEN}✓ Composer install selesai.${NC}"
             else
                 echo ""
-                echo -e "${RED}✗ Composer install gagal — periksa output di atas.${NC}"
+                echo -e "${RED}✗ Composer install gagal - periksa output di atas.${NC}"
                 echo ""
                 read -p "Press Enter to continue..."
                 continue
@@ -1127,7 +1127,7 @@ while true; do
                 echo -e "${CYAN}  Class dan alias baru (DOMPDF, Excel, dll) sudah terdaftar.${NC}"
             else
                 echo ""
-                echo -e "${YELLOW}⚠ Cache clear gagal — jalankan Option 22 secara manual.${NC}"
+                echo -e "${YELLOW}⚠ Cache clear gagal - jalankan Option 22 secara manual.${NC}"
             fi
 
             echo ""
@@ -1311,7 +1311,7 @@ while true; do
             ;;
 
         # -------------------------------------------------------------------
-        # Cleanup — Project-Scoped
+        # Cleanup - Project-Scoped
         #
         # AMAN: Hanya menghapus resource yang memiliki label
         #       com.docker.compose.project=mer-system

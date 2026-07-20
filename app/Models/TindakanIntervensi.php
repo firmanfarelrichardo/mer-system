@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Model TindakanIntervensi — maps to `master.tindakan_intervensi`.
+ * Model TindakanIntervensi - maps to `master.tindakan_intervensi`.
  *
  * Master data untuk intervensi/tindakan ke pasien yang muncul
  * sebagai checkbox di formulir pelaporan insiden Nakes.

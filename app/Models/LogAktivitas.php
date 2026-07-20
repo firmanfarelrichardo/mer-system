@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Model LogAktivitas — memetakan tabel `audit.log_aktivitas`.
+ * Model LogAktivitas - memetakan tabel `audit.log_aktivitas`.
  *
  * Immutable by design: hanya INSERT yang diizinkan.
  * Tidak menggunakan updated_at maupun soft-deletes.
