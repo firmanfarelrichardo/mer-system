@@ -8,7 +8,7 @@
 #
 # AKSES: Nginx staging di-bind ke 127.0.0.1:8080.
 # Untuk mengakses staging dari browser lokal, gunakan SSH Tunnel:
-#   ssh -L 8080:127.0.0.1:8080 mer_ops@<IP_VPS>
+#   ssh -L 8080:127.0.0.1:8080 mer-vps
 #   Lalu buka: http://localhost:8080
 # ===========================================
 

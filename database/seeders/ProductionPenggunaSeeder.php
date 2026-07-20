@@ -4,397 +4,589 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\Organisasi;
-use App\Models\Pengguna;
 use App\Models\Peran;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\UnitKerja;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Throwable;
 
 /**
- * ProductionPenggunaSeeder — Akun pengguna resmi RSUD HM. Ryacudu Kotabumi.
+ * ProductionPenggunaSeeder — data akun pengguna staging/production dari daftar CSV.
  *
- * Sumber data: SK UPTD RSUD HM. Ryacudu Kabupaten Lampung Utara Tahun 2025.
+ * Seeder ini sengaja mandiri: data pengguna sudah ditanam sebagai array PHP,
+ * sehingga eksekusi di VPS tidak bergantung pada file CSV eksternal.
  *
- * DAFTAR AKUN YANG DIBUAT:
- * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │ AKUN KHUSUS (6)                                                             │
- * ├───────────────────┬──────────────────────────────┬─────────────────────────┤
- * │ Peran             │ Username (login)             │ Sandi Sementara         │
- * ├───────────────────┼──────────────────────────────┼─────────────────────────┤
- * │ Admin             │ admin.rsud                   │ password                │
- * │ Direktur          │ direktur.rsud                │ password                │
- * │ Komite (Kes.)     │ komite.keselamatan           │ password                │
- * │ Komite (Mutu)     │ komite.mutu                  │ password                │
- * │ Komite (Medik)    │ komite.medik                 │ password                │
- * │ Peneliti/Dosen    │ dosenpeneliti                │ Peneliti@2026!          │
- * ├───────────────────┴──────────────────────────────┴─────────────────────────┤
- * │ NAKES PIC (25) — Perawat/Bidan Pelaksana per Unit                          │
- * │ KEPALA RUANGAN (28) — Validator per Unit                                   │
- * │ Semua non-admin: wajib_ganti_sandi = true (ganti sandi saat login pertama) │
- * └─────────────────────────────────────────────────────────────────────────────┘
- *
- * IDEMPOTENT: menggunakan updateOrCreate dengan (tenant_id, email) sebagai kunci
- * pencarian — kolom yang memiliki unique constraint di database.
- *
- * Jalankan secara mandiri:
- *   php artisan db:seed --class=ProductionPenggunaSeeder
+ * Sumber data awal: database/seeders/data/pengguna-staging.csv
+ * Format baris data: [nama_lengkap, username, unit_kerja, peran, kata_sandi]
  */
 class ProductionPenggunaSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /** Alamat kantor untuk semua staf RS. */
     private const ALAMAT_RS = 'RSUD HM. Ryacudu, Jl. HM. Ryacudu No. 1, Kotabumi, Lampung Utara';
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Format setiap baris:
-    //   [kode_unit, nomor_induk, username, nama_lengkap, jabatan, email, nomor_hp]
-    //
-    // Catatan:
-    //  - Ns. Zulda Purnawati, S.Kep menjabat sekaligus PIC dan Kepala Ruangan
-    //    Poli Ortopedi → satu akun, peran Kepala Ruangan (lebih tinggi).
-    //  - Puji Astuti Sepriani, AMKG menjabat sekaligus PIC dan Kepala Ruangan
-    //    Poli Gigi → satu akun, peran Kepala Ruangan.
-    // ─────────────────────────────────────────────────────────────────────────
-
     /**
-     * Data PIC (perawat/bidan pelaksana) sebagai Nakes.
-     * PIC Poli Ortopedi & Poli Gigi tidak ada di sini karena
-     * kedua orang tersebut juga menjabat Kepala Ruangan (lihat KARU_DATA).
+     * @var array<int, array{0: string, 1: string, 2: string, 3: string, 4: string}>
      */
-    private const NAKES_DATA = [
-        // ── PIC Poliklinik ────────────────────────────────────────────────
-        ['POLI-ANAK',  'NP001', 'hartati',       'Ns. Hartati, S.Kep',             'Perawat Pelaksana',         'hartati@rsudryacudu.go.id',       '081100000101'],
-        ['POLI-KBD',   'NP002', 'herlinawati',   'Herlina Wati, Amd. Keb',         'Bidan Pelaksana',           'herlinawati@rsudryacudu.go.id',   '081100000102'],
-        ['POLI-SARAF', 'NP003', 'srisumini',     'Sri Sumini, Amd.Kep',            'Perawat Pelaksana',         'srisumini@rsudryacudu.go.id',     '081100000103'],
-        ['POLI-PD',    'NP004', 'vicania',        'Ns. Vicania, S.Kep',             'Perawat Pelaksana',         'vicania@rsudryacudu.go.id',       '081100000104'],
-        ['POLI-THT',   'NP005', 'sririzki',      'Sri Rizki Yanti, Amd.Kep',       'Perawat Pelaksana',         'sririzki@rsudryacudu.go.id',      '081100000105'],
-        ['POLI-BEDAH', 'NP006', 'oktarina',      'Oktarina, Amd.Kep',              'Perawat Pelaksana',         'oktarina@rsudryacudu.go.id',      '081100000106'],
-        ['POLI-PARU',  'NP007', 'karwanti',      'Ns. Karwanti, S.Kep',            'Perawat Pelaksana',         'karwanti@rsudryacudu.go.id',      '081100000107'],
-        ['POLI-KULIT', 'NP008', 'istihernani',   'Isti Hernani, Amd.Kep',          'Perawat Pelaksana',         'istihernani@rsudryacudu.go.id',   '081100000108'],
-        ['POLI-MATA',  'NP009', 'komariah',      'Ns. Komariah, S.Kep',            'Perawat Pelaksana',         'komariah@rsudryacudu.go.id',      '081100000109'],
-        ['POLI-JIWA',  'NP010', 'denifrengky',   'Ns. Deni Frengky, S.Kep',        'Perawat Pelaksana',         'denifrengky@rsudryacudu.go.id',   '081100000110'],
-        ['POLI-ANEST', 'NP011', 'ledioktaria',   'Ns. Ledi Oktaria, S.Kep',        'Perawat Pelaksana',         'ledioktaria@rsudryacudu.go.id',   '081100000111'],
-
-        // ── PIC Rawat Inap ────────────────────────────────────────────────
-        ['RW-BEDAH',   'NR001', 'meritasundari', 'Merita Sundari, Amd.Kep',        'Perawat Pelaksana',         'meritasundari@rsudryacudu.go.id', '081200000201'],
-        ['RW-VIP',     'NR002', 'saripaulina',   'Sari Paulina, Amd.Kep',          'Perawat Pelaksana',         'saripaulina@rsudryacudu.go.id',   '081200000202'],
-        ['RW-HD',      'NR003', 'juliprabowo',   'Ns. Juli Prabowo, S.Kep',        'Perawat Pelaksana',         'juliprabowo@rsudryacudu.go.id',   '081200000203'],
-        ['RW-PD',      'NR004', 'novidahlia',    'Novi Dahlia, Amd.Kep',           'Perawat Pelaksana',         'novidahlia@rsudryacudu.go.id',    '081200000204'],
-        ['RW-SARAF',   'NR005', 'enilestari',    'Eni Lestari, Amd.Kep',           'Perawat Pelaksana',         'enilestari@rsudryacudu.go.id',    '081200000205'],
-        ['RW-NEONAT',  'NR006', 'viagina',       'Ns. Via Gina Mahardhika, S.Kep', 'Perawat Pelaksana',         'viagina@rsudryacudu.go.id',       '081200000206'],
-        ['RW-ANAK',    'NR007', 'niryana',       'Niryana, Amd.Kep',               'Perawat Pelaksana',         'niryana@rsudryacudu.go.id',       '081200000207'],
-        ['RW-KBD',     'NR008', 'merimaydiana',  'Meri Maydiana, Amd.Keb',         'Bidan Pelaksana',           'merimaydiana@rsudryacudu.go.id',  '081200000208'],
-        ['RW-VK',      'NR009', 'sydesmaalia',   'Sydesma Alia, Amd.Keb',          'Bidan Pelaksana',           'sydesmaalia@rsudryacudu.go.id',   '081200000209'],
-        ['ICU',        'NR010', 'heniapri',      'Heni Apriyani, Amd.Kep',         'Perawat Pelaksana',         'heniapri@rsudryacudu.go.id',      '081200000210'],
-        ['IGD',        'NR011', 'devizana',      'Devi Zana Junjungan, Amd.Kep',   'Perawat Pelaksana',         'devizana@rsudryacudu.go.id',      '081200000211'],
-        ['IBS',        'NR012', 'yeninarina',    'Ns. Yeni Narina, S.Kep',         'Perawat Pelaksana',         'yeninarina@rsudryacudu.go.id',    '081200000212'],
-        ['RW-PONEK',   'NR013', 'septiamei',     'Septia Meinitasari, Amd.Keb',    'Bidan Pelaksana',           'septiamei@rsudryacudu.go.id',     '081200000213'],
-
-        // ── PIC Penunjang ─────────────────────────────────────────────────
-        ['FARMASI',    'NPJ01', 'dianasari',     'Diana Sari, S.Farm',             'Asisten Apoteker Penyelia', 'dianasari@rsudryacudu.go.id',     '081300000301'],
+    private const PENGGUNA_DATA = [
+        ['Administrator Sistem RSUD HM. Ryacudu', 'admin.rsud', '', 'Admin', 'password'],
+        ['Direktur RSUD HM. Ryacudu', 'direktur.rsud', '', 'Direktur', 'password'],
+        ['Anggota Komite Medik', 'komite.medik', '', 'Komite', 'password'],
+        ['Anggota Komite Mutu dan Keselamatan', 'komite.mutu', '', 'Komite', 'password'],
+        ['Ketua Komite Keselamatan Pasien', 'komite.keselamatan', '', 'Komite', 'password'],
+        ['Aprilinda, Amd. Kep', 'aprilinda', 'Poli Saraf', 'Nakes', 'password'],
+        ['Desi Nopiyanti, S.Si.,Apt', 'desinopi', 'Instalasi Farmasi', 'Nakes', 'password'],
+        ['Devi Zana Junjungan, Amd.Kep', 'devizana', 'IGD', 'Nakes', 'password'],
+        ['Diana Sari, S.Farm', 'dianasari', 'Instalasi Farmasi', 'Nakes', 'password'],
+        ['Eni Lestari, Amd.Kep', 'enilestari', 'Ruang Saraf', 'Nakes', 'password'],
+        ['Heni Apriyani, Amd.Kep', 'heniapri', 'ICU', 'Nakes', 'password'],
+        ['Herlina Wati, Amd. Keb', 'herlinawati', 'Poli Kebidanan', 'Nakes', 'password'],
+        ['Isti Hernani, Amd.Kep', 'istihernani', 'Poli Kulit Kelamin', 'Nakes', 'password'],
+        ['Meida Liana, S.ST.,M.Kes', 'meidaliana', 'Ruang PONEK', 'Nakes', 'password'],
+        ['Meri Maydiana, Amd.Keb', 'merimaydiana', 'Ruang Kebidanan', 'Nakes', 'password'],
+        ['Merita Sundari, Amd.Kep', 'meritasundari', 'Ruang Bedah', 'Nakes', 'password'],
+        ['Muhartini, SST', 'muhartini', 'Ruang Kebidanan', 'Nakes', 'password'],
+        ['Niryana, Amd.Kep', 'niryana', 'Ruang Anak', 'Nakes', 'password'],
+        ['Novi Dahlia, Amd.Kep', 'novidahlia', 'Ruang Penyakit Dalam', 'Nakes', 'password'],
+        ['Ns. April Nita, S.Kep', 'aprilnita', 'Poli Mata', 'Nakes', 'password'],
+        ['Ns. Bayu Irda Manita, S.Kep', 'bayuirda', 'IGD', 'Nakes', 'password'],
+        ['Ns. Dahlia, S.Kep', 'dahlia', 'Poli Anak', 'Nakes', 'password'],
+        ['Ns. Deni Frengky, S.Kep', 'denifrengky', 'Poli Jiwa', 'Nakes', 'password'],
+        ['Ns. Deni Novice, S.Kep', 'deninovice', 'Ruang Saraf', 'Nakes', 'password'],
+        ['Ns. Desy Hastuti, S.Kep', 'desyhastuti', 'Poli Anestesi', 'Nakes', 'password'],
+        ['Ns. Fitriantina, S.Kep', 'fitriantina', 'Poli Jiwa', 'Nakes', 'password'],
+        ['Ns. Haris Awaludin, S.Kep', 'harisawaludin', 'ICU', 'Nakes', 'password'],
+        ['Ns. Hartati, S.Kep', 'hartati', 'Poli Anak', 'Nakes', 'password'],
+        ['Ns. Ida Yati, S.Kep', 'idayati', 'Poli Bedah', 'Nakes', 'password'],
+        ['Ns. Juli Prabowo, S.Kep', 'juliprabowo', 'Ruang HD', 'Nakes', 'password'],
+        ['Ns. Karwanti, S.Kep', 'karwanti', 'Poli Paru', 'Nakes', 'password'],
+        ['Ns. Komariah, S.Kep', 'komariah', 'Poli Mata', 'Nakes', 'password'],
+        ['Ns. Ledi Oktaria, S.Kep', 'ledioktaria', 'Poli Anestesi', 'Nakes', 'password'],
+        ['Ns. Mad Jahuri, S.Kep', 'madjahuri', 'Ruang Penyakit Dalam', 'Nakes', 'password'],
+        ['Ns. Muliana, S.Kep', 'muliana', 'Poli Paru', 'Nakes', 'password'],
+        ['Ns. Nova Liana Sari, S.Kep', 'novaliana', 'Ruang Bedah', 'Nakes', 'password'],
+        ['Ns. Rahmad Saleh, S.Kep', 'rahmadsaleh', 'Ruang Isolasi B', 'Nakes', 'password'],
+        ['Ns. Rahmawaty, S.Kep', 'rahmawaty', 'Ruang VIP', 'Nakes', 'password'],
+        ['Ns. Resmareny, S.Kep', 'resmareny', 'Ruang Neonatus', 'Nakes', 'password'],
+        ['Ns. Revi Sesiana, S.Kep', 'revisesiana', 'Ruang Anak', 'Nakes', 'password'],
+        ['Ns. Riduan Husin, S.Kep', 'riduanhusin', 'Instalasi Bedah Sentral (IBS)', 'Nakes', 'password'],
+        ['Ns. Sri Anggareny, S.Kep', 'srianggareny', 'Poli THT', 'Nakes', 'password'],
+        ['Ns. Suhartini, S.Kep', 'suhartini', 'Poli Penyakit Dalam', 'Nakes', 'password'],
+        ['Ns. Tri Hananto, S.Kep', 'trihananto', 'Ruang HD', 'Nakes', 'password'],
+        ['Ns. Via Gina Mahardhika, S.Kep', 'viagina', 'Ruang Neonatus', 'Nakes', 'password'],
+        ['Ns. Vicania, S.Kep', 'vicania', 'Poli Penyakit Dalam', 'Nakes', 'password'],
+        ['Ns. Yeni Narina, S.Kep', 'yeninarina', 'Instalasi Bedah Sentral (IBS)', 'Nakes', 'password'],
+        ['Ns. Yuli Afrida, S.Kep', 'yuliafrida', 'Poli Kulit Kelamin', 'Nakes', 'password'],
+        ['Ns. Zulda Purnawati, S.Kep', 'zuldapurnawati', 'Poli Orthopedi', 'Nakes', 'password'],
+        ['Oktarina, Amd.Kep', 'oktarina', 'Poli Bedah', 'Nakes', 'password'],
+        ['Puji Astuti Sepriani, AMKG', 'pujiastuti', 'Poli Gigi', 'Nakes', 'password'],
+        ['Sari Paulina, Amd.Kep', 'saripaulina', 'Ruang VIP', 'Nakes', 'password'],
+        ['Septia Meinitasari, Amd.Keb', 'septiamei', 'Ruang PONEK', 'Nakes', 'password'],
+        ['Sri Rizki Yanti, Amd.Kep', 'sririzki', 'Poli THT', 'Nakes', 'password'],
+        ['Sri Sumini, Amd.Kep', 'srisumini', 'Poli Saraf', 'Nakes', 'password'],
+        ['Sydesma Alia, Amd.Keb', 'sydesmaalia', 'Ruang VK', 'Nakes', 'password'],
+        ['Wardalia, SST', 'wardalia', 'Poli Kebidanan', 'Nakes', 'password'],
+        ['Yuli Caturini, STT.,M.Kes', 'yulicaturini', 'Ruang VK', 'Nakes', 'password'],
+        ['Dosen Peneliti', 'dosenpeneliti', '', 'Peneliti', 'Peneliti@2026!'],
+        ['dr. Nanik Zulaichah, Sp. KK', '', 'Poliklinik Kulit Kelamin', 'Nakes', 'password'],
+        ['Ns. Parnila, S. Kep', '', 'Poliklinik Kulit Kelamin', 'Nakes', 'password'],
+        ['Yulita, A.Md.Kep', '', 'Poliklinik Saraf', 'Nakes', 'password'],
+        ['dr. Doddy Afprianto, M.Sc.,Sp. PD', '', 'Poliklinik Penyakit Dalam', 'Nakes', 'password'],
+        ['Ns. Suharti Rahayu, S. Kep', '', 'Poliklinik Penyakit Dalam', 'Nakes', 'password'],
+        ['Ns. Rita Novalinda, S. Kep', '', 'Poliklinik Penyakit Dalam', 'Nakes', 'password'],
+        ['Denti', '', 'Poliklinik Penyakit Dalam', 'Nakes', 'password'],
+        ['drg. Fitri Setia Rahayu, Sp. KG', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['drg. Wiewied Priosambodo, Sp.Perio', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['drg. Rakhmida Sari', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['Cumiati, AMKG', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['Puji Astuti Sepriani, A.Md.KG', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['Zidni Aulia Rahma S. Tr. Kes', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['Wiwin Agung Setiawati, S.Tr.KG', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['Choirinnisa, S. Tr. Kes', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['Aniq Fadliatuz, S. Tr. Kes', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['Fathatin Jawad, S. Tr. Kes', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['Fattah Kurniawan, S. Tr. Kes', '', 'Poliklinik Gigi', 'Nakes', 'password'],
+        ['Aqida El Fadila', '', 'Poliklinik Mata', 'Nakes', 'password'],
+        ['April Hairi', '', 'Poliklinik Mata', 'Nakes', 'password'],
+        ['Belly Sutopo, Sp. THT., KL', '', 'Poliklinik THT', 'Nakes', 'password'],
+        ['Ns. Berta Septarina, S.Kep', '', 'Poliklinik THT', 'Nakes', 'password'],
+        ['Sri Rizki Yanti, A. Md. Kep', '', 'Poliklinik THT', 'Nakes', 'password'],
+        ['Agitya Yohana, A.Md.Kep', '', 'Poliklinik THT', 'Nakes', 'password'],
+        ['Ona Siska, S.Tr.Keb', '', 'Poliklinik  Kebidanan', 'Nakes', 'password'],
+        ['Herlina', '', 'Poliklinik  Kebidanan', 'Nakes', 'password'],
+        ['Dewi Listiowati, S. Tr.Keb', '', 'Poliklinik  Kebidanan', 'Nakes', 'password'],
+        ['Deviana Pratama Christianti, A. Md. Keb', '', 'Poliklinik  Kebidanan', 'Nakes', 'password'],
+        ['Ns.Hesti Mutiance, S. Kep', '', 'Poliklinik Anestesi', 'Nakes', 'password'],
+        ['Ns.Ledi Oktaria Th, S.Kep', '', 'Poliklinik Anestesi', 'Nakes', 'password'],
+        ['dr. I Kadek Suaryana, M.Biomed, Sp.Kj', '', 'Poliklinik Jiwa', 'Nakes', 'password'],
+        ['dr. Novi Susilowati, Sp. KJ', '', 'Poliklinik Jiwa', 'Nakes', 'password'],
+        ['Ns. Sry Anggraeny, S.Kep', '', 'Poliklinik Jiwa', 'Nakes', 'password'],
+        ['Ns. Dhanang Ardi Saputra, S.Kep', '', 'Poliklinik Jiwa', 'Nakes', 'password'],
+        ['Ns. Dahlia, S.Kep', '', 'Poliklinik Bedah', 'Nakes', 'password'],
+        ['Isti Hernani, A.Md.Kep', '', 'Poliklinik Bedah', 'Nakes', 'password'],
+        ['Muliana, S.Kep., Ns', '', 'Poliklinik Paru', 'Nakes', 'password'],
+        ['Karwanti, S.Kep.,Ns', '', 'Poliklinik Paru', 'Nakes', 'password'],
+        ['Khoiriyah, A.Md.Kep', '', 'Poliklinik Paru', 'Nakes', 'password'],
+        ['Octarina, A. Md. Kep', '', 'Poliklinik Paru', 'Nakes', 'password'],
+        ['Ns. Komariah MK, S.Kep', '', 'Poliklinik Tumbuh Kembang Anak', 'Nakes', 'password'],
+        ['Ika Miarti, A. Md. Kep', '', 'Poliklinik Tumbuh Kembang Anak', 'Nakes', 'password'],
+        ['dr. Budi Agus Setiawan, Sp. OT', '', 'Poliklinik Orthopedi', 'Nakes', 'password'],
+        ['Ns. Zulda Purnawati, S. Kep', '', 'Poliklinik Orthopedi', 'Nakes', 'password'],
+        ['Lusiana Usman, A. Md. Kep', '', 'Poliklinik Orthopedi', 'Nakes', 'password'],
+        ['Mukhlisin, S. Kep', '', 'Ruang Cese Manager', 'Nakes', 'password'],
+        ['Ns. Aprilnita,S.Kep', '', 'Ruang Cese Manager', 'Nakes', 'password'],
+        ['Isana Oktaria, A. Md. Kep', '', 'Ruang Cese Manager', 'Nakes', 'password'],
+        ['dr. Betty Soedaly, Sp. S', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Ns. Deni Novice, S.Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Nizar Seprida, A.Md.Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Ns.Melisa Megayanti Turnip,S.Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Ns. Dini, S.Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Ns. Mardiyanti, S.Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Ns. Evi Anggraini Gultom, S.Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Eni Lestari, A. Md. Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Meliya Sari, A. Md. Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Heni Apriyani, A. Md. Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Triyana, A.Md.Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Efriyana, A. Md. Kep', '', 'RUANG : SARAF', 'Nakes', 'password'],
+        ['Ns. Revi Sesiana, S.Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Aprilinda, A. Md. Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Ns.Dwi Afriyanti, S.Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Baita, A. Md. Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Ria Ariyana, S. Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Sri Nurhayati, A.Md.Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Niryana, A. Md. Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Isri Yana Putri Yani, A. Md. Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Susilawati, A. Md. Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Ns.Tommy Ari Sandy, S. Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Shelvita Mandasari, A. Md. Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['Riya Septiana. A.Md.Kep', '', 'RUANG ANAK', 'Nakes', 'password'],
+        ['dr. Mareti Pandan Ayu, Sp. OG', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Muhartini, SST', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Angga Selvia,S.Tr. Keb', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Mery Maydiana, A. Md. Keb', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Anisa Febriani, A.Md.Keb', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Siti Azerina Harahap, S.Keb., Bd', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Septika Zahra, S. Tr. Keb', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Yuli Astuti, A.Md.Keb', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Gendhy Prima Putri, S.Keb., Bd', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Afriyanti Margaretha, A.Md.Keb', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Homsah Fitriyanti, A. Md.Keb', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Iis Agustina, A. Md. Keb', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Jayanti Mulinda Sari, A. Md. Keb', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['Eka Novita Handayani, A.Md.Keb', '', 'Ruang KEBIDANAN', 'Nakes', 'password'],
+        ['dr. Jan Markus S, Sp. B', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Ns. Riduan Husien, S.Kep', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Ns. Hendra, S.Kep', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Hidar Hamzah', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Tati Hartati', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Ns. Ega Frihani Wiagi, S.Kep', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Tri Agung Nugroho, A.Md.Kep', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Deni Muhammad I.T, S.Kep., Ns', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Yeni Marina, S.Kep., Ns', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Sugi Hartono, S.Kep.Ns', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Ernawati, S.Kep., Ns', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Sigit Febiantoro, A. Md. Kep', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['Rinta Karisma Dewi , SST', '', 'INSTALASI BEDAH SENTRAL', 'Nakes', 'password'],
+        ['dr. H. Joko Susilo Sp. An', '', 'RUANG ANESTESI', 'Nakes', 'password'],
+        ['dr. Haris Riyadi, M. Kes., Sp. An', '', 'RUANG ANESTESI', 'Nakes', 'password'],
+        ['Jamaluddin', '', 'RUANG ANESTESI', 'Nakes', 'password'],
+        ['Evita Gani', '', 'RUANG ANESTESI', 'Nakes', 'password'],
+        ['Zulkifli', '', 'RUANG ANESTESI', 'Nakes', 'password'],
+        ['Taufik, S. Kep', '', 'RUANG ANESTESI', 'Nakes', 'password'],
+        ['Dafania Megananda Ayu', '', 'RUANG ANESTESI', 'Nakes', 'password'],
+        ['Novian Adi Sabhara, A.Md.Kep', '', 'RUANG ANESTESI', 'Nakes', 'password'],
+        ['Ns.Nova Liana Sari, S.Kep.', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Yunita Yanti, A.Md.Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Ns. Widya Puspitasari, S.Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Ns. Ari Handoko, S.Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Nia Susanti, A.Md.Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Al Fadli Abdurrohim SR. A. Md. Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Zulfikri, A. Md. Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Ns. Vivi Adrima Adni, S. Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Ns. Soerika Januarta S. Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Arya Putra, A.Md.Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Merita Sundari, A. Md. Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Nindita Hermawati', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Berza Candry, A. Md. Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Reni Novita, A. Md. Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['Rika Oktaria, A. Md. Kep', '', 'RUANG BEDAH', 'Nakes', 'password'],
+        ['dr. Saipul Huda, S. PD', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['dr. I Gede Putu Arinanda, Sp. PD', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['dr. Apriani', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Ns. Mad Jahuri, S.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Marlia Tanjungan,A.Md.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Ns. Jaka Juniver, S.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Yuriza Hanifah, A.Md.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Ns. Angga Bagus Widya Saputra, S.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['M. Fadillah Mextio,A.Md.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Ns. Sepki Anggarini, S.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Novi Dahlia, A.Md.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Insiatun, A.Md.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Meriza afialis, A.Md.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Helna Sari, A.Md.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Maria Ramadini, A. Md. Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Nurul Husna, A.Md.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Ayu Samfika, A.Md.Kep', '', 'RUANG PENYAKIT DALAM', 'Nakes', 'password'],
+        ['Ns. Eka Oktasari, S. Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['Ns. Eni Suryani, S. Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['Ns. Riza Umami, S.Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['Ns. Epi Suspalinda, S. Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['Rio Pradana Adri, A. Md. Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['Ns. Butro Zagali, S.Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['Yuli Purnama Sari, A. Md. Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['Meri Puji Astuti, A.Md.Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['Muchowir, S. Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['Sari Paulina', '', 'VIP.', 'Nakes', 'password'],
+        ['Desi Yana Guba, A. Md. Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['Ns.Riya Astuti, S. Kep', '', 'VIP.', 'Nakes', 'password'],
+        ['apt.Desi Nopi Yanti, S. Si,', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Vita Rahmawati, S.Farm', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Diana Sari, A.Md.Farm', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Elvina Sary, A.Md.Farm', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Yulida Sari, SE', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Fitri Yanti', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Sri Ramis, SE', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Baninar, A. Md. F', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Linda Firyani', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Apt. Yeni Setyawati, S.Far.', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Apt. Metha Linda Yanti, S. Farm', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Anggun Yulistiani, A.Md', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Ongga Novanda, SH', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Mela Sari, A.Md.Keb', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Mike Lusia', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Darma Kesuma Jaya, S. Kom', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Nova Ria Safitri, A.Md.Keb', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Dera Isjayanti, A.Md.Keb', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Eka Havitasyari Anom, A.Md.Keb', '', 'INSTALASI FARMASI', 'Nakes', 'password'],
+        ['Ns, Haris Awaludin, S. Kep', '', 'ICU', 'Nakes', 'password'],
+        ['Kurnia Akbar FR,A.Md.Kep', '', 'ICU', 'Nakes', 'password'],
+        ['Ns. Arif Tahta Prayogi, S.Kep', '', 'ICU', 'Nakes', 'password'],
+        ['Heny Septina, S.Kep', '', 'ICU', 'Nakes', 'password'],
+        ['Nur Susilawati, A.Md.Kep', '', 'ICU', 'Nakes', 'password'],
+        ['Jumraini, A.Md.Kep', '', 'ICU', 'Nakes', 'password'],
+        ['Atika Triyani, A.Md.Kep', '', 'ICU', 'Nakes', 'password'],
+        ['Ns. Riensi Nurdika Yani, S.Kep', '', 'ICU', 'Nakes', 'password'],
+        ['Tri Mardyandoko, A. Md. Kep', '', 'ICU', 'Nakes', 'password'],
+        ['Ns. Bayu Irda Manita, S. Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Ns. Hendra Setya Pratama, S. Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Haris Iswanto, A. Md. Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Ariyanti, A. Md. Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Ns. Romie Saputra, S.Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Firmansyah, A.Md.Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Hendra MP Halil, A. Md. Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Ns.Syandri Irawan, S.Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Rahmad Gani,A.Md.Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Devi Zana Junjungan, A. Md. Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Juli Agus Stiawan, A. Md. Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Ahmad Sunandar, A. Md. Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Ervan Wijaya, S.Kep., NS', '', 'IGD', 'Nakes', 'password'],
+        ['Deni Johansyah R, S. Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Dwi Wahyudi, A.Md.Kep', '', 'IGD', 'Nakes', 'password'],
+        ['M. Imam Saputra, A.Md.Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Achmad Rikho Benisya Rio BN, A.Md.Kep', '', 'IGD', 'Nakes', 'password'],
+        ['Resmareny, S.Kep., Ns', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Ns. Meila Suri, S.Kep', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Ns. Neli Putri, S. Kep', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Renika, S. Tr. Keb', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Martini, A. Md. Kep', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Erika Permana, S.Kep.,Ns', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Zur\'Aini Wulandari, A.Md.Keb', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Yeni Firda, A. Md. Keb', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Afrizal, A.Md.Kep', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Novi Darmita, A.Md.Keb', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Mauli Nopitri, A. Md. Keb', '', 'NEONATUS', 'Nakes', 'password'],
+        ['Via Gina Mahardhika, S.Kep.,Ns', '', 'NEONATUS', 'Nakes', 'password'],
+        ['dr. Vemi Fitria, Sp. P', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Ns. Rahmawaty, S.Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Ns. Saiyidah, S. Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Ns. Tati Wulandari, S.Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Ns. Santi Astri, A.Md.Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Melly Rosalia Indah, A.Md.Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Mardona Arisando, A. Md. Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Gandi Irawan, A. Md. Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Fera Suciawati, A.Md.Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Merry Octarina, A.Md.Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Rizqi Dwi Apriyanto, A.Md.Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Mardiyana, A. Md. Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Rahmad Mulyono, A.Md.Kep', '', 'RUANG PARU', 'Nakes', 'password'],
+        ['Meida Liana, S. ST., M. Kes', '', 'PONEK', 'Nakes', 'password'],
+        ['Misni Agustin, SST', '', 'PONEK', 'Nakes', 'password'],
+        ['Uci Marina, SST', '', 'PONEK', 'Nakes', 'password'],
+        ['Apriyanti  A. Md. Keb', '', 'PONEK', 'Nakes', 'password'],
+        ['Anita Gina Indriyana, SST', '', 'PONEK', 'Nakes', 'password'],
+        ['Pika Putri Purnama Dewi, SST', '', 'PONEK', 'Nakes', 'password'],
+        ['Oktaria Sari, A.Md.Keb', '', 'PONEK', 'Nakes', 'password'],
+        ['Devita Amalia, A.Md.Keb', '', 'PONEK', 'Nakes', 'password'],
+        ['Lilia Faristi, SST', '', 'PONEK', 'Nakes', 'password'],
+        ['Ima Agustina, A. Md. Keb', '', 'PONEK', 'Nakes', 'password'],
+        ['Vetti Silvia, A.Md.Keb', '', 'PONEK', 'Nakes', 'password'],
+        ['Seftia Meinita Sari, A.Md.Keb', '', 'PONEK', 'Nakes', 'password'],
+        ['Fadhila Agnia, A.Md.Keb', '', 'PONEK', 'Nakes', 'password'],
+        ['Evi Herlinda, S.Tr.Keb., M.Kes', '', 'PONEK', 'Nakes', 'password'],
+        ['Erry Nathalia, A. Md. Keb', '', 'PONEK', 'Nakes', 'password'],
+        ['dr. Artyca Wahyu Utami', '', 'HEMODIALISA', 'Nakes', 'password'],
+        ['Ns. Tri Hananto, S.Kep', '', 'HEMODIALISA', 'Nakes', 'password'],
+        ['Hi. Supardi, A.Md.Kep', '', 'HEMODIALISA', 'Nakes', 'password'],
+        ['Ns. Juli Prabowo, S.Kep', '', 'HEMODIALISA', 'Nakes', 'password'],
+        ['Mario Martin, A. Md. Kep', '', 'HEMODIALISA', 'Nakes', 'password'],
+        ['Rendi Yosfi Kurniawan, A.Md.Kep', '', 'HEMODIALISA', 'Nakes', 'password'],
+        ['Selvia Sari, A.Md.Kep', '', 'HEMODIALISA', 'Nakes', 'password'],
+        ['Sunarmila    ( Adm )', '', 'HEMODIALISA', 'Nakes', 'password'],
+        ['Marlia Tanjungan,A.Md.Kep', '', 'HEMODIALISA', 'Nakes', 'password'],
+        ['Yuli Caturini, SST.,M.Kes', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Feny Eka Putri Isun. SST', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Tania Cantika, A. Md. Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Weci Vectoria, S.ST', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Amelia Rosadi, SST', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Maya Zamarmah, A. Md. Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Dina Ariani, A. Md. Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Sydesma Alia, A. Md. Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Siti Handayani, A. Md. Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Meila Sari, A. Md. Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Siti Husna, A.Md.Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Desti Candra Yunita, A.Md.Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Riani, A. Md. Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Ria Febrianti, A. Md. Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Meiza Trizna, A. Md. Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Eva Astin Qomariah, A.Md.Keb', '', 'RUANG VK', 'Nakes', 'password'],
+        ['Ns.Rahmad Saleh, S.Kep', '', 'ISOLASI B', 'Nakes', 'password'],
+        ['Ns.Linda Hermalia, S.Kep', '', 'ISOLASI B', 'Nakes', 'password'],
+        ['Ns. Metty Anggraeni, S. Kep', '', 'ISOLASI B', 'Nakes', 'password'],
+        ['Mohammad Salim, A.Md.Kep', '', 'ISOLASI B', 'Nakes', 'password'],
+        ['Dennyy Lestari, A.Md.Kep', '', 'ISOLASI B', 'Nakes', 'password'],
+        ['Desi Satya Purwaningsih, A.Md.Kep', '', 'ISOLASI B', 'Nakes', 'password'],
+        ['Eron Eka Putra, A.Md.Kep', '', 'ISOLASI B', 'Nakes', 'password'],
+        ['Andika Oktario, A. Md. Kep', '', 'ISOLASI B', 'Nakes', 'password'],
+        ['Ana Maryana, A. Md. Kep', '', 'ISOLASI B', 'Nakes', 'password'],
+        ['Fatmawati, A.Md. Kep', '', 'ISOLASI B', 'Nakes', 'password'],
+        ['dr. Febi Merdika', '', 'DOKTER UMUM', 'Nakes', 'password'],
+        ['dr. Ficky Orina Sari', '', 'DOKTER UMUM', 'Nakes', 'password'],
+        ['dr. Wawan Ridwan', '', 'DOKTER UMUM', 'Nakes', 'password'],
+        ['dr. Alef Adlia Rahmani', '', 'DOKTER UMUM', 'Nakes', 'password'],
+        ['dr. Santo Fitriantoro', '', 'DOKTER UMUM', 'Nakes', 'password'],
+        ['dr. Agung Laksana', '', 'DOKTER UMUM', 'Nakes', 'password'],
+        ['dr. Imbri Fernando Ginting', '', 'DOKTER UMUM', 'Nakes', 'password'],
+        ['dr. Refa A.', '', 'DOKTER UMUM', 'Nakes', 'password'],
+        ['dr. M. Azzibaginda Ganie', '', 'DOKTER UMUM', 'Nakes', 'password'],
     ];
 
     /**
-     * Data Kepala Ruangan (Validator) per unit.
-     * Termasuk Ns. Zulda Purnawati (Poli Ortopedi) dan
-     * Puji Astuti Sepriani (Poli Gigi) yang juga menjadi PIC.
+     * Jalankan database seeds.
+     *
+     * Seeder ini membersihkan ulang akun.pengguna dan akun.pengguna_peran,
+     * lalu mengisi ulang seluruh pengguna dari PENGGUNA_DATA.
+     * Unit kerja yang belum ada akan dibuat otomatis.
      */
-    private const KARU_DATA = [
-        // ── Kepala Ruangan Poliklinik ─────────────────────────────────────
-        ['POLI-ANAK',    'KP001', 'dahlia',        'Ns. Dahlia, S.Kep',             'Kepala Ruangan', 'dahlia@rsudryacudu.go.id',        '081400000401'],
-        ['POLI-KBD',     'KP002', 'wardalia',      'Wardalia, SST',                  'Kepala Ruangan', 'wardalia@rsudryacudu.go.id',      '081400000402'],
-        ['POLI-ORTHO',   'KP003', 'zuldapurnawati','Ns. Zulda Purnawati, S.Kep',    'Kepala Ruangan', 'zuldapurnawati@rsudryacudu.go.id','081400000403'],
-        ['POLI-SARAF',   'KP004', 'aprilinda',     'Aprilinda, Amd. Kep',            'Kepala Ruangan', 'aprilinda@rsudryacudu.go.id',     '081400000404'],
-        ['POLI-PD',      'KP005', 'suhartini',     'Ns. Suhartini, S.Kep',           'Kepala Ruangan', 'suhartini@rsudryacudu.go.id',     '081400000405'],
-        ['POLI-THT',     'KP006', 'srianggareny',  'Ns. Sri Anggareny, S.Kep',       'Kepala Ruangan', 'srianggareny@rsudryacudu.go.id',  '081400000406'],
-        ['POLI-BEDAH',   'KP007', 'idayati',       'Ns. Ida Yati, S.Kep',            'Kepala Ruangan', 'idayati@rsudryacudu.go.id',       '081400000407'],
-        ['POLI-PARU',    'KP008', 'muliana',       'Ns. Muliana, S.Kep',             'Kepala Ruangan', 'muliana@rsudryacudu.go.id',       '081400000408'],
-        ['POLI-GIGI',    'KP009', 'pujiastuti',    'Puji Astuti Sepriani, AMKG',     'Kepala Ruangan', 'pujiastuti@rsudryacudu.go.id',    '081400000409'],
-        ['POLI-KULIT',   'KP010', 'yuliafrida',    'Ns. Yuli Afrida, S.Kep',         'Kepala Ruangan', 'yuliafrida@rsudryacudu.go.id',    '081400000410'],
-        ['POLI-MATA',    'KP011', 'aprilnita',     'Ns. April Nita, S.Kep',          'Kepala Ruangan', 'aprilnita@rsudryacudu.go.id',     '081400000411'],
-        ['POLI-JIWA',    'KP012', 'fitriantina',   'Ns. Fitriantina, S.Kep',         'Kepala Ruangan', 'fitriantina@rsudryacudu.go.id',   '081400000412'],
-        ['POLI-ANEST',   'KP013', 'desyhastuti',   'Ns. Desy Hastuti, S.Kep',        'Kepala Ruangan', 'desyhastuti@rsudryacudu.go.id',   '081400000413'],
-
-        // ── Kepala Ruangan Rawat Inap ─────────────────────────────────────
-        ['RW-BEDAH',     'KR001', 'novaliana',     'Ns. Nova Liana Sari, S.Kep',     'Kepala Ruangan', 'novaliana@rsudryacudu.go.id',     '081500000501'],
-        ['RW-VIP',       'KR002', 'rahmawaty',     'Ns. Rahmawaty, S.Kep',           'Kepala Ruangan', 'rahmawaty@rsudryacudu.go.id',     '081500000502'],
-        ['RW-ISOLASI-B', 'KR003', 'rahmadsaleh',   'Ns. Rahmad Saleh, S.Kep',        'Kepala Ruangan', 'rahmadsaleh@rsudryacudu.go.id',   '081500000503'],
-        ['RW-HD',        'KR004', 'trihananto',    'Ns. Tri Hananto, S.Kep',         'Kepala Ruangan', 'trihananto@rsudryacudu.go.id',    '081500000504'],
-        ['RW-PD',        'KR005', 'madjahuri',     'Ns. Mad Jahuri, S.Kep',          'Kepala Ruangan', 'madjahuri@rsudryacudu.go.id',     '081500000505'],
-        ['RW-SARAF',     'KR006', 'deninovice',    'Ns. Deni Novice, S.Kep',         'Kepala Ruangan', 'deninovice@rsudryacudu.go.id',    '081500000506'],
-        ['RW-NEONAT',    'KR007', 'resmareny',     'Ns. Resmareny, S.Kep',           'Kepala Ruangan', 'resmareny@rsudryacudu.go.id',     '081500000507'],
-        ['RW-ANAK',      'KR008', 'revisesiana',   'Ns. Revi Sesiana, S.Kep',        'Kepala Ruangan', 'revisesiana@rsudryacudu.go.id',   '081500000508'],
-        ['RW-KBD',       'KR009', 'muhartini',     'Muhartini, SST',                  'Kepala Ruangan', 'muhartini@rsudryacudu.go.id',     '081500000509'],
-        ['RW-VK',        'KR010', 'yulicaturini',  'Yuli Caturini, STT.,M.Kes',      'Kepala Ruangan', 'yulicaturini@rsudryacudu.go.id',  '081500000510'],
-        ['ICU',          'KR011', 'harisawaludin', 'Ns. Haris Awaludin, S.Kep',      'Kepala Ruangan', 'harisawaludin@rsudryacudu.go.id', '081500000511'],
-        ['IGD',          'KR012', 'bayuirda',      'Ns. Bayu Irda Manita, S.Kep',    'Kepala Ruangan', 'bayuirda@rsudryacudu.go.id',      '081500000512'],
-        ['IBS',          'KR013', 'riduanhusin',   'Ns. Riduan Husin, S.Kep',        'Kepala Ruangan', 'riduanhusin@rsudryacudu.go.id',   '081500000513'],
-        ['RW-PONEK',     'KR014', 'meidaliana',    'Meida Liana, S.ST.,M.Kes',       'Kepala Ruangan', 'meidaliana@rsudryacudu.go.id',    '081500000514'],
-
-        // ── Kepala Ruangan Penunjang ──────────────────────────────────────
-        ['FARMASI',      'KRJ01', 'desinopi',      'Desi Nopiyanti, S.Si.,Apt',      'Kepala Ruangan', 'desinopi@rsudryacudu.go.id',      '081600000601'],
-    ];
-
-    /* ---------------------------------------------------------------
-     | Entry Point
-     | ------------------------------------------------------------*/
-
     public function run(): void
     {
-        $tenant = Organisasi::where('kode_organisasi', 'default')->firstOrFail();
+        $tenantId = DB::table('tenant.organisasi')->value('id');
 
-        // Pastikan semua peran tersedia sebelum digunakan sebagai FK.
-        $this->ensurePeranExists($tenant->id);
-
-        $peranAdmin    = Peran::where(['tenant_id' => $tenant->id, 'nama_peran' => Peran::ADMIN])->firstOrFail();
-        $peranDirektur = Peran::where(['tenant_id' => $tenant->id, 'nama_peran' => Peran::DIREKTUR])->firstOrFail();
-        $peranKomite   = Peran::where(['tenant_id' => $tenant->id, 'nama_peran' => Peran::KOMITE])->firstOrFail();
-        $peranPeneliti = Peran::where(['tenant_id' => $tenant->id, 'nama_peran' => Peran::PENELITI])->firstOrFail();
-        $peranNakes    = Peran::where(['tenant_id' => $tenant->id, 'nama_peran' => Peran::NAKES])->firstOrFail();
-        $peranKaru     = Peran::where(['tenant_id' => $tenant->id, 'nama_peran' => Peran::KEPALA_RUANGAN])->firstOrFail();
-
-        // ── Step 1: Akun khusus ───────────────────────────────────────────
-        $this->command->info('  ▶ Membuat akun khusus (Admin, Direktur, 3 Komite, Peneliti)...');
-        $this->seedSpecialAccounts($tenant->id, $peranAdmin, $peranDirektur, $peranKomite, $peranPeneliti);
-
-        // ── Step 2: Nakes PIC ─────────────────────────────────────────────
-        $this->command->info('  ▶ Membuat 25 akun Nakes (PIC per Unit) ...');
-        $this->seedStaff($tenant->id, self::NAKES_DATA, $peranNakes);
-
-        // ── Step 3: Kepala Ruangan / Validator ───────────────────────────
-        $this->command->info('  ▶ Membuat 28 akun Kepala Ruangan (Didaftarkan sebagai Nakes awal) ...');
-        $this->seedStaff($tenant->id, self::KARU_DATA, $peranNakes, $peranKaru);
-
-        $this->command->info('  ✔ ProductionPenggunaSeeder selesai: 59 akun production diproses.');
-        $this->command->warn('  ⚠ Semua akun non-Admin diwajibkan ganti sandi pada login pertama.');
-    }
-
-    /* ---------------------------------------------------------------
-     | Private Helpers
-     | ------------------------------------------------------------*/
-
-    /**
-     * Pastikan semua peran tersedia di tenant (idempotent).
-     * Diperlukan agar seeder ini bisa jalan standalone tanpa PeranSeeder.
-     */
-    private function ensurePeranExists(int $tenantId): void
-    {
-        foreach ([Peran::NAKES, Peran::KEPALA_RUANGAN, Peran::KOMITE, Peran::ADMIN, Peran::DIREKTUR, Peran::PENELITI] as $nama) {
-            Peran::firstOrCreate(['tenant_id' => $tenantId, 'nama_peran' => $nama]);
+        if (!$tenantId) {
+            $this->command->error('❌ Tenant ID tidak ditemukan. Jalankan OrganisasiSeeder terlebih dahulu.');
+            return;
         }
-    }
 
-    /**
-     * Buat / perbarui 6 akun khusus (admin, direktur, 3 komite, peneliti).
-     */
-    private function seedSpecialAccounts(
-        int $tenantId,
-        Peran $peranAdmin,
-        Peran $peranDirektur,
-        Peran $peranKomite,
-        Peran $peranPeneliti,
-    ): void {
-        $entries = [
-            // ── Admin ──────────────────────────────────────────────────────
-            // wajib_ganti_sandi=false: Admin adalah pemilik sistem &
-            // sudah mengetahui sandi yang ditetapkan.
-            [
-                'data'  => [
-                    'tenant_id'         => $tenantId,
-                    'nomor_induk'       => 'ADM001',
-                    'username'          => 'admin.rsud',
-                    'nama_lengkap'      => 'Administrator Sistem RSUD HM. Ryacudu',
-                    'jabatan'           => 'Administrator Sistem',
-                    'email'             => 'admin@rsudryacudu.go.id',
-                    'nomor_hp'          => '082100000001',
-                    'alamat'            => self::ALAMAT_RS,
-                    'kata_sandi'        => 'password',
-                    'is_aktif'          => true,
-                    'wajib_ganti_sandi' => false,
-                ],
-                'peran' => $peranAdmin,
-            ],
-
-            // ── Direktur ───────────────────────────────────────────────────
-            [
-                'data'  => [
-                    'tenant_id'         => $tenantId,
-                    'nomor_induk'       => 'DIR001',
-                    'username'          => 'direktur.rsud',
-                    'nama_lengkap'      => 'Direktur RSUD HM. Ryacudu',
-                    'jabatan'           => 'Direktur',
-                    'email'             => 'direktur@rsudryacudu.go.id',
-                    'nomor_hp'          => '082100000002',
-                    'alamat'            => self::ALAMAT_RS,
-                    'kata_sandi'        => 'password',
-                    'is_aktif'          => true,
-                    'wajib_ganti_sandi' => true,
-                ],
-                'peran' => $peranDirektur,
-            ],
-
-            // ── Komite 1 — Keselamatan Pasien ─────────────────────────────
-            [
-                'data'  => [
-                    'tenant_id'         => $tenantId,
-                    'nomor_induk'       => 'KOM001',
-                    'username'          => 'komite.keselamatan',
-                    'nama_lengkap'      => 'Ketua Komite Keselamatan Pasien',
-                    'jabatan'           => 'Ketua Komite Keselamatan Pasien',
-                    'email'             => 'komite.keselamatan@rsudryacudu.go.id',
-                    'nomor_hp'          => '082100000003',
-                    'alamat'            => self::ALAMAT_RS,
-                    'kata_sandi'        => 'password',
-                    'is_aktif'          => true,
-                    'wajib_ganti_sandi' => true,
-                ],
-                'peran' => $peranKomite,
-            ],
-
-            // ── Komite 2 — Mutu dan Keselamatan ───────────────────────────
-            [
-                'data'  => [
-                    'tenant_id'         => $tenantId,
-                    'nomor_induk'       => 'KOM002',
-                    'username'          => 'komite.mutu',
-                    'nama_lengkap'      => 'Anggota Komite Mutu dan Keselamatan',
-                    'jabatan'           => 'Anggota Komite Mutu dan Keselamatan',
-                    'email'             => 'komite.mutu@rsudryacudu.go.id',
-                    'nomor_hp'          => '082100000004',
-                    'alamat'            => self::ALAMAT_RS,
-                    'kata_sandi'        => 'password',
-                    'is_aktif'          => true,
-                    'wajib_ganti_sandi' => true,
-                ],
-                'peran' => $peranKomite,
-            ],
-
-            // ── Komite 3 — Medik ───────────────────────────────────────────
-            [
-                'data'  => [
-                    'tenant_id'         => $tenantId,
-                    'nomor_induk'       => 'KOM003',
-                    'username'          => 'komite.medik',
-                    'nama_lengkap'      => 'Anggota Komite Medik',
-                    'jabatan'           => 'Anggota Komite Medik',
-                    'email'             => 'komite.medik@rsudryacudu.go.id',
-                    'nomor_hp'          => '082100000005',
-                    'alamat'            => self::ALAMAT_RS,
-                    'kata_sandi'        => 'password',
-                    'is_aktif'          => true,
-                    'wajib_ganti_sandi' => true,
-                ],
-                'peran' => $peranKomite,
-            ],
-
-            // ── Peneliti / Dosen Pembimbing ────────────────────────────────
-            // Email menggunakan domain universitas (bukan RS) karena akun ini
-            // milik dosen luar yang diberi akses sementara untuk penelitian.
-            // Konsisten dengan nilai di PenelitiSeeder agar tidak konflik.
-            [
-                'data'  => [
-                    'tenant_id'         => $tenantId,
-                    'nomor_induk'       => 'dosenpeneliti',
-                    'username'          => 'dosenpeneliti',
-                    'nama_lengkap'      => 'Dosen Peneliti',
-                    'jabatan'           => 'Dosen Peneliti',
-                    'email'             => 'peneliti.mer@universitas.ac.id',
-                    'nomor_hp'          => '082100000099',
-                    'alamat'            => 'Kampus Universitas, Gedung Kesehatan',
-                    'kata_sandi'        => 'Peneliti@2026!',
-                    'is_aktif'          => true,
-                    'wajib_ganti_sandi' => false,
-                ],
-                'peran' => $peranPeneliti,
-            ],
-        ];
-
-        foreach ($entries as $entry) {
-            $p = Pengguna::updateOrCreate(
-                [
-                    'tenant_id' => $entry['data']['tenant_id'],
-                    'email'     => $entry['data']['email'],
-                ],
-                $entry['data'],
-            );
-            $p->peran()->syncWithoutDetaching([$entry['peran']->id]);
-            $this->command->line(sprintf(
-                '    ✓ %-42s | %-18s | %s',
-                $p->nama_lengkap,
-                $entry['peran']->nama_peran,
-                $p->email,
-            ));
+        if (self::PENGGUNA_DATA === []) {
+            $this->command->error('❌ Data pengguna kosong. Database tidak dibersihkan.');
+            return;
         }
-    }
 
-    /**
-     * Buat / perbarui akun staf (Nakes atau Kepala Ruangan) secara batch.
-     *
-     * @param array<int, array<int, string>> $staffData
-     */
-    private function seedStaff(int $tenantId, array $staffData, Peran ...$peranList): void
-    {
-        // Ambil semua unit kerja sekaligus untuk menghindari query per-record.
-        $unitMap = DB::table('master.unit_kerja')
-            ->where('tenant_id', $tenantId)
-            ->whereNull('deleted_at')
-            ->pluck('id', 'kode_unit')
-            ->all();
+        $baris = 0;
+        $berhasil = 0;
+        $dilewati = 0;
 
-        // Sandi default
-        // Semua bersifat sementara dan wajib diganti pada login pertama.
-        $kata_sandi = 'password';
+        try {
+            DB::beginTransaction();
 
-        foreach ($staffData as [$kodeUnit, $nip, $username, $nama, $jabatan, $email, $hp]) {
-            $unitId = $unitMap[$kodeUnit] ?? null;
+            $this->command->info('🧹 Membersihkan database staging sebelum import pengguna...');
+            DB::statement('TRUNCATE TABLE akun.pengguna RESTART IDENTITY CASCADE');
 
-            $values = [
-                'tenant_id'         => $tenantId,
-                'unit_id'           => $unitId,
-                'nomor_induk'       => $nip,
-                'username'          => $username,
-                'nama_lengkap'      => $nama,
-                'jabatan'           => $jabatan,
-                'email'             => $email,
-                'nomor_hp'          => $hp,
-                'alamat'            => self::ALAMAT_RS,
-                'kata_sandi'        => $kata_sandi,
-                'is_aktif'          => true,
-                'wajib_ganti_sandi' => true,
-            ];
+            $peranMap = $this->ensurePeran($tenantId);
+            $unitMap = $this->existingUnitMap($tenantId);
 
-            // Strategi lookup 2-tahap untuk idempotency yang benar:
-            // 1. Cari berdasarkan nomor_induk (unique constraint utama):
-            //    mencegah UniqueConstraintViolationException ketika seeder lain
-            //    (mis. InsidenSeeder) sudah membuat akun dengan NIP yang sama
-            //    tetapi menggunakan email placeholder (mis. karu01@mer.test).
-            // 2. Jika tidak ditemukan via NIP, cari via email.
-            // 3. Jika masih tidak ditemukan, buat baru.
-            $p = Pengguna::where('tenant_id', $tenantId)
-                    ->where('nomor_induk', $nip)
-                    ->first()
-                ?? Pengguna::where('tenant_id', $tenantId)
-                    ->where('email', $email)
-                    ->first();
+            foreach (self::PENGGUNA_DATA as [$namaLengkap, $usernameRaw, $unitKerja, $peran, $kataSandi]) {
+                $baris++;
 
-            if ($p) {
-                $p->fill($values)->save();
-            } else {
-                $p = Pengguna::create($values);
+                $namaLengkap = trim($namaLengkap);
+                $usernameRaw = trim($usernameRaw);
+                $unitKerja = trim($unitKerja);
+                $peran = trim($peran);
+                $kataSandi = trim($kataSandi);
+
+                if ($namaLengkap === '' || $namaLengkap === '-' || $peran === '' || $peran === '-') {
+                    $dilewati++;
+                    continue;
+                }
+
+                $username = $this->makeUniqueUsername(
+                    $usernameRaw !== '' && $usernameRaw !== '-'
+                        ? strtolower($usernameRaw)
+                        : $this->usernameFromName($namaLengkap)
+                );
+
+                $penggunaId = DB::table('akun.pengguna')->insertGetId([
+                    'tenant_id' => $tenantId,
+                    'unit_id' => $this->resolveUnitId($tenantId, $unitMap, $unitKerja),
+                    'nomor_induk' => $this->makeUniqueNomorInduk($tenantId, $username),
+                    'username' => $username,
+                    'email' => null,
+                    'nomor_hp' => null,
+                    'alamat' => self::ALAMAT_RS,
+                    'nama_lengkap' => $namaLengkap,
+                    'kata_sandi' => Hash::make($kataSandi !== '' && $kataSandi !== '-' ? $kataSandi : 'password'),
+                    'wajib_ganti_sandi' => true,
+                    'is_aktif' => true,
+                    'jabatan' => $peran,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('akun.pengguna_peran')->insert([
+                    'pengguna_id' => $penggunaId,
+                    'peran_id' => $peranMap[strtolower($peran)],
+                ]);
+
+                $berhasil++;
             }
 
-            // Sync seberapa banyak pun peran yang di-passing dengan spread operator
-            $peranIds = array_map(fn($r) => $r->id, $peranList);
-            $p->peran()->syncWithoutDetaching($peranIds);
+            DB::commit();
+
+            $this->command->info("🎉 Sukses! {$berhasil} pengguna berhasil dibuat dari data seeder. {$dilewati} baris dilewati.");
+        } catch (Throwable $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
+            $this->command->error("❌ Terjadi kesalahan fatal pada data ke-{$baris}: " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function ensurePeran(int $tenantId): array
+    {
+        $peranMap = [];
+
+        foreach (array_unique(array_map(fn (array $row): string => trim($row[3]), self::PENGGUNA_DATA)) as $namaPeran) {
+            if ($namaPeran === '' || $namaPeran === '-') {
+                continue;
+            }
+
+            $peran = Peran::firstOrCreate([
+                'tenant_id' => $tenantId,
+                'nama_peran' => $namaPeran,
+            ]);
+
+            $peranMap[strtolower($namaPeran)] = $peran->id;
         }
 
-        $namaPeranStr = implode(', ', array_map(fn($r) => $r->nama_peran, $peranList));
-        $this->command->line(sprintf(
-            '    ✓ %d akun %s diproses.',
-            count($staffData),
-            $namaPeranStr
-        ));
+        return $peranMap;
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function existingUnitMap(int $tenantId): array
+    {
+        return UnitKerja::query()
+            ->where('tenant_id', $tenantId)
+            ->get(['id', 'nama_unit'])
+            ->mapWithKeys(fn (UnitKerja $unit): array => [strtolower($unit->nama_unit) => $unit->id])
+            ->all();
+    }
+
+    /**
+     * @param  array<string, int>  $unitMap
+     */
+    private function resolveUnitId(int $tenantId, array &$unitMap, string $unitKerja): ?int
+    {
+        $unitKerja = trim($unitKerja);
+
+        if ($unitKerja === '' || $unitKerja === '-') {
+            return null;
+        }
+
+        $key = strtolower($unitKerja);
+
+        if (isset($unitMap[$key])) {
+            return $unitMap[$key];
+        }
+
+        $unit = UnitKerja::create([
+            'tenant_id' => $tenantId,
+            'kode_unit' => $this->makeUniqueKodeUnit($tenantId, $unitKerja),
+            'nama_unit' => $unitKerja,
+            'keterangan' => null,
+        ]);
+
+        $unitMap[$key] = $unit->id;
+
+        return $unit->id;
+    }
+
+    private function usernameFromName(string $namaLengkap): string
+    {
+        $cleanName = preg_replace('/[^a-zA-Z\s]/', '', $namaLengkap) ?: $namaLengkap;
+        $username = Str::slug(trim($cleanName), '.');
+
+        return $username !== '' ? $username : 'pengguna';
+    }
+
+    private function makeUniqueUsername(string $username): string
+    {
+        $base = Str::limit($username !== '' ? $username : 'pengguna', 45, '');
+        $candidate = $base;
+        $counter = 2;
+
+        while (DB::table('akun.pengguna')->where('username', $candidate)->exists()) {
+            $suffix = '.' . $counter;
+            $candidate = Str::limit($base, 50 - strlen($suffix), '') . $suffix;
+            $counter++;
+        }
+
+        return $candidate;
+    }
+
+    private function makeUniqueNomorInduk(int $tenantId, string $username): string
+    {
+        $base = Str::limit($username !== '' ? $username : 'pengguna', 95, '');
+        $candidate = $base;
+        $counter = 2;
+
+        while (
+            DB::table('akun.pengguna')
+                ->where('tenant_id', $tenantId)
+                ->where('nomor_induk', $candidate)
+                ->exists()
+        ) {
+            $suffix = '-' . $counter;
+            $candidate = Str::limit($base, 100 - strlen($suffix), '') . $suffix;
+            $counter++;
+        }
+
+        return $candidate;
+    }
+
+    private function makeUniqueKodeUnit(int $tenantId, string $namaUnit): string
+    {
+        $base = Str::limit(strtoupper(Str::slug($namaUnit, '_')), 45, '');
+        $base = $base !== '' ? $base : 'UNIT';
+        $candidate = $base;
+        $counter = 2;
+
+        while (
+            UnitKerja::query()
+                ->where('tenant_id', $tenantId)
+                ->where('kode_unit', $candidate)
+                ->exists()
+        ) {
+            $suffix = '_' . $counter;
+            $candidate = Str::limit($base, 50 - strlen($suffix), '') . $suffix;
+            $counter++;
+        }
+
+        return $candidate;
     }
 }

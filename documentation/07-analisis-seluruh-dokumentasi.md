@@ -2,7 +2,7 @@
 
 > **Sistem**: Medication Error Reporting (MER) — Rumah Sakit  
 > **Klasifikasi**: HIGH-RISK (Data Medis Sensitif / PHI)  
-> **Tujuan Dokumen**: Analisis kesiapan 6 dokumen sebelumnya untuk eksekusi *Zero-to-Launch* tanpa interupsi, identifikasi celah (gaps), dan penyediaan *Master Workflow* yang mengikat semuanya.
+> **Tujuan Dokumen**: Analisis kesiapan seluruh rangkaian dokumen (01 s/d 06, termasuk 05-A) untuk eksekusi *Zero-to-Launch* tanpa interupsi, identifikasi celah (gaps), dan penyediaan *Master Workflow* yang mengikat semuanya.
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## 1. Kesimpulan Analisis Eksekusi Nul-ke-Luncur (Zero-to-Launch)
 
-**Pertanyaan:** *Apakah keenam dokumen standar (01-06) sudah cukup untuk dijalankan dari nol hingga selesai deploy tanpa ada perubahan di tengah-tengah proses?*
+**Pertanyaan:** *Apakah seluruh rangkaian dokumen standar (01-06, termasuk 05-A) sudah cukup untuk dijalankan dari nol hingga selesai deploy tanpa ada perubahan di tengah-tengah proses?*
 
 **Jawaban:** **BELUM CUKUP (TIDAK BISA DILAKUKAN SECARA MEMBABI BUTA).**
 
@@ -82,26 +82,32 @@ Berikut adalah alur waktu (chronological order) mutlak dari poin 0 hingga sistem
 6. Generate **Origin Certificate** di Cloudflare Dashboard.
 7. Login ke VPS via SSH, buat folder `/etc/ssl/cloudflare`, dan simpan Origin Certificate + Private Key secara manual. Download CA Auth. (Dokumen 02 Section 5)
 
-### Fase 3: Observabilitas (Hari ke-2)
-8. Deploy stack Monitoring (Grafana, Loki, Promtail, Uptime Kuma) di VPS. (Dokumen 05)
+### Fase 3: Observabilitas & Rilis Staging (Hari ke-2)
+8. Buat branch repositori khusus (`feature/monitoring`).
+9. Terapkan konfigurasi Staging di VPS (`/var/www/mer-system/staging`) untuk menguji coba limitasi RAM 8GB.
+10. Deploy stack Monitoring (Grafana, Loki, Promtail, Uptime Kuma) di VPS. (Dokumen 05)
 
-### Fase 4: Persiapan CI/CD & State Awal (Hari ke-2)
-9. Di Repository GitHub, masuk ke Settings > Secrets. Masukkan 4 secret (`VPS_SSH_HOST`, `PORT`, `USER`, `KEY`). Konfigurasi GitHub Environments. (Dokumen 06)
-10. **(LANGKAH KRUSIAL BARU)**: Login ke VPS, jalankan skrip "Pre-Pipeline Initialization" (lihat Section 5 di bawah) untuk membuat kerangka direktori, mengatur `.env` definitif, dan pre-generate `APP_KEY`.
+### Fase 4: Verifikasi & Transisi ke Production (Hari ke-2)
+11. Verifikasi jalannya Log Audit Medis dan penangkapan Exception Sentry pada environment *staging*. (Dokumen 05-A)
+12. Sinkronisasi Git branch (`merge` ke `production`). Masuk ke `/var/www/mer-system/production` di VPS, jalankan re-build Docker image untuk container Production secara aman (termasuk penerapan `.env` yang benar). (Dokumen 05-A)
 
-### Fase 5: Modifikasi Kode Repositori Lokal (Hari ke-2)
-11. Update kode `docker-compose.yml` Anda untuk membuka port 443 dan mount `/etc/ssl/cloudflare`.
-12. Update `nginx.conf` untuk menggunakan HTTPS 443 TLS.
-13. Commit dan Push kode ke branch `main`.
+### Fase 5: Persiapan CI/CD & State Awal (Hari ke-3)
+13. Di Repository GitHub, masuk ke Settings > Secrets. Masukkan 4 secret (`VPS_SSH_HOST`, `PORT`, `USER`, `KEY`). Konfigurasi GitHub Environments. (Dokumen 06)
+14. **(LANGKAH KRUSIAL BARU)**: Login ke VPS, jalankan skrip "Pre-Pipeline Initialization" (lihat Section 5 di bawah) untuk membuat kerangka direktori, mengatur `.env` definitif (termasuk variabel khusus `SENTRY_LARAVEL_DSN` jika digunakan), dan pre-generate `APP_KEY`.
 
-### Fase 6: Otomatisasi & Peluncuran
-14. GitHub Actions (Doc 06) terpicu otomatis.
-15. CI menguji kode (lulus).
-16. Reviewer meng-approve deployment.
-17. CD mentransfer file via SCP (TIDAK MENIMPA `.env`).
-18. CD via SSH memperbaiki permission UID 33:33.
-19. CD mem-build Docker, up container, dan menjalankan migrasi database dengan aman.
-20. Sistem LIVE.
+### Fase 6: Modifikasi Kode Repositori Lokal (Hari ke-3)
+15. Update kode `docker-compose.yml` Anda untuk membuka port 443 dan mount `/etc/ssl/cloudflare`.
+16. Update `nginx.conf` untuk menggunakan HTTPS 443 TLS.
+17. Commit dan Push kode ke branch `main`.
+
+### Fase 7: Otomatisasi & Peluncuran
+18. GitHub Actions (Doc 06) terpicu otomatis.
+19. CI menguji kode (lulus).
+20. Reviewer meng-approve deployment.
+21. CD mentransfer file via SCP (TIDAK MENIMPA `.env`).
+22. CD via SSH memperbaiki permission UID 33:33.
+23. CD mem-build Docker, up container, dan menjalankan migrasi database dengan aman.
+24. Sistem LIVE (Zero-Downtime, Staging & Production berjalan lancar).
 
 ---
 
@@ -157,6 +163,10 @@ MAIL_PASSWORD=GANTI_DENGAN_SMTP_PASS
 MAIL_ENCRYPTION=tls
 MAIL_FROM_ADDRESS="no-reply@mers-rsryacudu.com"
 MAIL_FROM_NAME="MER System Alerts"
+
+# Observability Sentry
+# Jika integrasi Sentry sudah dibuat, tambahkan DSN agar Composer/Sentry Test tidak memproduksi error
+SENTRY_LARAVEL_DSN="https://xxxx@o12345.ingest.sentry.io/xxxx"
 EOF
 
 # 3. Amankan permissions .env
@@ -173,4 +183,4 @@ echo "Anda sekarang BENAR-BENAR AMAN untuk mem-push kode ke GitHub dan memicu CI
 ```
 
 ## Penutup
-Dengan ditutupnya ketiga celah logis ini dan diterapkannya *Master Workflow*, seluruh rangkaian dokumen 01 hingga 06 sekarang membentuk rantai operasi yang **Kalis Peluru (Bulletproof)**. Sistem kini dapat dibangun dari Server Kosong hingga Sistem Produksi Kelas-Rumah-Sakit secara lancar tanpa hambatan di tengah jalan.
+Dengan ditutupnya ketiga celah logis ini dan diterapkannya *Master Workflow*, seluruh rangkaian dokumen 01 hingga 06 (termasuk 05-A dan eksistensi 07) sekarang membentuk rantai operasi yang **Kalis Peluru (Bulletproof)**. Sistem kini dapat diagendakan untuk dibangun dari Server Kosong hingga Sistem Produksi Kelas-Rumah-Sakit secara lancar tanpa hambatan kritis di tengah jalan.
