@@ -122,30 +122,30 @@
          STEP INDICATOR
          ================================================================ --}}
     <div id="step-indicator" class="mb-8">
-        <div class="flex items-center justify-center gap-0">
+        <div class="flex justify-between w-full max-w-3xl mx-auto px-2 sm:px-0">
             @foreach (['Data Demografis', 'Detail Insiden', 'Kronologi', 'Konfirmasi'] as $i => $label)
-                <div class="flex items-center">
-                    <div class="flex flex-col items-center">
-                        <div id="step-circle-{{ $i + 1 }}"
-                             class="flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300
-                                    {{ $i === 0
-                                        ? 'border-brand bg-brand text-white'
-                                        : 'border-slate-300 bg-white text-slate-400' }}">
-                            <span class="step-number">{{ $i + 1 }}</span>
-                            <svg class="step-check hidden h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-                            </svg>
-                        </div>
-                        <span id="step-label-{{ $i + 1 }}"
-                              class="mt-2 text-xs font-medium transition-colors duration-300
-                                     {{ $i === 0 ? 'text-brand' : 'text-slate-400' }}">
-                            {{ $label }}
-                        </span>
-                    </div>
+                <div class="relative flex flex-col items-center flex-1">
                     @if ($i < 3)
+                        <!-- Inline style ensures the gap and vertical center work perfectly everywhere -->
                         <div id="step-line-{{ $i + 1 }}"
-                             class="mx-1 h-0.5 flex-1 rounded-full bg-slate-200 transition-colors duration-300 sm:mx-2 sm:max-w-[6rem]" style="margin-top: 19px;"></div>
+                             class="absolute h-0.5 bg-slate-200 transition-colors duration-300"
+                             style="top: 20px; left: calc(50% + 24px); width: calc(100% - 48px); z-index: 0;"></div>
                     @endif
+                    <div id="step-circle-{{ $i + 1 }}"
+                         class="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300
+                                {{ $i === 0
+                                    ? 'border-brand bg-brand text-white'
+                                    : 'border-slate-300 bg-white text-slate-400' }}">
+                        <span class="step-number">{{ $i + 1 }}</span>
+                        <svg class="step-check hidden h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                        </svg>
+                    </div>
+                    <span id="step-label-{{ $i + 1 }}"
+                          class="mt-2 px-1 text-center text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-300
+                                 {{ $i === 0 ? 'text-brand' : 'text-slate-400' }}">
+                        {{ $label }}
+                    </span>
                 </div>
             @endforeach
         </div>
@@ -661,8 +661,8 @@
         {{-- ============================================================
              TOMBOL NAVIGASI
              ============================================================ --}}
-        <div class="mt-6 flex items-center justify-between">
-            <div class="flex items-center gap-3">
+        <div class="mt-6 flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4 sm:gap-0">
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3 w-full sm:w-auto">
                 <button type="button" id="btn-kembali"
                         class="hidden items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-5 py-2.5
                                text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
@@ -706,7 +706,7 @@
                 </div>
             </div>
 
-            <div class="ml-auto flex items-center gap-3">
+            <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 w-full sm:w-auto">
                 {{-- Simpan sebagai Draf — submit form dengan action=simpan_draf --}}
                 <button type="submit" name="action" value="simpan_draf" id="btn-draf"
                         class="inline-flex items-center gap-1.5 rounded-lg border border-brand bg-white px-5 py-2.5
@@ -775,7 +775,10 @@
                 document.getElementById('btn-selanjutnya').style.display  = tahapAktif < TOTAL_TAHAP ? 'inline-flex' : 'none';
                 document.getElementById('btn-kirim').style.display        = tahapAktif === TOTAL_TAHAP ? 'inline-flex' : 'none';
 
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const stepIndicator = document.getElementById('step-indicator');
+                if (stepIndicator) {
+                    stepIndicator.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
             };
 
             function perbaruiIndikator(tahapBaru) {
@@ -788,21 +791,28 @@
                     const selesai = i < tahapBaru;
                     const aktif   = i === tahapBaru;
 
-                    lingkaran.className = 'flex h-10 w-10 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300 '
+                    lingkaran.className = 'relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300 '
                         + (selesai || aktif
                             ? 'border-brand bg-brand text-white'
                             : 'border-slate-300 bg-white text-slate-400');
 
-                    label.className = 'mt-2 text-xs font-medium transition-colors duration-300 '
+                    label.className = 'mt-2 px-1 text-center text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-300 '
                         + (selesai || aktif ? 'text-brand' : 'text-slate-400');
 
                     nomor.classList.toggle('hidden', selesai);
                     centang.classList.toggle('hidden', !selesai);
 
                     if (i < TOTAL_TAHAP) {
-                        document.getElementById('step-line-' + i).className =
-                            'mx-2 h-0.5 w-16 rounded-full transition-colors duration-300 sm:w-24 '
-                            + (i < tahapBaru ? 'bg-brand' : 'bg-slate-200');
+                        const line = document.getElementById('step-line-' + i);
+                        if (line) {
+                            if (i < tahapBaru) {
+                                line.classList.remove('bg-slate-200');
+                                line.classList.add('bg-brand');
+                            } else {
+                                line.classList.remove('bg-brand');
+                                line.classList.add('bg-slate-200');
+                            }
+                        }
                     }
                 }
             }
