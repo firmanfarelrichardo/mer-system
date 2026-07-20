@@ -10,7 +10,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * LaporanExportController — menangani ekspor laporan rekapitulasi ke PDF.
+ * LaporanExportController - menangani ekspor laporan rekapitulasi ke PDF.
  *
  * Hanya dapat diakses oleh peran 'Komite' dan 'Direktur'.
  * Otorisasi dilakukan secara eksplisit di setiap method menggunakan

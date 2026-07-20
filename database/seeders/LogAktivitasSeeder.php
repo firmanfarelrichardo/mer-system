@@ -12,7 +12,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * LogAktivitasSeeder — Seed 1500+ log aktivitas audit selama 3 tahun (2024-2026).
+ * LogAktivitasSeeder - Seed 1500+ log aktivitas audit selama 3 tahun (2024-2026).
  *
  * Mensimulasikan aktivitas harian pengguna: login, CRUD insiden, kelola pengguna,
  * perubahan unit kerja, dan lain-lain.

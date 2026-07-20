@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Model TipeCedera — maps to `master.tipe_cedera`.
+ * Model TipeCedera - maps to `master.tipe_cedera`.
  *
  * Master data untuk jenis cedera pasien yang muncul
  * sebagai checkbox di formulir pelaporan insiden Nakes.

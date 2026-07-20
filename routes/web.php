@@ -26,7 +26,7 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Rute Web — Sistem Pelaporan Insiden Medication Errors
+| Rute Web - Sistem Pelaporan Insiden Medication Errors
 |--------------------------------------------------------------------------
 */
 
@@ -52,7 +52,7 @@ Route::middleware('guest')->group(function (): void {
 // -----------------------------------------------------------------------
 // Rute Publik (tidak memerlukan autentikasi)
 // -----------------------------------------------------------------------
-// Bantuan Akses — Dynamic WhatsApp Redirect ke Admin aktif.
+// Bantuan Akses - Dynamic WhatsApp Redirect ke Admin aktif.
 // Bebas dari middleware auth agar dapat diakses oleh pengguna yang lupa sandi.
 Route::get('bantuan-akses', [AuthController::class, 'bantuanLogin'])
     ->name('auth.bantuan-akses');
@@ -65,7 +65,7 @@ Route::middleware(['auth'])->group(function (): void {
     Route::post('keluar', [AuthController::class, 'keluar'])
         ->name('logout');
 
-    // Logout khusus karena idle (tidak ada aktivitas) — dipanggil via Fetch dari Alpine.js.
+    // Logout khusus karena idle (tidak ada aktivitas) - dipanggil via Fetch dari Alpine.js.
     // Dipisahkan dari POST /keluar agar audit log mencatat konteks yang berbeda.
     Route::post('logout-idle', [AuthController::class, 'logoutIdle'])
         ->name('logout.idle');
@@ -97,13 +97,13 @@ Route::middleware(['auth'])->group(function (): void {
 
     // ----- Hub Dasbor -----
     // Route 'dashboard' wajib ada: digunakan oleh Laravel's RedirectIfAuthenticated
-    // (middleware 'guest') sebagai fallback — mencegah infinite redirect loop.
+    // (middleware 'guest') sebagai fallback - mencegah infinite redirect loop.
     // Admin di-redirect ke admin dashboard sendiri; peran lain ke DashboardController.
     Route::get('/dasbor', function () {
         /** @var \App\Models\Pengguna $pengguna */
         $pengguna = auth()->user();
 
-        // memilikiPeran() session-aware untuk peneliti — redirect otomatis
+        // memilikiPeran() session-aware untuk peneliti - redirect otomatis
         // mencerminkan peran yang sedang disimulasikan. Peneliti mode penuh
         // tidak memiliki active_role di sesi, sehingga memilikiPeran() jatuh
         // ke cek DB (Peneliti), semua branch false → default admin.dashboard.
@@ -348,7 +348,7 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('/laporan/ekspor/rekapitulasi', [LaporanExportController::class, 'exportSummary'])
         ->name('komite.export.summary');
 
-    // Alias untuk akses Direktur — sama route, cukup satu handler.
+    // Alias untuk akses Direktur - sama route, cukup satu handler.
     Route::get('/laporan/ekspor/rekapitulasi-direktur', [LaporanExportController::class, 'exportSummary'])
         ->name('direktur.export.summary');
     Route::get('/notifikasi/{notifikasi}/baca', [NotifikasiController::class, 'bacaDanArahkan'])

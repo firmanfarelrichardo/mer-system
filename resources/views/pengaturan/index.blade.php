@@ -12,7 +12,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Pengaturan — Sistem MER')
+@section('judul', 'Pengaturan - Sistem MER')
 
 @section('konten')
 
@@ -130,7 +130,7 @@
                            class="h-5 w-5 rounded border-slate-300 text-brand focus:ring-brand/50">
                 </label>
 
-                {{-- Toggle: Email --}}
+                {{-- TODO: Fitur email belum diaktifkan, disembunyikan sementara.
                 <label class="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
                     <div>
                         <p class="text-sm font-medium text-slate-700">Notifikasi Email</p>
@@ -138,7 +138,8 @@
                     </div>
                     <input type="checkbox" name="notif_email" value="1"
                            class="h-5 w-5 rounded border-slate-300 text-brand focus:ring-brand/50">
-                </label>
+                </label> 
+                --}}
 
                 <div class="pt-2">
                     <button type="submit"
@@ -173,7 +174,7 @@
                         </svg>
                         <div>
                             <p class="text-sm font-medium text-slate-700">Perangkat ini</p>
-                            <p class="text-xs text-slate-400">{{ request()->ip() }} · {{ request()->header('User-Agent') ? Str::limit(request()->header('User-Agent'), 60) : '—' }}</p>
+                            <p class="text-xs text-slate-400">{{ request()->ip() }} · {{ request()->header('User-Agent') ? Str::limit(request()->header('User-Agent'), 60) : '-' }}</p>
                         </div>
                     </div>
                     <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5

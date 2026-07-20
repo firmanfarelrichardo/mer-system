@@ -15,7 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Controller Daftar Kepala Ruangan — pengelolaan assignment Karu per unit.
+ * Controller Daftar Kepala Ruangan - pengelolaan assignment Karu per unit.
  *
  * Admin dapat:
  *   - Melihat seluruh unit beserta status Karu-nya
@@ -29,7 +29,7 @@ class KepalaRuanganController extends Controller
     ) {}
 
     /* ------------------------------------------------------------------
-     | INDEX — Daftar seluruh unit dan status Karu-nya
+     | INDEX - Daftar seluruh unit dan status Karu-nya
      | ----------------------------------------------------------------*/
 
     public function index(): View
@@ -52,7 +52,7 @@ class KepalaRuanganController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | CREATE — Form untuk menunjuk Karu di unit tertentu
+     | CREATE - Form untuk menunjuk Karu di unit tertentu
      | ----------------------------------------------------------------*/
 
     public function tunjuk(int $unitKerja): View
@@ -83,7 +83,7 @@ class KepalaRuanganController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | STORE — Proses penunjukan Karu
+     | STORE - Proses penunjukan Karu
      | ----------------------------------------------------------------*/
 
     public function simpanPenunjukan(Request $request, int $unitKerja): RedirectResponse
@@ -149,7 +149,7 @@ class KepalaRuanganController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | DELETE — Cabut peran Karu dari pengguna
+     | DELETE - Cabut peran Karu dari pengguna
      | ----------------------------------------------------------------*/
 
     public function cabut(int $unitKerja): RedirectResponse

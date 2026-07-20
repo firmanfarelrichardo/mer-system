@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Service FaktorPenyebab — logika bisnis manajemen faktor penyebab insiden.
+ * Service FaktorPenyebab - logika bisnis manajemen faktor penyebab insiden.
  *
  * Menjembatani Controller ↔ Repository dengan menambahkan:
  *   - Transaksi database (ACID)
@@ -60,7 +60,7 @@ class FaktorPenyebabService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Buat
+     | Command - Buat
      | ----------------------------------------------------------------*/
 
     /**
@@ -76,7 +76,7 @@ class FaktorPenyebabService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Perbarui
+     | Command - Perbarui
      | ----------------------------------------------------------------*/
 
     /**
@@ -91,7 +91,7 @@ class FaktorPenyebabService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Toggle Aktif
+     | Command - Toggle Aktif
      | ----------------------------------------------------------------*/
 
     /**
@@ -103,7 +103,7 @@ class FaktorPenyebabService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Hapus (Soft Delete)
+     | Command - Hapus (Soft Delete)
      | ----------------------------------------------------------------*/
 
     /**

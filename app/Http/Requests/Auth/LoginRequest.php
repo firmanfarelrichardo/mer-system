@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
- * PerintahLoginRequest — Validasi formulir masuk pengguna.
+ * PerintahLoginRequest - Validasi formulir masuk pengguna.
  *
  * Langkah keamanan yang diterapkan:
  *  1. Validasi input (format nomor induk, panjang kata sandi).
@@ -30,7 +30,7 @@ class LoginRequest extends FormRequest
     /* ------------------------------------------------------------------
      | Otorisasi
      | -----------------------------------------------------------------
-     | Formulir login dapat diakses tamu — selalu izinkan.
+     | Formulir login dapat diakses tamu - selalu izinkan.
      | ----------------------------------------------------------------*/
 
     public function authorize(): bool
@@ -41,9 +41,9 @@ class LoginRequest extends FormRequest
     /* ------------------------------------------------------------------
      | Aturan Validasi
      | -----------------------------------------------------------------
-     | • `nomor_induk` — wajib diisi, string, maks. 100 karakter.
-     | • `kata_sandi`  — wajib diisi, string, min. 8 karakter.
-     | • `captcha`     — divalidasi oleh aturan bawaan mews/captcha
+     | • `nomor_induk` - wajib diisi, string, maks. 100 karakter.
+     | • `kata_sandi`  - wajib diisi, string, min. 8 karakter.
+     | • `captcha`     - divalidasi oleh aturan bawaan mews/captcha
      |   yang mencocokkan nilai dengan kunci sesi di server.
      |   Dilewati saat CAPTCHA_DISABLE=true (lingkungan lokal/CI).
      | ----------------------------------------------------------------*/
@@ -61,7 +61,7 @@ class LoginRequest extends FormRequest
 
         // Tambahkan aturan captcha HANYA bila CAPTCHA_DISABLE=false (captcha aktif).
         //
-        // Menggunakan config() — bukan env() — agar kompatibel dengan config:cache
+        // Menggunakan config() - bukan env() - agar kompatibel dengan config:cache
         // produksi (env() mengembalikan null setelah cache di-build).
         //
         // Kunci 'captcha' sengaja dihilangkan dari array saat tidak aktif,
@@ -149,7 +149,7 @@ class LoginRequest extends FormRequest
 
     /**
      * Tambahkan satu hitungan gagal pada throttle percobaan ini.
-     * Jendela waktu 10 menit (600 detik) — setiap percobaan gagal
+     * Jendela waktu 10 menit (600 detik) - setiap percobaan gagal
      * memperpanjang durasi pemblokiran dari hitungan paling awal.
      */
     /**

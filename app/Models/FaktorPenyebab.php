@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Model FaktorPenyebab — maps to `master.faktor_penyebab`.
+ * Model FaktorPenyebab - maps to `master.faktor_penyebab`.
  *
  * Master data untuk faktor penyebab/kontribusi yang muncul
  * sebagai checkbox di formulir pelaporan insiden Nakes.

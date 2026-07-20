@@ -6,8 +6,8 @@
 | Menampilkan rekap laporan pribadi bulan ini dan kutipan patient safety.
 |
 | Props:
-|   $data      — array ['total_bulan_ini', 'selesai_bulan_ini', 'dalam_proses']
-|   $pengguna  — App\Models\Pengguna
+|   $data      - array ['total_bulan_ini', 'selesai_bulan_ini', 'dalam_proses']
+|   $pengguna  - App\Models\Pengguna
 |--------------------------------------------------------------------------
 --}}
 
@@ -16,7 +16,7 @@
 <div class="space-y-6">
 
     {{-- ================================================================
-         REKAP LAPORAN PRIBADI — Tracker visual ringkas
+         REKAP LAPORAN PRIBADI - Tracker visual ringkas
          ================================================================ --}}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
@@ -62,7 +62,7 @@
     </div>
 
     {{-- ================================================================
-         PROGRESS BAR VISUAL — persentase penyelesaian bulan ini
+         PROGRESS BAR VISUAL - persentase penyelesaian bulan ini
          ================================================================ --}}
     @php
         $persen = $data['total_bulan_ini'] > 0
@@ -84,12 +84,12 @@
     </div>
 
     {{-- ================================================================
-         KUTIPAN KESELAMATAN PASIEN — edukasi & motivasi harian
+         KUTIPAN KESELAMATAN PASIEN - edukasi & motivasi harian
          ================================================================ --}}
     @php
         // Kutipan diputar berdasarkan hari dalam bulan agar variasi harian.
         $kutipan = [
-            'Melaporkan insiden bukan tentang menyalahkan, tetapi tentang belajar dan mencegah kejadian serupa. — WHO Patient Safety',
+            'Melaporkan insiden bukan tentang menyalahkan, tetapi tentang belajar dan mencegah kejadian serupa. - WHO Patient Safety',
             'Setiap laporan insiden yang Anda kirim membantu membangun budaya keselamatan pasien di rumah sakit ini.',
             'Kesalahan adalah manusiawi, tetapi menyembunyikannya adalah pilihan. Terima kasih sudah berani melapor.',
             'Satu laporan kecil hari ini bisa mencegah satu insiden besar di masa depan.',

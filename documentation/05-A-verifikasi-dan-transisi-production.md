@@ -1,6 +1,6 @@
-# 05-A — Verifikasi Staging & Transisi ke Production
+# 05-A - Verifikasi Staging & Transisi ke Production
 
-> **Sistem**: Medication Error Reporting (MER) — Rumah Sakit  
+> **Sistem**: Medication Error Reporting (MER) - Rumah Sakit  
 > **Konteks**: Eksekusi Tahap Akhir dari Infrastruktur Cloud & Monitoring (Berdasarkan Dokumen 05)  
 > **Tujuan**: Validasi hasil Staging dan proses rilis sistem *observability* (Sentry & Logging) ke Production VPS dengan Arsitektur *Branch-Based Deployment*.
 

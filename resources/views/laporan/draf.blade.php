@@ -9,14 +9,14 @@
 |   3. Tabel data draf dengan tombol "Lanjutkan Laporan"
 |
 | Variabel dari controller:
-|   $daftarDraf — LengthAwarePaginator (Insiden with detailPasien, status='DRAF')
-|   $pengguna   — Pengguna (auth user)
+|   $daftarDraf - LengthAwarePaginator (Insiden with detailPasien, status='DRAF')
+|   $pengguna   - Pengguna (auth user)
 |--------------------------------------------------------------------------
 --}}
 
 @extends('layouts.app')
 
-@section('judul', 'Draf Laporan — Sistem MER')
+@section('judul', 'Draf Laporan - Sistem MER')
 
 @section('konten')
 
@@ -79,7 +79,7 @@
 
                             {{-- Unit Kerja --}}
                             <td class="whitespace-nowrap px-4 py-3.5 text-slate-500 sm:px-5">
-                                {{ $draf->nama_unit_kerja ?? '—' }}
+                                {{ $draf->nama_unit_kerja ?? '-' }}
                             </td>
 
                             {{-- Tanggal Kejadian --}}
@@ -88,7 +88,7 @@
                                     <span class="block text-xs font-medium text-slate-700">{{ $draf->tgl_kejadian->format('d M Y, H:i:s') }}</span>
                                     <span class="block text-xs text-slate-400">{{ $draf->tgl_kejadian->diffForHumans() }}</span>
                                 @else
-                                    <span class="text-slate-400">—</span>
+                                    <span class="text-slate-400">-</span>
                                 @endif
                             </td>
 
@@ -101,7 +101,7 @@
                                     </span>
                                     <span class="block text-xs text-slate-400">{{ $draf->updated_at->diffForHumans() }}</span>
                                 @else
-                                    <span class="text-slate-400">—</span>
+                                    <span class="text-slate-400">-</span>
                                 @endif
                             </td>
 

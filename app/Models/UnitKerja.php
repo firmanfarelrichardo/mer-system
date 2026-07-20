@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Model UnitKerja — maps to the `master.unit_kerja` table.
+ * Model UnitKerja - maps to the `master.unit_kerja` table.
  */
 class UnitKerja extends Model
 {

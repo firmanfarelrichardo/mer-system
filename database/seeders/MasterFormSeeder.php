@@ -10,7 +10,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * MasterFormSeeder — Seed data awal untuk 4 master formulir:
+ * MasterFormSeeder - Seed data awal untuk 4 master formulir:
  *   1. Jenis Kesalahan (Medication Error Types)
  *   2. Tipe Cedera (Injuries)
  *   3. Faktor Penyebab (Contributing Factors)

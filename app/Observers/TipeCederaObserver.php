@@ -8,7 +8,7 @@ use App\Models\TipeCedera;
 use App\Services\AuditLogService;
 
 /**
- * Observer TipeCedera — mencatat audit log secara otomatis
+ * Observer TipeCedera - mencatat audit log secara otomatis
  * setiap kali record tipe cedera dibuat, diubah, atau dihapus.
  */
 class TipeCederaObserver

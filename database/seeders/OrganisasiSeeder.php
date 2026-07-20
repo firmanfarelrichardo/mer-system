@@ -8,7 +8,7 @@ use App\Models\Organisasi;
 use Illuminate\Database\Seeder;
 
 /**
- * OrganisasiSeeder — Seeds the default tenant organisation.
+ * OrganisasiSeeder - Seeds the default tenant organisation.
  *
  * A tenant record is required before any user or role can be created
  * (foreign-key constraint on `akun.pengguna.tenant_id`).

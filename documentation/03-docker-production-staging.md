@@ -1,6 +1,6 @@
-# 03 — Docker Production & Staging (Network Isolation)
+# 03 - Docker Production & Staging (Network Isolation)
 
-> **Sistem**: Medication Error Reporting (MER) — Rumah Sakit  
+> **Sistem**: Medication Error Reporting (MER) - Rumah Sakit  
 > **Klasifikasi**: HIGH-RISK (Data Medis Sensitif / PHI)  
 > **Spesifikasi VPS**: 2 Core CPU, 8GB RAM, 100GB SSD  
 > **Prasyarat**: Dokumen [01](./01-arsitektur-dan-hardening-os.md) dan [02](./02-cloudflare-dan-edge-security.md) sudah dilaksanakan
@@ -13,7 +13,7 @@
 2. [Struktur Folder Server](#2-struktur-folder-server)
 3. [SSH Deploy Key (Distribusi Kode Git yang Aman)](#3-ssh-deploy-key-distribusi-kode-git-yang-aman)
 4. [Instalasi Docker Engine](#4-instalasi-docker-engine)
-5. [Jebakan Docker & UFW — Solusi Teknis](#5-jebakan-docker--ufw--solusi-teknis)
+5. [Jebakan Docker & UFW - Solusi Teknis](#5-jebakan-docker--ufw--solusi-teknis)
 6. [Docker Compose Production](#6-docker-compose-production)
 7. [Docker Compose Staging](#7-docker-compose-staging)
 8. [Dockerfile Production (Multi-Stage Build)](#8-dockerfile-production-multi-stage-build)
@@ -35,14 +35,14 @@ Bayangkan VPS sebagai **satu gedung rumah sakit** yang dibagi menjadi dua lantai
 | **Lantai 1** | **Production** | Ruang operasi yang sesungguhnya. Data pasien asli. Tidak boleh ada eksperimen. |
 | **Lantai 2** | **Staging** | Ruang simulasi. Untuk uji coba prosedur baru sebelum diterapkan di lantai 1. |
 
-Kedua lantai **tidak boleh terhubung** — pintu antaranya dikunci permanen. Listrik dan air terpisah (database, cache, network masing-masing). Jika lantai 2 kebakaran (bug di staging), lantai 1 tetap beroperasi normal.
+Kedua lantai **tidak boleh terhubung** - pintu antaranya dikunci permanen. Listrik dan air terpisah (database, cache, network masing-masing). Jika lantai 2 kebakaran (bug di staging), lantai 1 tetap beroperasi normal.
 
 ### Versi Formal (Standar Industri)
 
 Isolasi environment diterapkan menggunakan **Docker bridge network** yang terpisah:
 
-- `mer-prod-network` — Semua container production berkomunikasi di jaringan ini.
-- `mer-staging-network` — Semua container staging berkomunikasi di jaringan ini.
+- `mer-prod-network` - Semua container production berkomunikasi di jaringan ini.
+- `mer-staging-network` - Semua container staging berkomunikasi di jaringan ini.
 
 Karena bridge network bersifat *namespace-isolated*, container di `mer-prod-network` **tidak bisa** mengirim paket ke container di `mer-staging-network`, meskipun keduanya berjalan di host yang sama. Ini setara dengan VLAN separation di level OS.
 
@@ -103,17 +103,17 @@ sudo chown -R mer_ops:mer_ops /var/log/mer-system
 
 ### Mengapa Bukan FTP/SFTP?
 
-**Versi Formal:** FTP (File Transfer Protocol) mengirimkan kredensial dan data dalam bentuk *plaintext* — artinya siapapun yang melakukan network sniffing di jalur antara komputer Anda dan server dapat melihat username, password, dan seluruh kode sumber yang ditransfer. SFTP lebih baik (terenkripsi), tapi tetap memiliki kelemahan operasional: tidak ada version tracking, tidak ada rollback capability, dan rawan human error (upload file yang salah, menimpa file konfigurasi). SSH Deploy Key dengan Git memberikan distribusi kode yang terenkripsi, auditable (setiap perubahan tercatat di commit history), dan reproducible (bisa rollback ke commit manapun).
+**Versi Formal:** FTP (File Transfer Protocol) mengirimkan kredensial dan data dalam bentuk *plaintext* - artinya siapapun yang melakukan network sniffing di jalur antara komputer Anda dan server dapat melihat username, password, dan seluruh kode sumber yang ditransfer. SFTP lebih baik (terenkripsi), tapi tetap memiliki kelemahan operasional: tidak ada version tracking, tidak ada rollback capability, dan rawan human error (upload file yang salah, menimpa file konfigurasi). SSH Deploy Key dengan Git memberikan distribusi kode yang terenkripsi, auditable (setiap perubahan tercatat di commit history), dan reproducible (bisa rollback ke commit manapun).
 
-**Versi Sederhana:** FTP seperti mengirim dokumen rahasia rumah sakit lewat pos terbuka — siapapun bisa membaca isinya. SFTP seperti pos tercatat — lebih aman tapi tidak ada catatan apa yang dikirim kapan. Git + Deploy Key seperti sistem kurir rumah sakit yang terenkripsi, tercatat setiap pengiriman, dan bisa menarik kembali dokumen jika salah kirim.
+**Versi Sederhana:** FTP seperti mengirim dokumen rahasia rumah sakit lewat pos terbuka - siapapun bisa membaca isinya. SFTP seperti pos tercatat - lebih aman tapi tidak ada catatan apa yang dikirim kapan. Git + Deploy Key seperti sistem kurir rumah sakit yang terenkripsi, tercatat setiap pengiriman, dan bisa menarik kembali dokumen jika salah kirim.
 
 ### Apa Itu SSH Deploy Key?
 
-**Versi Formal:** SSH Deploy Key adalah pasangan kunci kriptografis Ed25519 yang di-generate khusus di server (bukan di komputer lokal) dan didaftarkan ke platform Git (GitHub/GitLab) sebagai **read-only key**. Berbeda dengan SSH key personal yang memberikan akses ke semua repository akun, Deploy Key hanya memberikan akses ke **satu repository spesifik** dengan hak baca saja. Jika server dikompromikan, attacker hanya bisa membaca kode sumber dari satu repository — tidak bisa mengubah kode atau mengakses repository lain.
+**Versi Formal:** SSH Deploy Key adalah pasangan kunci kriptografis Ed25519 yang di-generate khusus di server (bukan di komputer lokal) dan didaftarkan ke platform Git (GitHub/GitLab) sebagai **read-only key**. Berbeda dengan SSH key personal yang memberikan akses ke semua repository akun, Deploy Key hanya memberikan akses ke **satu repository spesifik** dengan hak baca saja. Jika server dikompromikan, attacker hanya bisa membaca kode sumber dari satu repository - tidak bisa mengubah kode atau mengakses repository lain.
 
-**Versi Sederhana:** Deploy Key seperti kartu akses ruang arsip yang hanya bisa "baca" — staf bisa masuk dan menyalin dokumen (git pull), tapi tidak bisa mengubah atau menghapus arsip asli (read-only). Dan kartu ini hanya berlaku untuk satu ruang arsip (satu repository), bukan seluruh gedung.
+**Versi Sederhana:** Deploy Key seperti kartu akses ruang arsip yang hanya bisa "baca" - staf bisa masuk dan menyalin dokumen (git pull), tapi tidak bisa mengubah atau menghapus arsip asli (read-only). Dan kartu ini hanya berlaku untuk satu ruang arsip (satu repository), bukan seluruh gedung.
 
-### Eksekusi — Generate Deploy Key di VPS
+### Eksekusi - Generate Deploy Key di VPS
 
 > **Konteks Eksekusi:** `User: mer_ops @ VPS`
 
@@ -121,7 +121,7 @@ sudo chown -R mer_ops:mer_ops /var/log/mer-system
 # Generate SSH key pair Ed25519 khusus untuk deploy.
 # -t ed25519    : algoritma kriptografi modern (kecil, cepat, aman)
 # -C "..."      : label identifikasi agar mudah dikenali
-# -f ~/.ssh/... : lokasi penyimpanan — TERPISAH dari key personal
+# -f ~/.ssh/... : lokasi penyimpanan - TERPISAH dari key personal
 # -N ""         : tanpa passphrase (diperlukan untuk operasi otomatis
 #                 seperti cronjob atau CI/CD yang tidak bisa input passphrase)
 ssh-keygen -t ed25519 -C "deploy@mer-system-vps" -f ~/.ssh/mer_deploy_ed25519 -N ""
@@ -130,7 +130,7 @@ ssh-keygen -t ed25519 -C "deploy@mer-system-vps" -f ~/.ssh/mer_deploy_ed25519 -N
 **Mengapa tanpa passphrase?**
 
 Deploy key tanpa passphrase diperbolehkan karena:
-1. Key ini bersifat **read-only** — jika dicuri, attacker hanya bisa membaca kode (yang mungkin sudah open-source atau bisa di-revoke segera).
+1. Key ini bersifat **read-only** - jika dicuri, attacker hanya bisa membaca kode (yang mungkin sudah open-source atau bisa di-revoke segera).
 2. Key ini digunakan oleh **proses otomatis** (git pull via script/cron) yang tidak bisa memasukkan passphrase secara interaktif.
 3. Keamanan dijaga melalui **permission file yang ketat** dan **hak akses read-only di platform Git**.
 
@@ -140,13 +140,13 @@ Deploy key tanpa passphrase diperbolehkan karena:
 chmod 600 ~/.ssh/mer_deploy_ed25519
 chmod 644 ~/.ssh/mer_deploy_ed25519.pub
 
-# Tampilkan public key — salin output ini untuk langkah berikutnya.
+# Tampilkan public key - salin output ini untuk langkah berikutnya.
 cat ~/.ssh/mer_deploy_ed25519.pub
 # Output contoh:
 # ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... deploy@mer-system-vps
 ```
 
-### Eksekusi — Daftarkan Deploy Key di GitHub
+### Eksekusi - Daftarkan Deploy Key di GitHub
 
 ```
 Navigasi: github.com > Repository mer-system > Settings > Deploy keys > Add deploy key
@@ -161,9 +161,9 @@ Navigasi: github.com > Repository mer-system > Settings > Deploy keys > Add depl
 Klik **Add key**.
 
 > [!IMPORTANT]
-> **JANGAN centang "Allow write access"** kecuali Anda memerlukan server untuk melakukan `git push` (biasanya tidak diperlukan untuk deployment). Read-only key menerapkan prinsip *Least Privilege* — server hanya perlu *membaca* kode, bukan *menulis*.
+> **JANGAN centang "Allow write access"** kecuali Anda memerlukan server untuk melakukan `git push` (biasanya tidak diperlukan untuk deployment). Read-only key menerapkan prinsip *Least Privilege* - server hanya perlu *membaca* kode, bukan *menulis*.
 
-### Eksekusi — Daftarkan Deploy Key di GitLab (Alternatif)
+### Eksekusi - Daftarkan Deploy Key di GitLab (Alternatif)
 
 Jika menggunakan GitLab sebagai platform Git:
 
@@ -178,7 +178,7 @@ Navigasi: gitlab.com > Project mer-system > Settings > Repository > Deploy keys 
 | **Grant write permissions** | **Tidak dicentang** (read-only) |
 | **Expiry date** | *(opsional, kosongkan untuk tanpa batas waktu)* |
 
-### Eksekusi — Konfigurasi SSH Client di VPS
+### Eksekusi - Konfigurasi SSH Client di VPS
 
 > **Konteks Eksekusi:** `User: mer_ops @ VPS`
 
@@ -217,7 +217,7 @@ Host gitlab.com
 SSH_GIT_CONFIG
 ```
 
-### Eksekusi — Verifikasi Koneksi
+### Eksekusi - Verifikasi Koneksi
 
 ```bash
 # Test koneksi SSH ke GitHub menggunakan deploy key.
@@ -231,11 +231,11 @@ ssh -T git@github.com
 # Output: Welcome to GitLab, @<username>!
 ```
 
-### Eksekusi — Clone Repository dengan Deploy Key
+### Eksekusi - Clone Repository dengan Deploy Key
 
 ```bash
 # Clone repository ke folder production.
-# GUNAKAN URL SSH (git@github.com:...) — BUKAN HTTPS.
+# GUNAKAN URL SSH (git@github.com:...) - BUKAN HTTPS.
 # URL HTTPS memerlukan personal access token, sedangkan
 # URL SSH akan otomatis menggunakan deploy key yang sudah dikonfigurasi.
 cd /var/www/mer-system
@@ -252,7 +252,7 @@ git remote -v
 # origin  git@github.com:<ORGANISASI>/mer-system.git (push)
 ```
 
-### Eksekusi — Pull Kode Terbaru (Update Deployment)
+### Eksekusi - Pull Kode Terbaru (Update Deployment)
 
 ```bash
 # Setiap kali ada update kode, cukup jalankan:
@@ -346,17 +346,17 @@ sudo systemctl enable docker
 |-----------|-------|--------|
 | `log-driver` | `json-file` | Format log yang kompatibel dengan Promtail/Loki |
 | `max-size` | `50m` | Batas ukuran per file log container. Nilai 50MB dipilih karena sistem medis production menghasilkan log yang lebih verbose (audit trail, error tracking DOMPDF, query logging). Nilai terlalu kecil (10MB) menyebabkan log penting ter-rotasi sebelum sempat dianalisis. Nilai terlalu besar (>100MB) berisiko menghabiskan disk |
-| `max-file` | `3` | Rotasi 3 file = maksimum **150MB log per container**. Dengan ~8 container aktif (production + staging), total worst-case pemakaian disk untuk log = 8 x 150MB = **1.2GB** — aman untuk SSD 100GB |
+| `max-file` | `3` | Rotasi 3 file = maksimum **150MB log per container**. Dengan ~8 container aktif (production + staging), total worst-case pemakaian disk untuk log = 8 x 150MB = **1.2GB** - aman untuk SSD 100GB |
 | `storage-driver` | `overlay2` | Driver storage paling efisien untuk Linux modern |
 | `live-restore` | `true` | Container tetap berjalan saat Docker daemon restart (zero downtime untuk maintenance daemon) |
 | `default-address-pools` | `172.20-21.x.x` | Mencegah konflik IP dengan subnet lokal dan VPN |
 
 > [!IMPORTANT]
-> **Mengapa `max-size` ditingkatkan ke 50MB?** Konfigurasi log rotation ini adalah pencegahan terhadap error **"No space left on device"** yang merupakan penyebab downtime paling umum di server Docker production. Tanpa rotasi, satu container yang mengalami *error loop* (misalnya koneksi database gagal terus-menerus) bisa menghasilkan log bergigabyte dalam hitungan jam, menghabiskan seluruh disk, dan menyebabkan **semua container** gagal — termasuk database. Konfigurasi `max-size: 50m` dengan `max-file: 3` menjamin setiap container tidak pernah menggunakan lebih dari 150MB disk untuk log.
+> **Mengapa `max-size` ditingkatkan ke 50MB?** Konfigurasi log rotation ini adalah pencegahan terhadap error **"No space left on device"** yang merupakan penyebab downtime paling umum di server Docker production. Tanpa rotasi, satu container yang mengalami *error loop* (misalnya koneksi database gagal terus-menerus) bisa menghasilkan log bergigabyte dalam hitungan jam, menghabiskan seluruh disk, dan menyebabkan **semua container** gagal - termasuk database. Konfigurasi `max-size: 50m` dengan `max-file: 3` menjamin setiap container tidak pernah menggunakan lebih dari 150MB disk untuk log.
 
 ---
 
-## 5. Jebakan Docker & UFW — Solusi Teknis
+## 5. Jebakan Docker & UFW - Solusi Teknis
 
 ### Masalah
 
@@ -414,10 +414,10 @@ sudo netfilter-persistent save
 
 **Penjelasan aturan (dibaca dari bawah ke atas karena urutan insert):**
 
-1. `--dport 443 -j ACCEPT` — Izinkan HTTPS
-2. `--dport 80 -j ACCEPT` — Izinkan HTTP
-3. `ESTABLISHED,RELATED -j ACCEPT` — Izinkan response dari koneksi yang sudah ada
-4. `-i eth0 -j DROP` — Tolak semua traffic lain dari interface publik
+1. `--dport 443 -j ACCEPT` - Izinkan HTTPS
+2. `--dport 80 -j ACCEPT` - Izinkan HTTP
+3. `ESTABLISHED,RELATED -j ACCEPT` - Izinkan response dari koneksi yang sudah ada
+4. `-i eth0 -j DROP` - Tolak semua traffic lain dari interface publik
 
 ---
 
@@ -514,7 +514,7 @@ services:
 
   # -------------------------------------------
   # PostgreSQL 16 Database
-  # Port di-bind ke 127.0.0.1 (loopback) — BUKAN 0.0.0.0.
+  # Port di-bind ke 127.0.0.1 (loopback) - BUKAN 0.0.0.0.
   # Akses remote via SSH Tunnel saja.
   # -------------------------------------------
   db:
@@ -816,12 +816,12 @@ volumes:
 
 **Versi Formal:** Multi-stage build memisahkan environment yang diperlukan untuk *build* (Node.js, NPM, Composer, build-deps) dari environment *runtime* (PHP-FPM saja). Hasilnya: image final berukuran ~200MB dibanding ~800MB jika semua tools di-include. Attack surface berkurang drastis karena compiler, header files, dan package manager yang tidak dibutuhkan di production tidak ada di image final.
 
-**Versi Sederhana:** Ibarat memasak di dapur (build stage) dan menyajikan di meja makan (runtime stage). Tamu tidak perlu melihat dapur yang berantakan — mereka hanya perlu hidangan yang sudah jadi. Image final hanya berisi "hidangan jadi" tanpa "peralatan masak."
+**Versi Sederhana:** Ibarat memasak di dapur (build stage) dan menyajikan di meja makan (runtime stage). Tamu tidak perlu melihat dapur yang berantakan - mereka hanya perlu hidangan yang sudah jadi. Image final hanya berisi "hidangan jadi" tanpa "peralatan masak."
 
 > [!NOTE]
 > File Dockerfile production sudah ada di repository: `deployment/production/Dockerfile`. Pastikan Anda menggunakan file yang sudah ada. Referensikan dokumentasi ini untuk memahami setiap keputusan arsitektural di dalamnya.
 
-Referensi file: [`deployment/production/Dockerfile`](../deployment/production/Dockerfile) — lihat dokumen [docker-architecture.md](./docker-architecture.md) bagian Production untuk penjelasan detail setiap layer.
+Referensi file: [`deployment/production/Dockerfile`](../deployment/production/Dockerfile) - lihat dokumen [docker-architecture.md](./docker-architecture.md) bagian Production untuk penjelasan detail setiap layer.
 
 ---
 
@@ -844,7 +844,7 @@ Referensi file: [`deployment/production/docker-entrypoint.sh`](../deployment/pro
 
 ### Mengapa Memory Limit Penting?
 
-**Versi Formal:** Tanpa memory limit, satu container yang mengalami memory leak bisa mengkonsumsi seluruh RAM server (OOM condition), menyebabkan Linux OOM Killer membunuh proses secara acak — termasuk database yang mungkin sedang menulis data. Dengan limit, kernel hanya membunuh container yang melebihi batas, menjaga layanan lain tetap stabil.
+**Versi Formal:** Tanpa memory limit, satu container yang mengalami memory leak bisa mengkonsumsi seluruh RAM server (OOM condition), menyebabkan Linux OOM Killer membunuh proses secara acak - termasuk database yang mungkin sedang menulis data. Dengan limit, kernel hanya membunuh container yang melebihi batas, menjaga layanan lain tetap stabil.
 
 ### Alokasi RAM (Total 8GB)
 
@@ -1095,4 +1095,4 @@ nc -zv <IP_VPS_ANDA> 49152   # Harus: Connection succeeded (SSH)
 
 ---
 
-> **Dokumen selanjutnya:** [04-nginx-waf-dan-laravel.md](./04-nginx-waf-dan-laravel.md) — Konfigurasi Nginx Reverse Proxy, Security Headers, Rate Limiting, PHP-FPM Optimization, dan startup script Laravel.
+> **Dokumen selanjutnya:** [04-nginx-waf-dan-laravel.md](./04-nginx-waf-dan-laravel.md) - Konfigurasi Nginx Reverse Proxy, Security Headers, Rate Limiting, PHP-FPM Optimization, dan startup script Laravel.

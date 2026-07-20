@@ -34,7 +34,7 @@ class SuspiciousLoginService
      * Threshold:
      *   0-30  : Normal, tidak perlu tindakan
      *   31-60 : Peringatan ringan (log saja)
-     *   61-100: Peringatan tinggi — perlu notifikasi ke admin
+     *   61-100: Peringatan tinggi - perlu notifikasi ke admin
      *
      * @return array{skor: int, alasan: list<string>, level: 'normal'|'peringatan'|'mencurigakan'}
      */

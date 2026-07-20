@@ -7,7 +7,7 @@ namespace App\DataTransferObjects;
 /**
  * DTO untuk membuat atau memperbarui data Unit Kerja.
  *
- * Immutable value-object — sekali dibuat, tidak bisa diubah.
+ * Immutable value-object - sekali dibuat, tidak bisa diubah.
  */
 final readonly class UnitKerjaData
 {

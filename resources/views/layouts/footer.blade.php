@@ -10,7 +10,7 @@
 |   Kanan → "Dibiayai HETI Project Unila · Dibuat oleh Mahasiswa PSTI Unila"
 |
 | Menerima parameter opsional:
-|   $footerGelap (bool) — true untuk bg gelap (login), false untuk terang
+|   $footerGelap (bool) - true untuk bg gelap (login), false untuk terang
 |--------------------------------------------------------------------------
 --}}
 

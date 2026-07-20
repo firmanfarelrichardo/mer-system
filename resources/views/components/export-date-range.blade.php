@@ -6,15 +6,15 @@
 | berdasarkan rentang tanggal yang dipilih pengguna.
 |
 | Props:
-|   $action — URL tujuan form (route laporan.export.summary)
-|   $label  — Teks tombol (default: "Cetak PDF")
+|   $action - URL tujuan form (route laporan.export.summary)
+|   $label  - Teks tombol (default: "Cetak PDF")
 |
-| Validasi sisi klien (Alpine.js — pola Alpine.data() seperti proyek ini):
+| Validasi sisi klien (Alpine.js - pola Alpine.data() seperti proyek ini):
 |   - tanggal_akhir tidak boleh sebelum tanggal_mulai.
 |   - Pesan error ditampilkan secara inline tanpa reload halaman.
 |
 | Input tambahan:
-|   orientation (portrait|landscape) — default portrait
+|   orientation (portrait|landscape) - default portrait
 |--------------------------------------------------------------------------
 --}}
 
@@ -23,7 +23,7 @@
     'label' => 'Cetak PDF',
 ])
 
-{{-- Definisi Alpine.data — didaftarkan sekali via @pushOnce agar tidak
+{{-- Definisi Alpine.data - didaftarkan sekali via @pushOnce agar tidak
      duplikat jika komponen dirender lebih dari satu kali di halaman yang
      sama. Mengikuti pola Alpine.data() yang digunakan seluruh proyek ini. --}}
 @pushOnce('scripts')
@@ -35,7 +35,7 @@
             orientasi    : 'portrait',
             errorMsg     : '',
 
-            // Cek validitas — dipanggil dari :disabled secara reaktif
+            // Cek validitas - dipanggil dari :disabled secara reaktif
             valid() {
                 return this.tanggalMulai !== ''
                     && this.tanggalAkhir !== ''

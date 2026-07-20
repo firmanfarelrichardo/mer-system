@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Ubah Kata Sandi — Sistem MER')
+@section('title', 'Ubah Kata Sandi - Sistem MER')
 
 @section('content')
     {{-- Peringatan keamanan --}}

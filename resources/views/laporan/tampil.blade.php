@@ -2,19 +2,19 @@
 |--------------------------------------------------------------------------
 | Detail Laporan Insiden (laporan/tampil.blade.php)
 |--------------------------------------------------------------------------
-| Halaman detail satu laporan insiden — menggunakan data REAL dari
+| Halaman detail satu laporan insiden - menggunakan data REAL dari
 | model Insiden beserta relasi detailPasien, pelapor, unitKerja,
 | dan tindakLanjut.
 |
 | Variabel dari controller:
-|   $insiden   — App\Models\Insiden (eager-loaded relations)
-|   $pengguna  — App\Models\Pengguna (auth user)
+|   $insiden   - App\Models\Insiden (eager-loaded relations)
+|   $pengguna  - App\Models\Pengguna (auth user)
 |--------------------------------------------------------------------------
 --}}
 
 @extends('layouts.app')
 
-@section('judul', $insiden->nomor_laporan . ' — Detail Laporan')
+@section('judul', $insiden->nomor_laporan . ' - Detail Laporan')
 
 @section('konten')
 
@@ -39,10 +39,21 @@
                 </span>
             </div>
             <p class="mt-1 text-sm text-slate-400">
-                Dilaporkan pada {{ $insiden->tgl_lapor?->translatedFormat('d F Y, H:i') ?? '—' }} WIB
+                Dilaporkan pada {{ $insiden->tgl_lapor?->translatedFormat('d F Y, H:i') ?? '-' }} WIB
             </p>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
+        {{-- Tombol Mobile (Tampil terpisah kiri-kanan) --}}
+        <div class="flex w-full items-center justify-between gap-2 sm:hidden">
+            <a href="{{ route('laporan.index') }}"
+               class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white
+                      px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors
+                      hover:bg-slate-50">
+                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                     viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                </svg>
+                Kembali
+            </a>
             @if (! $insiden->isDraf())
                 <a href="{{ route('laporan.cetak-pdf', $insiden->id) }}" target="_blank"
                    class="inline-flex items-center gap-1.5 rounded-lg border border-brand bg-brand
@@ -64,6 +75,10 @@
                     Cetak PDF
                 </a>
             @endif
+        </div>
+
+        {{-- Tombol Desktop (Tampil merapat di ujung kanan) --}}
+        <div class="hidden sm:flex items-center gap-3">
             <a href="{{ route('laporan.index') }}"
                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white
                       px-4 py-2 text-sm font-medium text-slate-600 shadow-sm transition-colors
@@ -74,6 +89,27 @@
                 </svg>
                 Kembali
             </a>
+            @if (! $insiden->isDraf())
+                <a href="{{ route('laporan.cetak-pdf', $insiden->id) }}" target="_blank"
+                   class="inline-flex items-center gap-1.5 rounded-lg border border-brand bg-brand
+                          px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors
+                          hover:bg-brand-hover">
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1
+                                 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096
+                                 L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662
+                                 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21
+                                 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913
+                                 -.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015
+                                 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0
+                                 -10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621
+                                 0-1.125.504-1.125 1.125v3.659M18.25 7.28H5.75" />
+                    </svg>
+                    Cetak PDF
+                </a>
+            @endif
         </div>
     </div>
 
@@ -110,7 +146,7 @@
                     <div>
                         <p class="text-xs font-medium text-slate-400">Nama Pelapor</p>
                         <p class="mt-0.5 text-sm font-medium text-slate-800">
-                            {{ blank($insiden->nama_pelapor) ? ($insiden->pelapor?->nama_lengkap ?? '—') : $insiden->nama_pelapor }}
+                            {{ blank($insiden->nama_pelapor) ? ($insiden->pelapor?->nama_lengkap ?? '-') : $insiden->nama_pelapor }}
                             @if ($insiden->is_anonim && $isAdmin)
                                 <span class="ml-1 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                                     Disembunyikan: Anonim
@@ -120,11 +156,11 @@
                     </div>
                     <div>
                         <p class="text-xs font-medium text-slate-400">Nomor Induk</p>
-                        <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->pelapor?->nomor_induk ?? '—' }}</p>
+                        <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->pelapor?->nomor_induk ?? '-' }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-medium text-slate-400">Unit Kerja</p>
-                        <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->nama_unit_kerja ?? $insiden->unitKerja?->nama_unit ?? '—' }}</p>
+                        <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->nama_unit_kerja ?? $insiden->unitKerja?->nama_unit ?? '-' }}</p>
                     </div>
                 </div>
             @endif
@@ -154,15 +190,15 @@
                     </div>
                     <div>
                         <p class="text-xs font-medium text-slate-400">No. Rekam Medis</p>
-                        <p class="mt-0.5 font-mono text-sm font-medium text-slate-800">{{ $insiden->detailPasien->nomor_rekam_medis ?? '—' }}</p>
+                        <p class="mt-0.5 font-mono text-sm font-medium text-slate-800">{{ $insiden->detailPasien->nomor_rekam_medis ?? '-' }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-medium text-slate-400">Obat Terkait</p>
-                        <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->detailPasien->obat_terkait ?? '—' }}</p>
+                        <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->detailPasien->obat_terkait ?? '-' }}</p>
                     </div>
                     <div>
                         <p class="text-xs font-medium text-slate-400">Dosis Obat</p>
-                        <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->detailPasien->dosis_obat ?? '—' }}</p>
+                        <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->detailPasien->dosis_obat ?? '-' }}</p>
                     </div>
                 </div>
             </div>
@@ -183,15 +219,15 @@
             <div class="grid grid-cols-1 gap-y-3 sm:grid-cols-3 sm:gap-x-6">
                 <div>
                     <p class="text-xs font-medium text-slate-400">Tanggal Kejadian</p>
-                    <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->tgl_kejadian?->translatedFormat('d F Y') ?? '—' }}</p>
+                    <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->tgl_kejadian?->translatedFormat('d F Y') ?? '-' }}</p>
                 </div>
                 <div>
                     <p class="text-xs font-medium text-slate-400">Waktu Kejadian</p>
-                    <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->tgl_kejadian?->format('H:i') ?? '—' }} WIB</p>
+                    <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->tgl_kejadian?->format('H:i') ?? '-' }} WIB</p>
                 </div>
                 <div>
                     <p class="text-xs font-medium text-slate-400">Fase Kesalahan</p>
-                    <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->fase_kesalahan ?? '—' }}</p>
+                    <p class="mt-0.5 text-sm font-medium text-slate-800">{{ $insiden->fase_kesalahan ?? '-' }}</p>
                 </div>
             </div>
             @if ($insiden->detailPasien?->kronologi)
@@ -296,7 +332,7 @@
                                     {{ $tl->labelStatus() }}
                                 </span>
                                 <span class="text-xs text-slate-400">
-                                    oleh <span class="font-medium text-slate-600">{{ $tl->pengguna?->labelPeranDanUnit() ?? '—' }}</span>
+                                    oleh <span class="font-medium text-slate-600">{{ $tl->pengguna?->labelPeranDanUnit() ?? '-' }}</span>
                                     &middot; {{ $tl->created_at?->translatedFormat('d M Y, H:i') }}
                                 </span>
                             </div>
@@ -316,10 +352,10 @@
                             <span class="text-xs text-slate-400">
                                 oleh <span class="font-medium text-slate-600">
                                     @if ($insiden->is_anonim && $isAdmin)
-                                        {{ $insiden->pelapor?->labelPelapor() ?? '—' }}
+                                        {{ $insiden->pelapor?->labelPelapor() ?? '-' }}
                                         <span class="ml-1 inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700">Anonim</span>
                                     @else
-                                        {{ $insiden->is_anonim ? 'Anonim' : ($insiden->pelapor?->labelPelapor() ?? '—') }}
+                                        {{ $insiden->is_anonim ? 'Anonim' : ($insiden->pelapor?->labelPelapor() ?? '-') }}
                                     @endif
                                 </span>
                                 &middot; {{ $insiden->created_at?->translatedFormat('d M Y, H:i') }}
@@ -369,7 +405,7 @@
                                        text-sm text-slate-700 shadow-sm focus:border-brand focus:outline-none
                                        focus:ring-2 focus:ring-brand/20 sm:w-64"
                                 required>
-                            <option value="">— Pilih status —</option>
+                            <option value="">- Pilih status -</option>
                             <option value="investigasi" {{ old('status_baru') === 'investigasi' ? 'selected' : '' }}>Investigasi</option>
                             <option value="tindak_lanjut" {{ old('status_baru') === 'tindak_lanjut' ? 'selected' : '' }}>Tindak Lanjut</option>
                             <option value="selesai" {{ old('status_baru') === 'selesai' ? 'selected' : '' }}>Selesai</option>
@@ -474,7 +510,7 @@
         @endif
 
         {{-- ============================================================
-             FORMULIR ARAHAN DIREKTUR (Direktur Only — jika dieskalasikan)
+             FORMULIR ARAHAN DIREKTUR (Direktur Only - jika dieskalasikan)
              ============================================================ --}}
         @if ($isDirektur && $insiden->is_eskalasi_direktur && is_null($insiden->solusi_direktur))
             <div class="rounded-xl border-2 border-dashed border-amber-400/50 bg-amber-50/30 p-6">
@@ -539,7 +575,7 @@
         @endif
 
         {{-- ============================================================
-             INSTRUKSI EKSEKUTIF / ARAHAN DIREKTUR (Read-Only — All Roles)
+             INSTRUKSI EKSEKUTIF / ARAHAN DIREKTUR (Read-Only - All Roles)
              ============================================================ --}}
         @if ($insiden->solusi_direktur)
             <div class="rounded-xl border-2 border-amber-300 bg-gradient-to-br from-amber-50 via-white to-amber-50/50 p-6 shadow-sm">
@@ -560,7 +596,7 @@
                     <p class="whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ $insiden->solusi_direktur }}</p>
                 </div>
                 <p class="mt-3 text-xs text-slate-400">
-                    Disampaikan pada {{ $insiden->waktu_solusi_direktur?->translatedFormat('d F Y, H:i') ?? '—' }} WIB
+                    Disampaikan pada {{ $insiden->waktu_solusi_direktur?->translatedFormat('d F Y, H:i') ?? '-' }} WIB
                 </p>
             </div>
         @endif

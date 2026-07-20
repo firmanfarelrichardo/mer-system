@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * Model Peran — maps to the `akun.peran` table.
+ * Model Peran - maps to the `akun.peran` table.
  *
  * Represents an application role such as:
  *   Nakes, Kepala Ruangan, Komite, Admin, Direktur.

@@ -11,7 +11,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Service UnitKerja — logika bisnis manajemen master unit kerja.
+ * Service UnitKerja - logika bisnis manajemen master unit kerja.
  *
  * Menjembatani Controller ↔ Repository dengan menambahkan:
  *   - Transaksi database
@@ -49,7 +49,7 @@ class UnitKerjaService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Buat Unit Kerja
+     | Command - Buat Unit Kerja
      | ----------------------------------------------------------------*/
 
     /**
@@ -66,7 +66,7 @@ class UnitKerjaService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Perbarui Unit Kerja
+     | Command - Perbarui Unit Kerja
      | ----------------------------------------------------------------*/
 
     /**
@@ -82,7 +82,7 @@ class UnitKerjaService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Hapus Unit Kerja (Soft Delete)
+     | Command - Hapus Unit Kerja (Soft Delete)
      | ----------------------------------------------------------------*/
 
     /**

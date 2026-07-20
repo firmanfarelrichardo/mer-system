@@ -10,7 +10,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 /**
- * UnitKerjaSeeder — Seed unit kerja rumah sakit dari NormalizesUnitKerjaNames.
+ * UnitKerjaSeeder - Seed unit kerja rumah sakit dari NormalizesUnitKerjaNames.
  *
  * Sumber data tunggal: Database\Seeders\Concerns\NormalizesUnitKerjaNames.
  * Idempotent: menggunakan firstOrCreate berdasarkan kode_unit per tenant.

@@ -8,7 +8,7 @@ use App\Http\Requests\SimpanLaporanRequest;
 use Illuminate\Http\Request;
 
 /**
- * DTO Insiden — memindahkan data form ke layer service secara immutable.
+ * DTO Insiden - memindahkan data form ke layer service secara immutable.
  *
  * Properti `$isDraft` di-mapping dari parameter `action` pada request.
  * Properti `$insidenId` diisi jika Nakes melanjutkan draf (update existing).
@@ -80,7 +80,7 @@ final readonly class InsidenData
     /**
      * Buat DTO dari Request biasa (auto-save background).
      *
-     * Tidak melakukan validasi ketat — menerima data parsial apa adanya.
+     * Tidak melakukan validasi ketat - menerima data parsial apa adanya.
      * Semua field nullable sehingga form bisa di-auto-save kapan saja.
      */
     public static function fromAutoSaveRequest(Request $request): self

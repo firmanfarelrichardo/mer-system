@@ -90,7 +90,7 @@ class NotifikasiRepository
 
         return new NotifikasiData(
             id:           $notif->id,
-            judul:        $data['judul'] ?? '—',
+            judul:        $data['judul'] ?? '-',
             pesan:        $data['pesan'] ?? '',
             tipe:         $data['tipe'] ?? 'default',
             ikonWarna:    $data['ikon_warna'] ?? 'bg-slate-50 text-slate-500',

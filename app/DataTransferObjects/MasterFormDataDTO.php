@@ -8,7 +8,7 @@ namespace App\DataTransferObjects;
  * DTO untuk membuat atau memperbarui master data formulir
  * (Tipe Cedera, Faktor Penyebab, Tindakan Intervensi).
  *
- * Immutable value-object — sekali dibuat, tidak bisa diubah.
+ * Immutable value-object - sekali dibuat, tidak bisa diubah.
  */
 final readonly class MasterFormDataDTO
 {

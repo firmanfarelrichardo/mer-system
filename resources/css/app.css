@@ -2,7 +2,7 @@
 
 /*
 |--------------------------------------------------------------------
-| Import palet warna — satu-satunya file yang perlu diubah
+| Import palet warna - satu-satunya file yang perlu diubah
 | saat melakukan re-theming sistem.  Lihat resources/css/theme.css.
 |--------------------------------------------------------------------
 */
@@ -15,12 +15,12 @@
 
 /*
 |====================================================================
-| @theme — Registrasi Token ke Tailwind v4
+| @theme - Registrasi Token ke Tailwind v4
 |====================================================================
 | Semua variabel --color-* di bawah ini otomatis menghasilkan
 | utilitas Tailwind: bg-primary-500, text-secondary-800, dst.
 |
-| JANGAN ubah file ini untuk re-theming — ubah theme.css saja.
+| JANGAN ubah file ini untuk re-theming - ubah theme.css saja.
 |====================================================================
 */
 @theme {
@@ -31,7 +31,7 @@
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     /* ============================================================
-       PRIMARY — Teal / Hijau-Toska (bg-primary-*, text-primary-*)
+       PRIMARY - Teal / Hijau-Toska (bg-primary-*, text-primary-*)
        ============================================================ */
     --color-primary-50:  var(--palette-primary-50);
     --color-primary-100: var(--palette-primary-100);
@@ -46,7 +46,7 @@
     --color-primary-950: var(--palette-primary-950);
 
     /* ============================================================
-       SECONDARY — Biru Profesional (bg-secondary-*, text-secondary-*)
+       SECONDARY - Biru Profesional (bg-secondary-*, text-secondary-*)
        ============================================================ */
     --color-secondary-50:  var(--palette-secondary-50);
     --color-secondary-100: var(--palette-secondary-100);
@@ -61,7 +61,7 @@
     --color-secondary-950: var(--palette-secondary-950);
 
     /* ============================================================
-       ACCENT — Kuning/Emas/Amber (bg-accent-*, text-accent-*)
+       ACCENT - Kuning/Emas/Amber (bg-accent-*, text-accent-*)
        ============================================================ */
     --color-accent-50:  var(--palette-accent-50);
     --color-accent-100: var(--palette-accent-100);
@@ -92,7 +92,7 @@
     --color-danger-border: var(--palette-danger-200);
 
     /* ============================================================
-       SEMANTIC BRAND TOKENS — utilitas cepat berbasis peran
+       SEMANTIC BRAND TOKENS - utilitas cepat berbasis peran
        (bg-brand, text-brand, border-brand, dst.)
        ============================================================ */
     --color-brand:          var(--token-brand);
@@ -114,7 +114,7 @@
     --color-warning-dark:   var(--token-warning-dark);
 
     /* ============================================================
-       SURFACE & TEXT — digunakan untuk background dan tipografi
+       SURFACE & TEXT - digunakan untuk background dan tipografi
        ============================================================ */
     --color-surface:         var(--token-surface);
     --color-surface-raised:  var(--token-surface-raised);

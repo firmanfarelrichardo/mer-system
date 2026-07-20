@@ -10,12 +10,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 
 /**
- * Service AuditLog — mencatat setiap aksi penting ke tabel audit.
+ * Service AuditLog - mencatat setiap aksi penting ke tabel audit.
  *
  * Log bersifat immutable (INSERT-only). Tidak ada method update/delete.
  *
  * MODE OPERASI:
- *   - AUDIT_LOG_ASYNC=false (default/local): INSERT synchronous — mudah di-debug.
+ *   - AUDIT_LOG_ASYNC=false (default/local): INSERT synchronous - mudah di-debug.
  *   - AUDIT_LOG_ASYNC=true  (production)   : Dispatch ke queue 'audit' via Redis
  *     agar respons user tidak tertahan oleh operasi database logging.
  *
@@ -51,7 +51,7 @@ class AuditLogService
             'id_data'     => $idData,
             'id_pengguna' => $idPengguna ?? $pengguna?->id,
             'alamat_ip'   => Request::ip(),
-            // Potong di 512 karakter — kolom DB tidak boleh overflow
+            // Potong di 512 karakter - kolom DB tidak boleh overflow
             'user_agent'  => mb_substr((string) Request::userAgent(), 0, 512) ?: null,
             'data_lama'   => $dataLama,
             'data_baru'   => $dataBaru,

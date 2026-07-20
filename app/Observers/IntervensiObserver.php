@@ -8,7 +8,7 @@ use App\Models\TindakanIntervensi;
 use App\Services\AuditLogService;
 
 /**
- * Observer TindakanIntervensi — mencatat audit log secara otomatis
+ * Observer TindakanIntervensi - mencatat audit log secara otomatis
  * setiap kali record tindakan intervensi dibuat, diubah, atau dihapus.
  */
 class IntervensiObserver

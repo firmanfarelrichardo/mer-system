@@ -2,12 +2,12 @@
 |--------------------------------------------------------------------------
 | Komponen: Komite Radar (dashboard/komite-radar)
 |--------------------------------------------------------------------------
-| Fokus: Radar & Bottleneck Detection — seluruh RS.
+| Fokus: Radar & Bottleneck Detection - seluruh RS.
 | Menampilkan alert severity tinggi, unit bottleneck, rasio resolusi harian,
 | dan total kasus belum selesai.
 |
 | Props:
-|   $data — array ['alert_severitas', 'bottleneck', 'masuk_hari_ini',
+|   $data - array ['alert_severitas', 'bottleneck', 'masuk_hari_ini',
 |                   'selesai_hari_ini', 'belum_selesai']
 |--------------------------------------------------------------------------
 --}}
@@ -17,7 +17,7 @@
 <div class="space-y-6">
 
     {{-- ================================================================
-         RADAR METRICS — 3 kartu atas
+         RADAR METRICS - 3 kartu atas
          ================================================================ --}}
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
 
@@ -48,7 +48,7 @@
     </div>
 
     {{-- ================================================================
-         ALERT SEVERITY TINGGI — KTD & Sentinel yang belum selesai
+         ALERT SEVERITY TINGGI - KTD & Sentinel yang belum selesai
          ================================================================ --}}
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="mb-4 flex items-center gap-2">
@@ -71,9 +71,9 @@
                         <span class="text-sm font-medium text-slate-700">{{ $insiden->nomor_laporan }}</span>
                     </div>
                     <p class="mt-0.5 text-xs text-slate-400">
-                        {{ $insiden->nama_unit_kerja ?? '—' }}
+                        {{ $insiden->nama_unit_kerja ?? '-' }}
                         &nbsp;·&nbsp;
-                        {{ $insiden->tgl_lapor?->diffForHumans() ?? '—' }}
+                        {{ $insiden->tgl_lapor?->diffForHumans() ?? '-' }}
                     </p>
                 </div>
                 <span class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-xs font-medium
@@ -97,7 +97,7 @@
     </div>
 
     {{-- ================================================================
-         UNIT PENUMPUKAN — unit dengan kasus_baru terbanyak
+         UNIT PENUMPUKAN - unit dengan kasus_baru terbanyak
          ================================================================ --}}
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <div class="mb-4 flex items-center gap-2">
@@ -115,7 +115,7 @@
             @endphp
             <div class="flex items-center justify-between gap-3 {{ !$loop->last ? 'mb-3 border-b border-slate-100 pb-3' : '' }}">
                 <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium text-slate-700">{{ $unit->nama_unit_kerja ?? '—' }}</p>
+                    <p class="text-sm font-medium text-slate-700">{{ $unit->nama_unit_kerja ?? '-' }}</p>
                     <p class="mt-0.5 text-xs text-slate-400">
                         Kasus tertua: {{ $hariBerselang }} hari lalu
                     </p>

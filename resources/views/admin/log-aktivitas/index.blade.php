@@ -2,14 +2,14 @@
 |--------------------------------------------------------------------------
 | Log Aktivitas (admin/log-aktivitas/index.blade.php)
 |--------------------------------------------------------------------------
-| View reusable — digunakan oleh 2 route:
+| View reusable - digunakan oleh 2 route:
 |   • admin.log-aktivitas.pengguna  → $tipePeran = 'pengguna'
 |   • admin.log-aktivitas.admin     → $tipePeran = 'admin'
 |
 | Variabel dari Controller:
-|   $daftarLog  — LengthAwarePaginator (eager: pengguna.peran withTrashed)
-|   $filter     — ['dari_tanggal', 'sampai_tanggal', 'cari']
-|   $tipePeran  — 'admin' | 'pengguna'
+|   $daftarLog  - LengthAwarePaginator (eager: pengguna.peran withTrashed)
+|   $filter     - ['dari_tanggal', 'sampai_tanggal', 'cari']
+|   $tipePeran  - 'admin' | 'pengguna'
 |--------------------------------------------------------------------------
 --}}
 
@@ -29,7 +29,7 @@
     $bolehLihatIp = count(array_intersect($roleAdmin, config('audit.roles_boleh_lihat_ip', []))) > 0;
 @endphp
 
-@section('judul', $judul . ' — Sistem MER')
+@section('judul', $judul . ' - Sistem MER')
 
 @section('konten')
 
@@ -194,14 +194,14 @@
                                                 $bagianIp = explode('.', $log->alamat_ip);
                                                 $ipSamar  = count($bagianIp) >= 2
                                                     ? $bagianIp[0] . '.' . $bagianIp[1] . '.x.x'
-                                                    : '—';
+                                                    : '-';
                                             @endphp
                                             <span class="font-mono text-xs text-slate-400" title="IP disamarkan">
                                                 {{ $ipSamar }}
                                             </span>
                                         @endif
                                     @else
-                                        <span class="text-xs text-slate-300">—</span>
+                                        <span class="text-xs text-slate-300">-</span>
                                     @endif
                                 </td>
 
@@ -242,7 +242,7 @@
                                             </div>
                                         </div>
                                     @else
-                                        <span class="text-xs text-slate-300">—</span>
+                                        <span class="text-xs text-slate-300">-</span>
                                     @endif
                                 </td>
 

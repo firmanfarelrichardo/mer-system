@@ -8,7 +8,7 @@ use App\Models\Insiden;
 use App\Services\AuditLogService;
 
 /**
- * Observer Insiden — mencatat audit log secara otomatis
+ * Observer Insiden - mencatat audit log secara otomatis
  * setiap kali record insiden dimanipulasi.
  *
  * Catatan: Penyimpanan draf dan submit laporan sudah di-log oleh

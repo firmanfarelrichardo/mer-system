@@ -1,6 +1,6 @@
 @extends('layouts.guest')
 
-@section('title', 'Masuk — Sistem Pelaporan Kesalahan Pengobatan')
+@section('title', 'Masuk - Sistem Pelaporan Kesalahan Pengobatan')
 
 @section('content')
     {{--
@@ -99,7 +99,7 @@
         </div>
 
         {{--
-            Captcha (mews/captcha) — Disembunyikan saat CAPTCHA_DISABLE=true.
+            Captcha (mews/captcha) - Disembunyikan saat CAPTCHA_DISABLE=true.
             Klik gambar untuk memperbarui kode tanpa muat ulang halaman.
 
             Catatan implementasi:
@@ -127,7 +127,7 @@
             {{--
                 Side-by-side: gambar kiri | input kanan.
                 Panel gambar menggunakan lebar relatif (60%) agar mengikuti lebar
-                kartu — gambar di-stretch tepat mengisi panel sehingga tidak terpotong.
+                kartu - gambar di-stretch tepat mengisi panel sehingga tidak terpotong.
             --}}
             <div class="flex overflow-hidden rounded-xl border
                         {{ $errors->has('captcha') ? 'border-red-400' : 'border-slate-200' }}">

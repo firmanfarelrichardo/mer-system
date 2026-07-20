@@ -9,7 +9,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Repository Pengguna — akses data ke tabel `akun.pengguna`.
+ * Repository Pengguna - akses data ke tabel `akun.pengguna`.
  *
  * Layer ini hanya bertanggung jawab pada query & persistensi.
  * TIDAK boleh mengandung logika bisnis apapun.
