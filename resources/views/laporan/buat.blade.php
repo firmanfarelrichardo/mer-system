@@ -596,25 +596,26 @@
         {{-- ============================================================
              TOMBOL NAVIGASI
              ============================================================ --}}
-        <div class="mt-6 flex flex-wrap items-center justify-between gap-y-4 sm:flex-nowrap">
+        <div class="mt-6 flex flex-col w-full">
             
-            {{-- Tombol Kembali --}}
-            <div class="order-1 flex shrink-0">
-                <button type="button" id="btn-kembali"
-                        class="hidden items-center gap-1 sm:gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2 sm:px-5 sm:py-2.5
-                               text-xs sm:text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                        onclick="ubahTahap(-1)">
-                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
-                    </svg>
-                    Kembali
-                </button>
-            </div>
+            {{-- Baris Utama: 3 Tombol Sejajar --}}
+            <div class="flex items-center justify-between w-full">
+                
+                {{-- Kiri: Tombol Kembali --}}
+                <div class="flex shrink-0">
+                    <button type="button" id="btn-kembali"
+                            class="hidden items-center justify-center gap-1 sm:gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-2 sm:px-5 sm:py-2.5
+                                   text-[11px] sm:text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 shrink-0"
+                            onclick="ubahTahap(-1)">
+                        <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
+                        </svg>
+                        Kembali
+                    </button>
+                </div>
 
-            {{-- Indikator Status Auto-Save --}}
-            <div class="order-3 mt-1 flex w-full justify-center sm:order-2 sm:mt-0 sm:w-auto sm:flex-1 sm:justify-start sm:pl-4">
-                <div class="flex items-center gap-1.5 text-xs transition-all duration-300">
-                    {{-- Saving --}}
+                {{-- Desktop: Auto-Save Status (Hidden on Mobile) --}}
+                <div class="hidden sm:flex flex-1 items-center justify-start pl-4 text-xs transition-all duration-300">
                     <template x-if="statusAutoSave === 'saving'">
                         <span class="inline-flex items-center gap-1 text-amber-600">
                             <svg class="h-3.5 w-3.5 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
@@ -624,7 +625,6 @@
                             Menyimpan...
                         </span>
                     </template>
-                    {{-- Saved --}}
                     <template x-if="statusAutoSave === 'saved'">
                         <span class="inline-flex items-center gap-1 text-emerald-600">
                             <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -633,7 +633,6 @@
                             Draf tersimpan <span x-text="waktuTerakhir"></span>
                         </span>
                     </template>
-                    {{-- Error --}}
                     <template x-if="statusAutoSave === 'error'">
                         <span class="inline-flex items-center gap-1 text-red-500">
                             <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -643,39 +642,68 @@
                         </span>
                     </template>
                 </div>
+
+                {{-- Kanan: Simpan Draf & Selanjutnya --}}
+                <div class="flex shrink-0 items-center justify-end gap-1.5 sm:gap-3">
+                    <button type="submit" name="action" value="simpan_draf" id="btn-draf"
+                            class="inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-lg border border-brand bg-white px-2 py-2 sm:px-5 sm:py-2.5
+                                   text-[11px] sm:text-sm font-medium text-brand shadow-sm transition-colors hover:bg-brand/5 shrink-0">
+                        <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"/>
+                        </svg>
+                        Simpan Draf
+                    </button>
+
+                    <button type="button" id="btn-selanjutnya"
+                            class="inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-lg bg-brand px-2 py-2 sm:px-5 sm:py-2.5 text-[11px] sm:text-sm font-medium
+                                   text-white shadow-sm transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2
+                                   focus:ring-brand/50 focus:ring-offset-2 shrink-0"
+                            onclick="ubahTahap(1)">
+                        Selanjutnya
+                        <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
+                        </svg>
+                    </button>
+
+                    <button type="submit" name="action" value="kirim_laporan" id="btn-kirim"
+                            class="hidden items-center justify-center gap-1 sm:gap-1.5 rounded-lg bg-brand px-2 py-2 sm:px-5 sm:py-2.5 text-[11px] sm:text-sm font-medium
+                                   text-white shadow-sm transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2
+                                   focus:ring-brand/50 focus:ring-offset-2 shrink-0">
+                        Kirim Laporan
+                        <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
 
-            {{-- Tombol Kanan (Simpan Draf & Selanjutnya/Kirim) --}}
-            <div class="order-2 flex shrink-0 items-center justify-end gap-1.5 sm:order-3 sm:gap-3">
-                <button type="submit" name="action" value="simpan_draf" id="btn-draf"
-                        class="inline-flex items-center gap-1 sm:gap-1.5 rounded-lg border border-brand bg-white px-2.5 py-2 sm:px-5 sm:py-2.5
-                               text-xs sm:text-sm font-medium text-brand shadow-sm transition-colors hover:bg-brand/5">
-                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z"/>
-                    </svg>
-                    Simpan Draf
-                </button>
-
-                <button type="button" id="btn-selanjutnya"
-                        class="inline-flex items-center gap-1 sm:gap-1.5 rounded-lg bg-brand px-2.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-medium
-                               text-white shadow-sm transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2
-                               focus:ring-brand/50 focus:ring-offset-2"
-                        onclick="ubahTahap(1)">
-                    Selanjutnya
-                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
-                    </svg>
-                </button>
-
-                <button type="submit" name="action" value="kirim_laporan" id="btn-kirim"
-                        class="hidden items-center gap-1 sm:gap-1.5 rounded-lg bg-brand px-2.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-medium
-                               text-white shadow-sm transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2
-                               focus:ring-brand/50 focus:ring-offset-2">
-                    Kirim Laporan
-                    <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
-                    </svg>
-                </button>
+            {{-- Mobile: Auto-Save Status (Muncul di Bawah) --}}
+            <div class="flex sm:hidden w-full justify-center mt-3 text-xs transition-all duration-300">
+                <template x-if="statusAutoSave === 'saving'">
+                    <span class="inline-flex items-center gap-1 text-amber-600">
+                        <svg class="h-3.5 w-3.5 animate-spin shrink-0" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                        Menyimpan...
+                    </span>
+                </template>
+                <template x-if="statusAutoSave === 'saved'">
+                    <span class="inline-flex items-center gap-1 text-emerald-600">
+                        <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                        </svg>
+                        Draf tersimpan <span x-text="waktuTerakhir"></span>
+                    </span>
+                </template>
+                <template x-if="statusAutoSave === 'error'">
+                    <span class="inline-flex items-center gap-1 text-red-500">
+                        <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+                        </svg>
+                        Gagal menyimpan
+                    </span>
+                </template>
             </div>
         </div>
     </form>
