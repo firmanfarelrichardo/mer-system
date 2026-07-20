@@ -13,13 +13,13 @@ use Illuminate\Support\Facades\Notification;
 /**
  * Listener: KirimNotifikasiInsiden
  *
- * State-based routing — menentukan SIAPA yang menerima notifikasi
+ * State-based routing - menentukan SIAPA yang menerima notifikasi
  * berdasarkan status baru insiden:
  *
  *   kasus_baru     → Kepala Ruangan (unit kerja yang sama) + Komite
  *   investigasi    → Komite (eskalasi high-risk)
- *   tindak_lanjut  → Pelapor (Nakes) — ada tindak lanjut untuk laporannya
- *   selesai        → Pelapor (Nakes) — laporannya telah selesai
+ *   tindak_lanjut  → Pelapor (Nakes) - ada tindak lanjut untuk laporannya
+ *   selesai        → Pelapor (Nakes) - laporannya telah selesai
  *
  * Sentinel event (tipe_insiden = SENTINEL) juga mengirim ke Direktur.
  */
@@ -90,10 +90,10 @@ class KirimNotifikasiInsiden
             ->get();
 
         if ($komite->isNotEmpty()) {
-            $namaUnit = $insiden->nama_unit_kerja ?? '—';
+            $namaUnit = $insiden->nama_unit_kerja ?? '-';
             Notification::send($komite, new InsidenNotifikasi(
                 insiden:   $insiden,
-                judul:     "Laporan baru masuk — {$nomor}",
+                judul:     "Laporan baru masuk - {$nomor}",
                 pesan:     "Laporan insiden {$nomor} ({$insiden->labelTipeInsiden()}) dari unit {$namaUnit} telah masuk dan sedang menunggu verifikasi.",
                 tipe:      'laporan',
                 ikonWarna: 'bg-brand/10 text-brand',

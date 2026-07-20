@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * PengaturanController — menangani halaman pengaturan akun.
+ * PengaturanController - menangani halaman pengaturan akun.
  *
  * Menyediakan antarmuka untuk pengguna mengelola pengaturan akunnya,
  * seperti mengubah kata sandi dan preferensi notifikasi.

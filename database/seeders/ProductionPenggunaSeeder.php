@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
 use Throwable;
 
 /**
- * ProductionPenggunaSeeder — data akun pengguna staging/production dari daftar CSV.
+ * ProductionPenggunaSeeder - data akun pengguna staging/production dari daftar CSV.
  *
  * Seeder ini sengaja mandiri: data pengguna sudah ditanam sebagai array PHP,
  * sehingga eksekusi di VPS tidak bergantung pada file CSV eksternal.

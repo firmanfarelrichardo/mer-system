@@ -11,7 +11,7 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
-     * Order matters — foreign-key constraints require tenants before
+     * Order matters - foreign-key constraints require tenants before
      * roles, and roles before users. Unit kerja must exist before
      * incidents reference them.
      *

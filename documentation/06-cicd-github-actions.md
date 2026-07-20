@@ -1,8 +1,8 @@
-# 06 — CI/CD Pipeline dengan GitHub Actions (Zero-Trust Deployment)
+# 06 - CI/CD Pipeline dengan GitHub Actions (Zero-Trust Deployment)
 
-> **Sistem**: Medication Error Reporting (MER) — Rumah Sakit  
+> **Sistem**: Medication Error Reporting (MER) - Rumah Sakit  
 > **Klasifikasi**: HIGH-RISK (Data Medis Sensitif / PHI)  
-> **Spesifikasi VPS**: Ubuntu 24.04 LTS — 2 Core CPU, 8GB RAM, 100GB SSD (Hostinger)  
+> **Spesifikasi VPS**: Ubuntu 24.04 LTS - 2 Core CPU, 8GB RAM, 100GB SSD (Hostinger)  
 > **Stack**: Laravel 12, PostgreSQL 16, Redis 7, Docker, Nginx, Cloudflare  
 > **Prasyarat**: Dokumen [01](./01-arsitektur-dan-hardening-os.md) s/d [05](./05-monitoring-dan-backup-strategy.md) sudah dilaksanakan  
 > **Tanggal**: Maret 2026
@@ -14,9 +14,9 @@
 1. [Arsitektur CI/CD Zero-Trust](#1-arsitektur-cicd-zero-trust)
 2. [Perbedaan Deployment Manual vs CI/CD Pipeline](#2-perbedaan-deployment-manual-vs-cicd-pipeline)
 3. [Diagram Alur Pipeline](#3-diagram-alur-pipeline)
-4. [Persiapan — Konfigurasi GitHub Secrets](#4-persiapan--konfigurasi-github-secrets)
-5. [Persiapan — Konfigurasi GitHub Environments](#5-persiapan--konfigurasi-github-environments)
-6. [Persiapan — Struktur Direktori Workflow](#6-persiapan--struktur-direktori-workflow)
+4. [Persiapan - Konfigurasi GitHub Secrets](#4-persiapan--konfigurasi-github-secrets)
+5. [Persiapan - Konfigurasi GitHub Environments](#5-persiapan--konfigurasi-github-environments)
+6. [Persiapan - Struktur Direktori Workflow](#6-persiapan--struktur-direktori-workflow)
 7. [Pipeline Staging (staging.yml)](#7-pipeline-staging-stagingyml)
 8. [Pipeline Production (production.yml)](#8-pipeline-production-productionyml)
 9. [Penjelasan Setiap Tahap Pipeline](#9-penjelasan-setiap-tahap-pipeline)
@@ -36,19 +36,19 @@ Bayangkan proses deployment seperti **mengirim obat dari pabrik farmasi ke rumah
 |-----------------------|---------------------|
 | Kurir (developer) membawa obat sendiri dari pabrik, naik motor ke rumah sakit, dan meletakkan sendiri ke rak | Pabrik memiliki **conveyor belt otomatis** yang memeriksa kualitas obat (CI: testing), mengemas dengan aman (build), lalu mengirim melalui kurir terpercaya (CD: SCP) ke rumah sakit |
 | Jika obat salah, kurir harus balik ke pabrik | Jika obat gagal uji kualitas, conveyor belt otomatis berhenti sebelum dikirim |
-| Kurir punya kunci semua gudang pabrik | Kurir hanya diberi **surat jalan satu paket** — tidak punya akses ke gudang pabrik (Zero-Trust) |
+| Kurir punya kunci semua gudang pabrik | Kurir hanya diberi **surat jalan satu paket** - tidak punya akses ke gudang pabrik (Zero-Trust) |
 
 ### Versi Formal (Standar Industri)
 
 Arsitektur CI/CD ini menerapkan model **Zero-Trust Deployment** dengan prinsip-prinsip:
 
-1. **VPS sebagai Receiving-Only Endpoint** — VPS tidak memiliki kredensial Git (deploy key, PAT, atau SSH key ke GitHub). VPS hanya *menerima* file dari GitHub Runner melalui SCP dan *mengeksekusi* perintah Docker yang dikirim melalui SSH. Jika VPS dikompromikan, attacker tidak bisa mengakses source code repository manapun.
+1. **VPS sebagai Receiving-Only Endpoint** - VPS tidak memiliki kredensial Git (deploy key, PAT, atau SSH key ke GitHub). VPS hanya *menerima* file dari GitHub Runner melalui SCP dan *mengeksekusi* perintah Docker yang dikirim melalui SSH. Jika VPS dikompromikan, attacker tidak bisa mengakses source code repository manapun.
 
-2. **GitHub Runner sebagai Build Environment** — Semua operasi berat (dependency installation, testing, vulnerability scanning, asset compilation) dijalankan di GitHub-hosted runner (`ubuntu-latest`) yang memiliki resource jauh lebih besar dari VPS. Setelah selesai, hanya *hasil jadi* yang dikirim ke VPS.
+2. **GitHub Runner sebagai Build Environment** - Semua operasi berat (dependency installation, testing, vulnerability scanning, asset compilation) dijalankan di GitHub-hosted runner (`ubuntu-latest`) yang memiliki resource jauh lebih besar dari VPS. Setelah selesai, hanya *hasil jadi* yang dikirim ke VPS.
 
-3. **Secrets Injection at Runtime** — Kredensial SSH (private key, host, port) disimpan di GitHub Secrets (encrypted at rest dengan libsodium sealed box) dan hanya di-inject ke runner environment saat pipeline berjalan. Tidak pernah tersimpan di kode, log, atau artifact.
+3. **Secrets Injection at Runtime** - Kredensial SSH (private key, host, port) disimpan di GitHub Secrets (encrypted at rest dengan libsodium sealed box) dan hanya di-inject ke runner environment saat pipeline berjalan. Tidak pernah tersimpan di kode, log, atau artifact.
 
-4. **Manual Approval Gate** — Deployment ke production memerlukan persetujuan eksplisit dari reviewer melalui GitHub Environments protection rules, mencegah push langsung ke production tanpa human verification.
+4. **Manual Approval Gate** - Deployment ke production memerlukan persetujuan eksplisit dari reviewer melalui GitHub Environments protection rules, mencegah push langsung ke production tanpa human verification.
 
 ---
 
@@ -61,9 +61,9 @@ Arsitektur CI/CD ini menerapkan model **Zero-Trust Deployment** dengan prinsip-p
 | **Kecepatan** | 5-15 menit per deployment | 3-5 menit (otomatis) |
 | **Konsistensi** | Rawan human error (lupa migrate, lupa cache:clear) | Setiap langkah terdefinisi dan dieksekusi identik |
 | **Keamanan** | VPS menyimpan deploy key (read-only ke repo) | VPS TIDAK menyimpan kredensial Git apa pun (Zero-Trust) |
-| **Audit Trail** | Tidak ada — siapa deploy kapan tidak tercatat | Setiap deployment tercatat di GitHub Actions log dengan SHA commit, waktu, dan status |
+| **Audit Trail** | Tidak ada - siapa deploy kapan tidak tercatat | Setiap deployment tercatat di GitHub Actions log dengan SHA commit, waktu, dan status |
 | **Rollback** | Manual: `git checkout <commit>` | Otomatis: re-run workflow pada commit sebelumnya |
-| **Resource VPS** | `composer install` dan `npm run build` dijalankan di VPS (CPU spike) | Build dijalankan di GitHub Runner — VPS hanya restart Docker |
+| **Resource VPS** | `composer install` dan `npm run build` dijalankan di VPS (CPU spike) | Build dijalankan di GitHub Runner - VPS hanya restart Docker |
 | **Testing** | Tidak ada testing otomatis sebelum deploy | Automated test suite wajib lulus sebelum deploy |
 | **Approval** | Tidak ada mekanisme approval | Approval wajib dari reviewer sebelum production deploy |
 
@@ -156,15 +156,15 @@ DEVELOPER
 
 ---
 
-## 4. Persiapan — Konfigurasi GitHub Secrets
+## 4. Persiapan - Konfigurasi GitHub Secrets
 
 ### Mengapa GitHub Secrets?
 
 **Versi Formal:** GitHub Secrets menggunakan enkripsi *libsodium sealed box* (Curve25519 + XSalsa20-Poly1305) untuk menyimpan nilai sensitif. Secret hanya didekripsi saat runtime di dalam GitHub Runner yang terisolasi. Nilai secret tidak pernah muncul di log (otomatis di-mask dengan `***`), tidak bisa dibaca melalui API setelah di-set, dan tidak bisa diakses oleh fork repositories. Ini memenuhi prinsip *secrets-never-at-rest-in-plaintext*.
 
-**Versi Sederhana:** GitHub Secrets seperti brankas digital. Anda memasukkan kunci rumah sakit (SSH key) ke dalam brankas. Saat kurir (GitHub Runner) perlu mengirim obat, brankas terbuka otomatis hanya untuk kurir itu di saat itu saja. Setelah selesai, brankas tertutup lagi. Tidak ada yang bisa membuka brankas dari luar — termasuk developer yang memasukkan kuncinya.
+**Versi Sederhana:** GitHub Secrets seperti brankas digital. Anda memasukkan kunci rumah sakit (SSH key) ke dalam brankas. Saat kurir (GitHub Runner) perlu mengirim obat, brankas terbuka otomatis hanya untuk kurir itu di saat itu saja. Setelah selesai, brankas tertutup lagi. Tidak ada yang bisa membuka brankas dari luar - termasuk developer yang memasukkan kuncinya.
 
-### Eksekusi — Tambahkan Secrets di GitHub
+### Eksekusi - Tambahkan Secrets di GitHub
 
 ```
 Navigasi: github.com > Repository mer-system > Settings > Secrets and variables > Actions > New repository secret
@@ -208,13 +208,13 @@ Tambahkan 4 secret berikut satu per satu:
 
 **Ini adalah secret paling kritis.** Nilai yang dimasukkan adalah **seluruh isi** file private key Ed25519, termasuk header dan footer.
 
-### Eksekusi — Mendapatkan Isi Private Key
+### Eksekusi - Mendapatkan Isi Private Key
 
 > **Konteks Eksekusi:** `Terminal Komputer Lokal`
 
 ```bash
 # Tampilkan isi LENGKAP private key.
-# SALIN SELURUH output — dari -----BEGIN hingga -----END termasuk baris kosong.
+# SALIN SELURUH output - dari -----BEGIN hingga -----END termasuk baris kosong.
 cat ~/.ssh/mer_ops_ed25519
 ```
 
@@ -246,15 +246,15 @@ Setelah keempat secret ditambahkan, halaman Secrets di GitHub harus menampilkan:
 
 ---
 
-## 5. Persiapan — Konfigurasi GitHub Environments
+## 5. Persiapan - Konfigurasi GitHub Environments
 
 ### Apa Itu GitHub Environments?
 
-**Versi Formal:** GitHub Environments adalah mekanisme *deployment protection rules* yang memungkinkan organisasi menerapkan *gate* pada proses deployment. Environment bisa dikonfigurasi dengan: required reviewers (approval manual), wait timer (delay sebelum deploy), dan branch restrictions (hanya branch tertentu yang boleh deploy). Ini menerapkan prinsip *Separation of Duties* — developer yang menulis kode tidak bisa langsung mendeploy ke production tanpa persetujuan pihak lain.
+**Versi Formal:** GitHub Environments adalah mekanisme *deployment protection rules* yang memungkinkan organisasi menerapkan *gate* pada proses deployment. Environment bisa dikonfigurasi dengan: required reviewers (approval manual), wait timer (delay sebelum deploy), dan branch restrictions (hanya branch tertentu yang boleh deploy). Ini menerapkan prinsip *Separation of Duties* - developer yang menulis kode tidak bisa langsung mendeploy ke production tanpa persetujuan pihak lain.
 
-**Versi Sederhana:** Environment seperti **pintu keamanan berlapis** di rumah sakit. Untuk memasukkan obat baru ke ruang farmasi utama (production), perlu tanda tangan persetujuan dari kepala farmasi (reviewer). Tanpa tanda tangan, pintu tidak bisa dibuka — tidak peduli semodern apapun troli pengantarnya (pipeline).
+**Versi Sederhana:** Environment seperti **pintu keamanan berlapis** di rumah sakit. Untuk memasukkan obat baru ke ruang farmasi utama (production), perlu tanda tangan persetujuan dari kepala farmasi (reviewer). Tanpa tanda tangan, pintu tidak bisa dibuka - tidak peduli semodern apapun troli pengantarnya (pipeline).
 
-### Eksekusi — Buat Environment "staging"
+### Eksekusi - Buat Environment "staging"
 
 ```
 Navigasi: github.com > Repository mer-system > Settings > Environments > New environment
@@ -268,10 +268,10 @@ Klik **Configure environment**, lalu atur:
 
 | Setting | Nilai | Alasan |
 |---------|-------|--------|
-| **Required reviewers** | *(tidak dicentang)* | Staging tidak perlu approval — tujuannya adalah testing cepat |
+| **Required reviewers** | *(tidak dicentang)* | Staging tidak perlu approval - tujuannya adalah testing cepat |
 | **Deployment branches** | **Selected branches** > tambahkan `staging` | Hanya branch `staging` yang bisa deploy ke environment ini |
 
-### Eksekusi — Buat Environment "production"
+### Eksekusi - Buat Environment "production"
 
 ```
 Navigasi: github.com > Repository mer-system > Settings > Environments > New environment
@@ -312,15 +312,15 @@ Klik **Configure environment**, lalu atur:
 
 ---
 
-## 6. Persiapan — Struktur Direktori Workflow
+## 6. Persiapan - Struktur Direktori Workflow
 
-### Eksekusi — Buat Struktur File
+### Eksekusi - Buat Struktur File
 
 > **Konteks Eksekusi:** `Terminal Komputer Lokal` (di dalam repository mer-system)
 
 ```bash
 # Buat direktori untuk workflow GitHub Actions.
-# Direktori .github/workflows/ adalah konvensi wajib GitHub —
+# Direktori .github/workflows/ adalah konvensi wajib GitHub -
 # file YAML di luar direktori ini tidak akan dikenali.
 mkdir -p .github/workflows
 
@@ -981,7 +981,7 @@ jobs:
 
 ## 9. Penjelasan Setiap Tahap Pipeline
 
-### CI Stage — Mengapa Setiap Step Diperlukan?
+### CI Stage - Mengapa Setiap Step Diperlukan?
 
 | # | Step | Apa yang Dilakukan | Jika Dilewatkan |
 |---|------|--------------------|-----------------|
@@ -995,7 +995,7 @@ jobs:
 | 8 | Test Suite | Jalankan PHPUnit/Pest | Bug lolos ke server |
 | 9 | Composer Audit | Scan vulnerability dependency | Dependency dengan CVE lolos ke production |
 
-### CD Stage — Mengapa Setiap Step Diperlukan?
+### CD Stage - Mengapa Setiap Step Diperlukan?
 
 | # | Step | Apa yang Dilakukan | Jika Dilewatkan |
 |---|------|--------------------|-----------------|
@@ -1233,9 +1233,9 @@ echo "========================================="
 
 > **Dokumentasi lengkap.** Keenam file dokumentasi kini mencakup seluruh siklus dari hardening OS hingga deployment otomatis:
 >
-> 1. [01-arsitektur-dan-hardening-os.md](./01-arsitektur-dan-hardening-os.md) — Fondasi keamanan server
-> 2. [02-cloudflare-dan-edge-security.md](./02-cloudflare-dan-edge-security.md) — Perlindungan tepi
-> 3. [03-docker-production-staging.md](./03-docker-production-staging.md) — Containerization & isolasi
-> 4. [04-nginx-waf-dan-laravel.md](./04-nginx-waf-dan-laravel.md) — Web server & aplikasi
-> 5. [05-monitoring-dan-backup-strategy.md](./05-monitoring-dan-backup-strategy.md) — Observability & disaster recovery
-> 6. [06-cicd-github-actions.md](./06-cicd-github-actions.md) — CI/CD Pipeline Zero-Trust (dokumen ini)
+> 1. [01-arsitektur-dan-hardening-os.md](./01-arsitektur-dan-hardening-os.md) - Fondasi keamanan server
+> 2. [02-cloudflare-dan-edge-security.md](./02-cloudflare-dan-edge-security.md) - Perlindungan tepi
+> 3. [03-docker-production-staging.md](./03-docker-production-staging.md) - Containerization & isolasi
+> 4. [04-nginx-waf-dan-laravel.md](./04-nginx-waf-dan-laravel.md) - Web server & aplikasi
+> 5. [05-monitoring-dan-backup-strategy.md](./05-monitoring-dan-backup-strategy.md) - Observability & disaster recovery
+> 6. [06-cicd-github-actions.md](./06-cicd-github-actions.md) - CI/CD Pipeline Zero-Trust (dokumen ini)

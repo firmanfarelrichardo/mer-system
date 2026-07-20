@@ -6,7 +6,7 @@
 |
 | Akses: Kepala Ruangan, Komite, Direktur
 |
-| RBAC — Visibilitas:
+| RBAC - Visibilitas:
 |   - Kepala Ruangan  → data unit kerjanya saja; filter unit tidak ditampilkan.
 |   - Komite/Direktur → semua data; seluruh filter & grafik aktif.
 |
@@ -18,7 +18,7 @@
 |   (array)  $distribusiTipe   [labels, data, colors]
 |   (array)  $distribusiTahapan[labels, data, colors, persen]
 |   (array)  $ringkasanPerUnit
-|   (Collection) $daftarUnit   — kosong jika karu
+|   (Collection) $daftarUnit   - kosong jika karu
 |   (bool)   $filterAktif
 |   (array)  $filterAktifData
 |--------------------------------------------------------------------------
@@ -26,9 +26,9 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Statistik & Analisis — Sistem MER')
+@section('judul', 'Statistik & Analisis - Sistem MER')
 
-{{-- Chart.js CDN — dimuat SEKALI dari sini via @pushOnce. --}}
+{{-- Chart.js CDN - dimuat SEKALI dari sini via @pushOnce. --}}
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"
         crossorigin="anonymous"></script>
@@ -45,7 +45,7 @@
         <p class="mt-0.5 text-sm text-slate-400">
             {{ $pengguna->tenant?->nama ?? 'Sistem Pelaporan Kesalahan Pengobatan' }}
             @if (!$bisaLihatSemua)
-                &nbsp;·&nbsp;Unit: <span class="font-medium text-slate-600">{{ $pengguna->unitKerja?->nama_unit ?? '—' }}</span>
+                &nbsp;·&nbsp;Unit: <span class="font-medium text-slate-600">{{ $pengguna->unitKerja?->nama_unit ?? '-' }}</span>
             @endif
         </p>
     </div>
@@ -92,14 +92,14 @@
                               focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
             </div>
 
-            {{-- Unit Kerja — hanya direktur & komite --}}
+            {{-- Unit Kerja - hanya direktur & komite --}}
             @if ($bisaLihatSemua)
                 <div>
                     <label class="mb-1 block text-xs font-medium text-slate-500">Unit Kerja</label>
                     <select name="unit_kerja"
                             class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700
                                    focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
-                        <option value="">— Semua Unit —</option>
+                        <option value="">- Semua Unit -</option>
                         @foreach ($daftarUnit as $unit)
                             <option value="{{ $unit }}"
                                     @selected(request('unit_kerja', $filterAktifData['unit_kerja'] ?? '') === $unit)>
@@ -116,7 +116,7 @@
                 <select name="tipe_insiden"
                         class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700
                                focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/30">
-                    <option value="">— Semua Tipe —</option>
+                    <option value="">- Semua Tipe -</option>
                     @foreach ([
                         'KPC'      => 'KPC – Potensial Cedera',
                         'KNC'      => 'KNC – Nyaris Cedera',
@@ -134,7 +134,7 @@
 
         </x-filter-dropdown>
 
-        {{-- Tombol Reset — tampil jika ada filter aktif --}}
+        {{-- Tombol Reset - tampil jika ada filter aktif --}}
         @if ($filterAktif)
             <a href="{{ route('statistik.index') }}"
                class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm
@@ -255,7 +255,7 @@
                     <template x-for="unit in paginatedUnits()" :key="unit.unit">
                         <tr class="group transition-colors hover:bg-slate-50/50">
                             <td class="py-3 pr-4 font-medium text-slate-700" x-text="unit.unit"></td>
-                            <td class="px-3 py-3 text-center font-semibold text-slate-800" x-text="unit.total > 0 ? unit.total : '—'"></td>
+                            <td class="px-3 py-3 text-center font-semibold text-slate-800" x-text="unit.total > 0 ? unit.total : '-'"></td>
                             <td class="px-2 py-3 text-center">
                                 <span x-show="unit.kpc > 0" x-text="unit.kpc" class="inline-flex min-w-[22px] justify-center rounded-full bg-green-100 px-1.5 py-0.5 text-xs font-bold text-green-700"></span>
                                 <span x-show="unit.kpc === 0" class="text-slate-300">–</span>
@@ -368,7 +368,7 @@
 </div>
 
 {{-- ================================================================
-     CETAK LAPORAN REKAPITULASI — ekspor PDF per rentang tanggal
+     CETAK LAPORAN REKAPITULASI - ekspor PDF per rentang tanggal
      RBAC: HANYA direktur & komite
      ================================================================ --}}
 <div class="mt-6">

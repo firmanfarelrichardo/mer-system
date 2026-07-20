@@ -12,7 +12,7 @@
 |   5. Sertakan indikator status di area tombol navigasi.
 |
 | Variabel yang harus tersedia sebelum include:
-|   $autoSaveInsidenId — int|null — ID insiden (null untuk form baru)
+|   $autoSaveInsidenId - int|null - ID insiden (null untuk form baru)
 |--------------------------------------------------------------------------
 --}}
 

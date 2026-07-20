@@ -9,7 +9,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Dashboard Admin — Sistem MER')
+@section('judul', 'Dashboard Admin - Sistem MER')
 
 @section('konten')
 

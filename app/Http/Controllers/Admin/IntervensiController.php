@@ -14,7 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Controller Manajemen Tindakan Intervensi — CRUD master intervensi oleh Admin.
+ * Controller Manajemen Tindakan Intervensi - CRUD master intervensi oleh Admin.
  *
  * Alur: Controller → DTO → Service → Repository → Database
  * Audit log dicatat otomatis oleh Observer.
@@ -26,7 +26,7 @@ class IntervensiController extends Controller
     ) {}
 
     /* ------------------------------------------------------------------
-     | INDEX — Daftar Tindakan Intervensi + Filter
+     | INDEX - Daftar Tindakan Intervensi + Filter
      | ----------------------------------------------------------------*/
 
     public function index(Request $request): View
@@ -43,7 +43,7 @@ class IntervensiController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | STORE — Simpan Tindakan Intervensi Baru
+     | STORE - Simpan Tindakan Intervensi Baru
      | ----------------------------------------------------------------*/
 
     public function simpan(SimpanMasterFormRequest $request): RedirectResponse
@@ -59,7 +59,7 @@ class IntervensiController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | UPDATE — Perbarui Data Tindakan Intervensi
+     | UPDATE - Perbarui Data Tindakan Intervensi
      | ----------------------------------------------------------------*/
 
     public function perbarui(SimpanMasterFormRequest $request, int $id): RedirectResponse
@@ -78,7 +78,7 @@ class IntervensiController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | TOGGLE — Ubah Status Aktif/Nonaktif
+     | TOGGLE - Ubah Status Aktif/Nonaktif
      | ----------------------------------------------------------------*/
 
     public function toggleAktif(int $id): RedirectResponse
@@ -97,7 +97,7 @@ class IntervensiController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | DESTROY — Hapus Tindakan Intervensi (Soft Delete)
+     | DESTROY - Hapus Tindakan Intervensi (Soft Delete)
      | ----------------------------------------------------------------*/
 
     public function hapus(int $id): RedirectResponse

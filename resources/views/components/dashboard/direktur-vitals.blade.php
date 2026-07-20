@@ -2,12 +2,12 @@
 |--------------------------------------------------------------------------
 | Komponen: Direktur Vitals (dashboard/direktur-vitals)
 |--------------------------------------------------------------------------
-| Fokus: Executive Dashboard — read-only, high-level.
+| Fokus: Executive Dashboard - read-only, high-level.
 | Menampilkan status kesehatan sistem, rata-rata waktu respons,
 | ringkasan eksekutif, dan tren mingguan (sparkline text).
 |
 | Props:
-|   $data — array ['status_kesehatan', 'high_sev_hari_ini',
+|   $data - array ['status_kesehatan', 'high_sev_hari_ini',
 |                   'rata_respons_jam', 'ringkasan', 'tren_mingguan']
 |--------------------------------------------------------------------------
 --}}
@@ -17,7 +17,7 @@
 <div class="space-y-6">
 
     {{-- ================================================================
-         SYSTEM HEALTH STATUS — indikator utama
+         SYSTEM HEALTH STATUS - indikator utama
          ================================================================ --}}
     @php
         $health = match($data['status_kesehatan']) {
@@ -66,7 +66,7 @@
     </div>
 
     {{-- ================================================================
-         EXECUTIVE METRICS — 4 kartu ringkas
+         EXECUTIVE METRICS - 4 kartu ringkas
          ================================================================ --}}
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
 
@@ -129,14 +129,14 @@
     </div>
 
     {{-- ================================================================
-         TREN MINGGUAN — 7 hari terakhir (visual bar sederhana)
+         TREN MINGGUAN - 7 hari terakhir (visual bar sederhana)
          ================================================================ --}}
     @php
         $maxTren   = $data['tren_mingguan']->max() ?: 1;
         $hariLabel = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
     @endphp
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <p class="mb-4 text-sm font-semibold text-slate-700">Laporan Masuk — 7 Hari Terakhir</p>
+        <p class="mb-4 text-sm font-semibold text-slate-700">Laporan Masuk - 7 Hari Terakhir</p>
         <div class="flex items-end justify-between gap-2">
             @for ($i = 6; $i >= 0; $i--)
                 @php

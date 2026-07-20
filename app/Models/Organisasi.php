@@ -7,7 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Model Organisasi — maps to the `tenant.organisasi` table.
+ * Model Organisasi - maps to the `tenant.organisasi` table.
  */
 class Organisasi extends Model
 {

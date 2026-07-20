@@ -18,7 +18,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Edit Profil — Sistem MER')
+@section('judul', 'Edit Profil - Sistem MER')
 
 @section('konten')
 
@@ -135,7 +135,7 @@
                         </label>
                         <div class="flex w-full items-center rounded-lg border border-slate-200 bg-slate-50
                                     px-3 py-2.5 text-sm text-slate-500">
-                            {{ $pengguna->unitKerja?->nama_unit ?? '—' }}
+                            {{ $pengguna->unitKerja?->nama_unit ?? '-' }}
                         </div>
                         <p class="mt-1 text-xs text-slate-400">Hanya dapat diubah oleh Admin.</p>
                     </div>

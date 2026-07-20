@@ -3,8 +3,8 @@
 | Komponen Pagination (components/pagination.blade.php)
 |--------------------------------------------------------------------------
 | Props:
-|   $paginator          — instance LengthAwarePaginator (wajib)
-|   $pilihanPerHalaman  — array opsi per-halaman (opsional, default dari Paginasi::PILIHAN)
+|   $paginator          - instance LengthAwarePaginator (wajib)
+|   $pilihanPerHalaman  - array opsi per-halaman (opsional, default dari Paginasi::PILIHAN)
 |
 | Penggunaan:
 |   <x-pagination :paginator="$daftarX" />
@@ -104,7 +104,7 @@
             </select>
         </form>
 
-        {{-- Navigasi halaman (custom — tanpa teks bawaan Laravel) --}}
+        {{-- Navigasi halaman (custom - tanpa teks bawaan Laravel) --}}
         @if ($paginator->hasPages())
             <nav class="flex items-center gap-1" aria-label="Navigasi halaman">
 

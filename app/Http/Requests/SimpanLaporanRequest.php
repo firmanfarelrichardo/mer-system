@@ -8,17 +8,17 @@ use App\Models\Insiden;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
- * SimpanLaporanRequest — validasi formulir buat/edit laporan insiden.
+ * SimpanLaporanRequest - validasi formulir buat/edit laporan insiden.
  *
  * Mendukung DUA mode pengiriman via parameter `action`:
  *   - `simpan_draf`   → Validasi longgar (hanya unit_kerja & tanggal_kejadian required).
  *   - `kirim_laporan`  → Validasi ketat (semua field pasien, kronologi, kategori wajib).
  *
  * Memvalidasi seluruh data dari 4 tahap wizard:
- *   1. Data Demografis   — data pasien, unit, tanggal, jenis insiden
- *   2. Detail Insiden     — klasifikasi kesalahan, cedera, faktor, intervensi, fase, obat
- *   3. Kronologi Kejadian — narasi kronologi, disclaimer non-hukum
- *   4. Konfirmasi         — checkbox pengiriman
+ *   1. Data Demografis   - data pasien, unit, tanggal, jenis insiden
+ *   2. Detail Insiden     - klasifikasi kesalahan, cedera, faktor, intervensi, fase, obat
+ *   3. Kronologi Kejadian - narasi kronologi, disclaimer non-hukum
+ *   4. Konfirmasi         - checkbox pengiriman
  */
 class SimpanLaporanRequest extends FormRequest
 {
@@ -39,7 +39,7 @@ class SimpanLaporanRequest extends FormRequest
     }
 
     /**
-     * Aturan validasi — kondisional berdasarkan action.
+     * Aturan validasi - kondisional berdasarkan action.
      *
      * @return array<string, mixed>
      */

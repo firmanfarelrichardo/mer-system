@@ -15,7 +15,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * ProductionInsidenSeeder — 100 laporan insiden medication error sepanjang 2025.
+ * ProductionInsidenSeeder - 100 laporan insiden medication error sepanjang 2025.
  *
  * Data laporan tersebar secara acak dari 1 Januari hingga 31 Desember 2025,
  * menggunakan nama staf RSUD HM. Ryacudu Kotabumi sebagai pelapor.
@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\DB;
  *   1. OrganisasiSeeder
  *   2. PeranSeeder
  *   3. UnitKerjaSeeder
- *   4. MasterFormSeeder  (atau InsidenSeeder — untuk master kategori/matriks)
+ *   4. MasterFormSeeder  (atau InsidenSeeder - untuk master kategori/matriks)
  *   5. ProductionPenggunaSeeder
  *
  * IDEMPOTENT: insertOrIgnore pada nomor_laporan (PROD-2025-XXXX) + cek
@@ -129,7 +129,7 @@ class ProductionInsidenSeeder extends Seeder
     ];
 
     /**
-     * Template kronologi — jumlah %s harus konsisten dengan sprintf di generateKronologi().
+     * Template kronologi - jumlah %s harus konsisten dengan sprintf di generateKronologi().
      * Template 0–1: 5 parameter. Template 2–4: 4 parameter.
      */
     private const KRONOLOGI_TEMPLATE = [
@@ -519,7 +519,7 @@ class ProductionInsidenSeeder extends Seeder
                 ->value('id');
 
             if ($rowsAffected === 0) {
-                // Sudah ada dari run sebelumnya — lewati seluruh child records.
+                // Sudah ada dari run sebelumnya - lewati seluruh child records.
                 $skipped++;
                 continue;
             }
@@ -645,7 +645,7 @@ class ProductionInsidenSeeder extends Seeder
             } elseif (!empty($komiteList)) {
                 $pengguna = $komiteList[array_rand($komiteList)];
             } else {
-                continue; // Tidak ada user tersedia — lewati step ini.
+                continue; // Tidak ada user tersedia - lewati step ini.
             }
 
             $pool = self::CATATAN_TINDAK_LANJUT[$statusBaru] ?? ['Kasus diproses sesuai SOP.'];

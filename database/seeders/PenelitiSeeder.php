@@ -10,19 +10,19 @@ use App\Models\Peran;
 use Illuminate\Database\Seeder;
 
 /**
- * PenelitiSeeder — Akun akses sementara untuk peneliti/dosen pembimbing.
+ * PenelitiSeeder - Akun akses sementara untuk peneliti/dosen pembimbing.
  *
  * =====================================================================
- *  PERHATIAN — KEAMANAN & SIKLUS HIDUP AKUN INI
+ *  PERHATIAN - KEAMANAN & SIKLUS HIDUP AKUN INI
  * =====================================================================
  *  Seeder ini membuat satu akun khusus untuk monitoring sistem selama
  *  fase penelitian. Akses universal diberikan melalui peran "Peneliti"
- *  di database — Gate::before di AppServiceProvider mengecek peran ini
+ *  di database - Gate::before di AppServiceProvider mengecek peran ini
  *  via Pengguna::isPeneliti().
  *
  *  Prosedur penghapusan akses setelah penelitian selesai:
  *    Hapus akun via UI Admin > Manajemen Pengguna.
- *    Semua akses universal otomatis tercabut — tidak perlu mengubah
+ *    Semua akses universal otomatis tercabut - tidak perlu mengubah
  *    file .env, kode, atau konfigurasi server.
  *
  *  Kredensial login akun peneliti:
@@ -41,7 +41,7 @@ use Illuminate\Database\Seeder;
 class PenelitiSeeder extends Seeder
 {
     /**
-     * NIP peneliti — identifier untuk akun peneliti.
+     * NIP peneliti - identifier untuk akun peneliti.
      */
     public const NIP_PENELITI = 'dosenpeneliti';
 

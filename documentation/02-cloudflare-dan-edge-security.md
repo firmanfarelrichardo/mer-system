@@ -1,6 +1,6 @@
-# 02 — Cloudflare & Edge Security
+# 02 - Cloudflare & Edge Security
 
-> **Sistem**: Medication Error Reporting (MER) — Rumah Sakit  
+> **Sistem**: Medication Error Reporting (MER) - Rumah Sakit  
 > **Klasifikasi**: HIGH-RISK (Data Medis Sensitif / PHI)  
 > **Prasyarat**: Dokumen [01-arsitektur-dan-hardening-os.md](./01-arsitektur-dan-hardening-os.md) sudah selesai dilaksanakan
 
@@ -31,7 +31,7 @@ Cloudflare bertindak sebagai **pos satpam di gerbang utama** rumah sakit digital
 |--------|---------|
 | **DNS Proxied** | Alamat rumah sakit yang tertera di Google Maps menunjuk ke pos satpam, BUKAN langsung ke gedung. Sehingga tidak ada yang tahu lokasi asli gedung. |
 | **WAF (Web Application Firewall)** | Satpam memeriksa setiap tas tamu menggunakan X-ray. Jika ditemukan senjata (SQL injection, XSS), tamu langsung ditolak. |
-| **SSL/TLS Full Strict** | Semua surat yang dikirim dari dan ke rumah sakit dimasukkan ke dalam amplop berlak segel (enkripsi) — baik dari tamu ke satpam, maupun dari satpam ke gedung. |
+| **SSL/TLS Full Strict** | Semua surat yang dikirim dari dan ke rumah sakit dimasukkan ke dalam amplop berlak segel (enkripsi) - baik dari tamu ke satpam, maupun dari satpam ke gedung. |
 | **DDoS Protection** | Jika ada seribu orang datang bersamaan untuk memblokir pintu masuk (DDoS), satpam punya jalur khusus untuk tamu asli dan mengusir kerumunan. |
 | **Origin Certificate** | Sertifikat identitas khusus antara satpam dan gedung. Satpam hanya mau meneruskan tamu ke gedung yang punya sertifikat ini. |
 
@@ -39,11 +39,11 @@ Cloudflare bertindak sebagai **pos satpam di gerbang utama** rumah sakit digital
 
 Cloudflare berfungsi sebagai **reverse proxy edge** yang beroperasi di layer 7 (application layer) dari model OSI. Dengan menempatkan Cloudflare di depan origin server, kita mendapatkan:
 
-1. **IP Masking** — IP asli VPS tersembunyi di balik anycast network Cloudflare (AS13335), mencegah direct-to-origin attacks.
-2. **TLS Termination** — Cloudflare menangani handshake TLS dengan client, mengurangi beban CPU di origin server.
-3. **WAF Inspection** — Setiap HTTP request diinspeksi terhadap ruleset OWASP Core Rule Set dan custom rules sebelum diteruskan ke origin.
-4. **DDoS Mitigation** — Cloudflare menyerap volumetric attacks di edge network mereka yang berkapasitas 209+ Tbps.
-5. **Authenticated Origin Pull** — Koneksi antara Cloudflare dan origin server diverifikasi menggunakan mutual TLS (mTLS) via Origin Certificate.
+1. **IP Masking** - IP asli VPS tersembunyi di balik anycast network Cloudflare (AS13335), mencegah direct-to-origin attacks.
+2. **TLS Termination** - Cloudflare menangani handshake TLS dengan client, mengurangi beban CPU di origin server.
+3. **WAF Inspection** - Setiap HTTP request diinspeksi terhadap ruleset OWASP Core Rule Set dan custom rules sebelum diteruskan ke origin.
+4. **DDoS Mitigation** - Cloudflare menyerap volumetric attacks di edge network mereka yang berkapasitas 209+ Tbps.
+5. **Authenticated Origin Pull** - Koneksi antara Cloudflare dan origin server diverifikasi menggunakan mutual TLS (mTLS) via Origin Certificate.
 
 ---
 
@@ -54,7 +54,7 @@ Cloudflare berfungsi sebagai **reverse proxy edge** yang beroperasi di layer 7 (
 - Domain sudah terdaftar dan nameserver sudah diarahkan ke Cloudflare
 - Akun Cloudflare sudah aktif (free plan sudah cukup untuk fitur yang dibutuhkan)
 
-### Eksekusi — Dashboard Cloudflare
+### Eksekusi - Dashboard Cloudflare
 
 ```
 Navigasi: Cloudflare Dashboard > Domain Anda > DNS > Records
@@ -100,7 +100,7 @@ Cloudflare menawarkan 4 mode SSL:
 > [!CAUTION]
 > **JANGAN gunakan mode "Flexible".** Mode ini menciptakan ilusi keamanan yang berbahaya. User melihat gembok HTTPS di browser, tapi data antara Cloudflare dan server Anda dikirim dalam bentuk teks biasa (HTTP). Untuk sistem yang menangani data medis, ini adalah pelanggaran keamanan fundamental.
 
-### Eksekusi — Dashboard Cloudflare
+### Eksekusi - Dashboard Cloudflare
 
 ```
 Navigasi: Cloudflare Dashboard > Domain Anda > SSL/TLS > Overview
@@ -136,7 +136,7 @@ Navigasi: Cloudflare Dashboard > Domain Anda > SSL/TLS > Edge Certificates
 
 **Versi Sederhana:** Origin Certificate adalah "kartu identitas khusus" antara pos satpam (Cloudflare) dan gedung (VPS). Pos satpam hanya mau mengirim tamu ke gedung yang punya kartu identitas ini. Gedung lain yang mengaku-aku akan ditolak.
 
-### Eksekusi — Generate di Dashboard Cloudflare
+### Eksekusi - Generate di Dashboard Cloudflare
 
 ```
 Navigasi: Cloudflare Dashboard > Domain Anda > SSL/TLS > Origin Server
@@ -153,8 +153,8 @@ Navigasi: Cloudflare Dashboard > Domain Anda > SSL/TLS > Origin Server
 
 3.  Klik **Create**
 4.  Cloudflare akan menampilkan dua blok teks:
-    -   **Origin Certificate** (PEM) — Public certificate
-    -   **Private Key** (PEM) — Kunci privat
+    -   **Origin Certificate** (PEM) - Public certificate
+    -   **Private Key** (PEM) - Kunci privat
 
 > [!CAUTION]
 > **SALIN DAN SIMPAN PRIVATE KEY SEKARANG.** Cloudflare hanya menampilkan private key SEKALI. Jika tab ditutup sebelum disalin, Anda harus membuat sertifikat baru.
@@ -236,7 +236,7 @@ openssl x509 -in /etc/ssl/cloudflare/origin-cert.pem -noout -subject -dates
 
 **Versi Sederhana:** Karena fitur satpam otomatis (Managed WAF) berbayar, kita mendaftarkan 3 aturan khusus (Custom Rules) ke satpam gerbang depan kita (Cloudflare) secara manual. Aturan ini sama amannya, tapi dikhususkan hanya untuk menjaga pintu-pintu rahasia dan gerbang masuk aplikasi kita.
 
-### Eksekusi — Buat Custom WAF Rules
+### Eksekusi - Buat Custom WAF Rules
 
 ```
 Navigasi: Cloudflare Dashboard > Domain Anda > Security > WAF > Custom rules
@@ -305,7 +305,7 @@ Gunakan sintaks berikut pada Expression Builder:
 
 ## 7. Rate Limiting
 
-### Eksekusi — Rate Limiting Rule (Pencegahan Brute-Force Spesifik)
+### Eksekusi - Rate Limiting Rule (Pencegahan Brute-Force Spesifik)
 
 Akun Free Tier memberikan kuota komplementer berupa 1 (satu) Rate Limiting Rule. Kita mendedikasikan rule langka ini khusus mengamankan titik terlemah sistem: formulir Login.
 
@@ -332,7 +332,7 @@ Andaikata peretas handal mampu mengakali "Managed Challenge" pada WAF Rule 2, me
 
 ## 8. Bot Fight Mode & Security Level
 
-### Eksekusi — Dashboard Cloudflare
+### Eksekusi - Dashboard Cloudflare
 
 ```
 Navigasi: Cloudflare Dashboard > Domain Anda > Security > Bots
@@ -360,9 +360,9 @@ Navigasi: Cloudflare Dashboard > Domain Anda > Security > Settings
 
 **Versi Formal:** Halaman yang menampilkan data medis pasien (PHI) tidak boleh di-cache di edge server Cloudflare karena data tersebut bersifat per-user dan sensitif. Hanya static assets (CSS, JS, gambar) yang boleh di-cache. Salah konfigurasi caching bisa menyebabkan data pasien A terlihat oleh pasien B (*cache poisoning*).
 
-**Versi Sederhana:** Cloudflare tidak boleh menyimpan salinan halaman yang berisi data pasien. Seperti resepsionis yang tidak boleh menyimpan fotokopi rekam medis pasien — harus selalu minta asli langsung dari dokter (origin server).
+**Versi Sederhana:** Cloudflare tidak boleh menyimpan salinan halaman yang berisi data pasien. Seperti resepsionis yang tidak boleh menyimpan fotokopi rekam medis pasien - harus selalu minta asli langsung dari dokter (origin server).
 
-### Eksekusi — Konfigurasi Caching
+### Eksekusi - Konfigurasi Caching
 
 ```
 Navigasi: Cloudflare Dashboard > Domain Anda > Caching > Configuration
@@ -373,7 +373,7 @@ Navigasi: Cloudflare Dashboard > Domain Anda > Caching > Configuration
 | **Caching Level** | Standard | Caching berdasarkan query string |
 | **Browser Cache TTL** | Respect Existing Headers | Nginx sudah mengatur cache header per tipe file |
 
-### Eksekusi — Cache Rules
+### Eksekusi - Cache Rules
 
 ```
 Navigasi: Cloudflare Dashboard > Domain Anda > Caching > Cache Rules
@@ -489,4 +489,4 @@ curl -sk --connect-timeout 5 https://<IP_VPS_ANDA>
 
 ---
 
-> **Dokumen selanjutnya:** [03-docker-production-staging.md](./03-docker-production-staging.md) — Struktur folder server, Docker Compose production & staging, network isolation, dan pengamanan port dari jebakan UFW.
+> **Dokumen selanjutnya:** [03-docker-production-staging.md](./03-docker-production-staging.md) - Struktur folder server, Docker Compose production & staging, network isolation, dan pengamanan port dari jebakan UFW.

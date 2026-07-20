@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Support;
 
 /**
- * Helper Paginasi — sentralisasi konfigurasi per-halaman.
+ * Helper Paginasi - sentralisasi konfigurasi per-halaman.
  *
  * Digunakan oleh seluruh controller yang menerima `per_halaman`
  * dari query string. Satu tempat untuk mengubah opsi/default global.

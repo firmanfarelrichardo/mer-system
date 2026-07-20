@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Insiden — {{ $insiden->nomor_laporan ?? 'Draft' }}</title>
+    <title>Laporan Insiden - {{ $insiden->nomor_laporan ?? 'Draft' }}</title>
     <style>
         /* 1. ZONA AMAN KERTAS (Margin Absolut) */
         @page {

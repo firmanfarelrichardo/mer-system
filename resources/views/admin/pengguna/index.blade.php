@@ -9,7 +9,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Manajemen Pengguna — Sistem MER')
+@section('judul', 'Manajemen Pengguna - Sistem MER')
 
 @section('konten')
 
@@ -184,7 +184,7 @@
                                 <td class="px-5 py-3 font-mono text-xs text-slate-600">{{ $akun->nomor_induk }}</td>
 
                                 {{-- Username --}}
-                                <td class="px-5 py-3 font-mono text-xs text-slate-500">{{ $akun->username ?? '—' }}</td>
+                                <td class="px-5 py-3 font-mono text-xs text-slate-500">{{ $akun->username ?? '-' }}</td>
 
                                 {{-- Email --}}
                                 <td class="px-5 py-3 text-slate-600">{{ $akun->email }}</td>
@@ -202,7 +202,7 @@
 
                                 {{-- Unit Kerja --}}
                                 <td class="px-5 py-3 text-slate-600">
-                                    {{ $akun->unitKerja?->nama_unit ?? '—' }}
+                                    {{ $akun->unitKerja?->nama_unit ?? '-' }}
                                 </td>
 
                                 {{-- Status --}}
@@ -231,7 +231,7 @@
                                         <span class="block">{{ $akun->terakhir_login_pada->format('d M Y') }}</span>
                                         <span class="text-slate-500">{{ $akun->terakhir_login_pada->format('H:i:s') }}</span>
                                     @else
-                                        <span class="text-slate-500">—</span>
+                                        <span class="text-slate-500">-</span>
                                     @endif
                                 </td>
 
@@ -318,7 +318,7 @@
 @endsection
 
 {{-- ================================================================
-     Modal Hasil Reset Sandi — ditampilkan setelah reset berhasil.
+     Modal Hasil Reset Sandi - ditampilkan setelah reset berhasil.
      Menampilkan sandi acak + tombol kirim via WhatsApp.
      ================================================================ --}}
 <div id="modal-hasil-reset"

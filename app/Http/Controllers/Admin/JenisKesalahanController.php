@@ -14,7 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Controller Manajemen Jenis Kesalahan — CRUD master jenis kesalahan oleh Admin.
+ * Controller Manajemen Jenis Kesalahan - CRUD master jenis kesalahan oleh Admin.
  *
  * Alur: Controller → DTO → Service → Repository → Database
  * Audit log dicatat otomatis oleh Observer.
@@ -26,7 +26,7 @@ class JenisKesalahanController extends Controller
     ) {}
 
     /* ------------------------------------------------------------------
-     | INDEX — Daftar Jenis Kesalahan + Filter
+     | INDEX - Daftar Jenis Kesalahan + Filter
      | ----------------------------------------------------------------*/
 
     public function index(Request $request): View
@@ -43,7 +43,7 @@ class JenisKesalahanController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | STORE — Simpan Jenis Kesalahan Baru
+     | STORE - Simpan Jenis Kesalahan Baru
      | ----------------------------------------------------------------*/
 
     public function simpan(SimpanMasterFormRequest $request): RedirectResponse
@@ -59,7 +59,7 @@ class JenisKesalahanController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | UPDATE — Perbarui Data Jenis Kesalahan
+     | UPDATE - Perbarui Data Jenis Kesalahan
      | ----------------------------------------------------------------*/
 
     public function perbarui(SimpanMasterFormRequest $request, int $id): RedirectResponse
@@ -78,7 +78,7 @@ class JenisKesalahanController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | TOGGLE — Ubah Status Aktif/Nonaktif
+     | TOGGLE - Ubah Status Aktif/Nonaktif
      | ----------------------------------------------------------------*/
 
     public function toggleAktif(int $id): RedirectResponse
@@ -97,7 +97,7 @@ class JenisKesalahanController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | DESTROY — Hapus Jenis Kesalahan (Soft Delete)
+     | DESTROY - Hapus Jenis Kesalahan (Soft Delete)
      | ----------------------------------------------------------------*/
 
     public function hapus(int $id): RedirectResponse

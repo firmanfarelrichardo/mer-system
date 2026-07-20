@@ -14,7 +14,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Profil Saya — Sistem MER')
+@section('judul', 'Profil Saya - Sistem MER')
 
 @section('konten')
 
@@ -22,12 +22,12 @@
         // $pengguna dikirim dari ProfilController
         $namaLengkap   = $pengguna->nama_lengkap;
         $daftarPeran   = $pengguna->daftarPeran();
-        $peranUtama    = $daftarPeran[0] ?? '—';
-        $namaUnit      = $pengguna->unitKerja?->nama_unit ?? '—';
-        $loginTerakhir = $pengguna->terakhir_login_pada?->translatedFormat('d F Y, H:i') ?? '—';
-        $terdaftarPada = $pengguna->created_at?->translatedFormat('d F Y') ?? '—';
-        $jabatan       = $pengguna->jabatan ?? '—';
-        $tglBergabung  = $pengguna->tanggal_bergabung_unit?->translatedFormat('d F Y') ?? '—';
+        $peranUtama    = $daftarPeran[0] ?? '-';
+        $namaUnit      = $pengguna->unitKerja?->nama_unit ?? '-';
+        $loginTerakhir = $pengguna->terakhir_login_pada?->translatedFormat('d F Y, H:i') ?? '-';
+        $terdaftarPada = $pengguna->created_at?->translatedFormat('d F Y') ?? '-';
+        $jabatan       = $pengguna->jabatan ?? '-';
+        $tglBergabung  = $pengguna->tanggal_bergabung_unit?->translatedFormat('d F Y') ?? '-';
 
         // Inisial untuk avatar besar
         $inisial = collect(explode(' ', $namaLengkap))
@@ -69,7 +69,7 @@
                         {{ $inisial }}
                     </div>
                     <h2 class="mt-4 text-lg font-semibold text-slate-800">{{ $namaLengkap }}</h2>
-                    @if ($jabatan !== '—')
+                    @if ($jabatan !== '-')
                         <p class="mt-0.5 text-sm text-slate-400">{{ $jabatan }}</p>
                     @endif
 
@@ -114,7 +114,7 @@
                                      1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25
                                      2.25 0 0 1-1.07-1.916V6.75" />
                         </svg>
-                        <span class="text-slate-600">{{ $pengguna->email ?? '—' }}</span>
+                        <span class="text-slate-600">{{ $pengguna->email ?? '-' }}</span>
                     </div>
                 </div>
             </div>
@@ -139,15 +139,15 @@
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-400">Username</label>
-                        <p class="font-mono text-sm font-medium text-slate-800">{{ $pengguna->username ?? '—' }}</p>
+                        <p class="font-mono text-sm font-medium text-slate-800">{{ $pengguna->username ?? '-' }}</p>
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-400">Email</label>
-                        <p class="text-sm font-medium text-slate-800">{{ $pengguna->email ?? '—' }}</p>
+                        <p class="text-sm font-medium text-slate-800">{{ $pengguna->email ?? '-' }}</p>
                     </div>
                     <div>
                         <label class="mb-1 block text-xs font-medium text-slate-400">Nomor Telepon</label>
-                        <p class="text-sm font-medium text-slate-800">{{ $pengguna->nomor_hp ?? '—' }}</p>
+                        <p class="text-sm font-medium text-slate-800">{{ $pengguna->nomor_hp ?? '-' }}</p>
                     </div>
                 </div>
             </div>

@@ -14,7 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Controller Manajemen Faktor Penyebab — CRUD master faktor penyebab oleh Admin.
+ * Controller Manajemen Faktor Penyebab - CRUD master faktor penyebab oleh Admin.
  *
  * Alur: Controller → DTO → Service → Repository → Database
  * Audit log dicatat otomatis oleh Observer.
@@ -26,7 +26,7 @@ class FaktorPenyebabController extends Controller
     ) {}
 
     /* ------------------------------------------------------------------
-     | INDEX — Daftar Faktor Penyebab + Filter
+     | INDEX - Daftar Faktor Penyebab + Filter
      | ----------------------------------------------------------------*/
 
     public function index(Request $request): View
@@ -43,7 +43,7 @@ class FaktorPenyebabController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | STORE — Simpan Faktor Penyebab Baru
+     | STORE - Simpan Faktor Penyebab Baru
      | ----------------------------------------------------------------*/
 
     public function simpan(SimpanMasterFormRequest $request): RedirectResponse
@@ -59,7 +59,7 @@ class FaktorPenyebabController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | UPDATE — Perbarui Data Faktor Penyebab
+     | UPDATE - Perbarui Data Faktor Penyebab
      | ----------------------------------------------------------------*/
 
     public function perbarui(SimpanMasterFormRequest $request, int $id): RedirectResponse
@@ -78,7 +78,7 @@ class FaktorPenyebabController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | TOGGLE — Ubah Status Aktif/Nonaktif
+     | TOGGLE - Ubah Status Aktif/Nonaktif
      | ----------------------------------------------------------------*/
 
     public function toggleAktif(int $id): RedirectResponse
@@ -97,7 +97,7 @@ class FaktorPenyebabController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | DESTROY — Hapus Faktor Penyebab (Soft Delete)
+     | DESTROY - Hapus Faktor Penyebab (Soft Delete)
      | ----------------------------------------------------------------*/
 
     public function hapus(int $id): RedirectResponse

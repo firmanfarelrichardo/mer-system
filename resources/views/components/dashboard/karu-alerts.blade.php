@@ -7,9 +7,9 @@
 | dan timeline aktivitas terbaru.
 |
 | Props:
-|   $data      — array ['menunggu_tindak_lanjut', 'sla_breach',
+|   $data      - array ['menunggu_tindak_lanjut', 'sla_breach',
 |                        'aktivitas_terbaru', 'ringkasan_status']
-|   $pengguna  — App\Models\Pengguna
+|   $pengguna  - App\Models\Pengguna
 |--------------------------------------------------------------------------
 --}}
 
@@ -18,7 +18,7 @@
 <div class="space-y-6">
 
     {{-- ================================================================
-         SLA ALERT BANNER — hanya muncul jika ada breach
+         SLA ALERT BANNER - hanya muncul jika ada breach
          ================================================================ --}}
     @if ($data['sla_breach'] > 0)
         <div class="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
@@ -35,7 +35,7 @@
     @endif
 
     {{-- ================================================================
-         RINGKASAN ANGKA — 4 kartu metrik
+         RINGKASAN ANGKA - 4 kartu metrik
          ================================================================ --}}
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
 
@@ -66,7 +66,7 @@
     </div>
 
     {{-- ================================================================
-         DISTRIBUSI STATUS — mini bar horizontal
+         DISTRIBUSI STATUS - mini bar horizontal
          ================================================================ --}}
     @php
         $totalUnit = array_sum($data['ringkasan_status']);
@@ -103,7 +103,7 @@
     </div>
 
     {{-- ================================================================
-         TIMELINE AKTIVITAS TERBARU — 5 entri terakhir
+         TIMELINE AKTIVITAS TERBARU - 5 entri terakhir
          ================================================================ --}}
     <div class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
         <p class="mb-4 text-sm font-semibold text-slate-700">Aktivitas Terbaru di Unit Anda</p>
@@ -139,7 +139,7 @@
                         </span>
                     </p>
                     <p class="mt-0.5 text-xs text-slate-400">
-                        {{ $tl->insiden?->nomor_laporan ?? '—' }}
+                        {{ $tl->insiden?->nomor_laporan ?? '-' }}
                         &nbsp;·&nbsp;
                         {{ $tl->created_at->diffForHumans() }}
                     </p>

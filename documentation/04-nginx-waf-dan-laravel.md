@@ -1,6 +1,6 @@
-# 04 — Nginx Reverse Proxy, Security Headers & Laravel Optimization
+# 04 - Nginx Reverse Proxy, Security Headers & Laravel Optimization
 
-> **Sistem**: Medication Error Reporting (MER) — Rumah Sakit  
+> **Sistem**: Medication Error Reporting (MER) - Rumah Sakit  
 > **Klasifikasi**: HIGH-RISK (Data Medis Sensitif / PHI)  
 > **Prasyarat**: Dokumen [01](./01-arsitektur-dan-hardening-os.md), [02](./02-cloudflare-dan-edge-security.md), dan [03](./03-docker-production-staging.md) sudah dilaksanakan
 
@@ -15,7 +15,7 @@
 5. [Konfigurasi SSL untuk Origin Certificate](#5-konfigurasi-ssl-untuk-origin-certificate)
 6. [Optimasi PHP-FPM](#6-optimasi-php-fpm)
 7. [Konfigurasi PHP.ini Production](#7-konfigurasi-phpini-production)
-8. [Supervisord — Multi-Process Container](#8-supervisord--multi-process-container)
+8. [Supervisord - Multi-Process Container](#8-supervisord--multi-process-container)
 9. [Resolusi Konflik Izin Host-Container (UID/GID)](#9-resolusi-konflik-izin-host-container-uidgid)
 10. [First-Time Initialization (Inisialisasi Pertama)](#10-first-time-initialization-inisialisasi-pertama)
 11. [Startup Script Laravel (Entrypoint)](#11-startup-script-laravel-entrypoint)
@@ -42,12 +42,12 @@ Nginx berperan sebagai **resepsionis rumah sakit**:
 
 Nginx berfungsi sebagai **Layer 7 reverse proxy** yang menangani:
 
-1. **TLS Termination** — Mendekripsi HTTPS dari Cloudflare menggunakan Origin Certificate
-2. **Static Asset Serving** — Menyajikan file statis dengan zero-copy sendfile() tanpa melibatkan PHP
-3. **Request Routing** — Meneruskan request dinamis ke PHP-FPM upstream via FastCGI protocol
-4. **Security Enforcement** — Menambahkan HTTP security headers dan memblokir akses ke path sensitif
-5. **Rate Limiting** — Membatasi request rate per IP menggunakan leaky bucket algorithm
-6. **Connection Management** — Mengelola keep-alive connections dan mengoptimasi TCP parameters
+1. **TLS Termination** - Mendekripsi HTTPS dari Cloudflare menggunakan Origin Certificate
+2. **Static Asset Serving** - Menyajikan file statis dengan zero-copy sendfile() tanpa melibatkan PHP
+3. **Request Routing** - Meneruskan request dinamis ke PHP-FPM upstream via FastCGI protocol
+4. **Security Enforcement** - Menambahkan HTTP security headers dan memblokir akses ke path sensitif
+5. **Rate Limiting** - Membatasi request rate per IP menggunakan leaky bucket algorithm
+6. **Connection Management** - Mengelola keep-alive connections dan mengoptimasi TCP parameters
 
 ---
 
@@ -353,12 +353,12 @@ http {
 
 | Header | Nilai | Serangan yang Dicegah | Dampak Jika Tidak Ada |
 |--------|-------|----------------------|----------------------|
-| `X-Frame-Options` | `SAMEORIGIN` | **Clickjacking** — Attacker menyembunyikan halaman MER di dalam iframe transparan di situs lain | User bisa diklik-jebak untuk submit form tanpa sadar |
-| `X-Content-Type-Options` | `nosniff` | **MIME Sniffing** — Browser menebak tipe file dan mengeksekusi file upload sebagai JavaScript | File upload berbahaya bisa dieksekusi |
-| `Strict-Transport-Security` | `max-age=31536000` | **SSL Stripping** — Attacker downgrade HTTPS ke HTTP | Data medis terkirim tanpa enkripsi |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | **Information Leakage** — URL yang mengandung ID pasien bocor lewat header Referer | ID pasien terekspos ke situs eksternal |
-| `Permissions-Policy` | `camera=(), microphone=()...` | **Unauthorized Hardware Access** — Skrip jahat mengaktifkan kamera/mikrofon | Privasi user dikompromikan |
-| `Content-Security-Policy` | `default-src 'self'...` | **XSS, Code Injection** — Skrip dari domain asing dieksekusi di browser | Attacker bisa mencuri session/data |
+| `X-Frame-Options` | `SAMEORIGIN` | **Clickjacking** - Attacker menyembunyikan halaman MER di dalam iframe transparan di situs lain | User bisa diklik-jebak untuk submit form tanpa sadar |
+| `X-Content-Type-Options` | `nosniff` | **MIME Sniffing** - Browser menebak tipe file dan mengeksekusi file upload sebagai JavaScript | File upload berbahaya bisa dieksekusi |
+| `Strict-Transport-Security` | `max-age=31536000` | **SSL Stripping** - Attacker downgrade HTTPS ke HTTP | Data medis terkirim tanpa enkripsi |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | **Information Leakage** - URL yang mengandung ID pasien bocor lewat header Referer | ID pasien terekspos ke situs eksternal |
+| `Permissions-Policy` | `camera=(), microphone=()...` | **Unauthorized Hardware Access** - Skrip jahat mengaktifkan kamera/mikrofon | Privasi user dikompromikan |
+| `Content-Security-Policy` | `default-src 'self'...` | **XSS, Code Injection** - Skrip dari domain asing dieksekusi di browser | Attacker bisa mencuri session/data |
 
 ---
 
@@ -541,7 +541,7 @@ Penjelasan setiap parameter kunci:
 
 ---
 
-## 8. Supervisord — Multi-Process Container
+## 8. Supervisord - Multi-Process Container
 
 ### Mengapa Supervisord?
 
@@ -670,7 +670,7 @@ stderr_logfile_maxbytes=0
 Pada VPS 2 Core dengan memory limit 1536MB untuk container app, satu queue worker sudah cukup untuk throughput rumah sakit (< 100 jobs/jam). Menambah worker berarti menambah konsumsi RAM (~50MB per worker) yang merenggut dari pool PHP-FPM. Jika traffic meningkat signifikan, naikkan `numprocs` ke 2-3 sambil memperhatikan memory usage.
 
 > [!IMPORTANT]
-> **Queue Worker dan Scheduler WAJIB berjalan di production.** Tanpa queue worker, semua background jobs (notifikasi email insiden medis, PDF generation) tidak akan terproses — tertumpuk di Redis tanpa disentu. Tanpa scheduler, tugas terjadwal (cleanup session, reminder) tidak akan tereksekusi.
+> **Queue Worker dan Scheduler WAJIB berjalan di production.** Tanpa queue worker, semua background jobs (notifikasi email insiden medis, PDF generation) tidak akan terproses - tertumpuk di Redis tanpa disentu. Tanpa scheduler, tugas terjadwal (cleanup session, reminder) tidak akan tereksekusi.
 
 ---
 
@@ -680,7 +680,7 @@ Pada VPS 2 Core dengan memory limit 1536MB untuk container app, satu queue worke
 
 **Versi Formal:** Saat Docker container menjalankan PHP-FPM sebagai user `www-data` (UID 33), dan volume yang di-mount dari host dimiliki oleh user `mer_ops` (UID 1000), terjadi UID/GID mismatch. PHP-FPM tidak bisa menulis ke direktori `storage/logs`, `storage/framework/cache`, `storage/framework/sessions`, dan `bootstrap/cache` karena filesystem permission menolak akses dari UID 33. Ini menghasilkan **Error 500 (Permission Denied)** yang terlihat di browser tanpa informasi diagnostik apapun (karena log file pun tidak bisa ditulis).
 
-**Versi Sederhana:** Bayangkan dokter (PHP-FPM/www-data) diminta menulis catatan di ruang arsip (storage/), tapi ruangan itu hanya bisa dibuka oleh petugas IT (mer_ops). Dokter berdiri di depan pintu terkunci — tidak bisa menulis, tidak bisa melaporkan masalah (log tidak bisa ditulis), sistem hanya menunjukkan "Error 500" di layar tanpa penjelasan.
+**Versi Sederhana:** Bayangkan dokter (PHP-FPM/www-data) diminta menulis catatan di ruang arsip (storage/), tapi ruangan itu hanya bisa dibuka oleh petugas IT (mer_ops). Dokter berdiri di depan pintu terkunci - tidak bisa menulis, tidak bisa melaporkan masalah (log tidak bisa ditulis), sistem hanya menunjukkan "Error 500" di layar tanpa penjelasan.
 
 ### Peta Konflik UID/GID
 
@@ -701,7 +701,7 @@ Pada VPS 2 Core dengan memory limit 1536MB untuk container app, satu queue worke
 | `storage/app/` | PHP-FPM (www-data) | File upload (dokumen insiden medis) |
 | `bootstrap/cache/` | PHP-FPM (www-data) | Cache autoloader dan konfigurasi |
 
-### Eksekusi — Sinkronisasi Permission dari Host
+### Eksekusi - Sinkronisasi Permission dari Host
 
 > **Konteks Eksekusi:** `User: mer_ops @ VPS`
 
@@ -726,7 +726,7 @@ sudo chown -R 33:33 bootstrap/cache/
 # File:      664 = owner+group bisa baca/tulis, others bisa baca
 #
 # Mengapa 775/664 (bukan 777)?
-# 777 memberikan write access ke SEMUA user di sistem — kerentanan keamanan.
+# 777 memberikan write access ke SEMUA user di sistem - kerentanan keamanan.
 # 775/664 membatasi write hanya ke owner (www-data) dan group,
 # sementara user lain hanya bisa membaca.
 sudo find storage/ -type d -exec chmod 775 {} \;
@@ -770,13 +770,13 @@ chmod -R 775 /var/www/html/bootstrap/cache
 
 ### Mengapa Perlu Urutan Eksekusi Statis?
 
-**Versi Formal:** Laravel membutuhkan serangkaian perintah inisialisasi yang harus dijalankan dalam urutan spesifik saat pertama kali di-deploy. Masing-masing perintah memiliki dependensi terhadap output perintah sebelumnya. Melewatkan satu langkah atau menjalankan dalam urutan yang salah menghasilkan error yang sulit didiagnosis — mulai dari "No application encryption key has been specified" hingga "SQLSTATE connection refused".
+**Versi Formal:** Laravel membutuhkan serangkaian perintah inisialisasi yang harus dijalankan dalam urutan spesifik saat pertama kali di-deploy. Masing-masing perintah memiliki dependensi terhadap output perintah sebelumnya. Melewatkan satu langkah atau menjalankan dalam urutan yang salah menghasilkan error yang sulit didiagnosis - mulai dari "No application encryption key has been specified" hingga "SQLSTATE connection refused".
 
 **Versi Sederhana:** Ini seperti prosedur membuka rumah sakit baru: pertama pasang alat medis (composer install), lalu buat kunci brankas (key:generate), siapkan ruang arsip (migrate), dan pasang petunjuk arah (storage:link). Jika langkah-langkah ini dilakukan tanpa urutan, rumah sakit tidak bisa beroperasi.
 
 ### Urutan Eksekusi (Wajib Diikuti)
 
-> **Konteks Eksekusi:** `User: mer_ops @ VPS` — jalankan setelah `docker compose up -d` pertama
+> **Konteks Eksekusi:** `User: mer_ops @ VPS` - jalankan setelah `docker compose up -d` pertama
 
 ```bash
 # ================================================================
@@ -856,7 +856,7 @@ docker exec production-app-1 \
 # (https://mers-rsryacudu.com/storage/foto-insiden.jpg).
 #
 # Tanpa symlink ini, semua file upload tidak bisa ditampilkan
-# di browser — user melihat gambar rusak (broken image).
+# di browser - user melihat gambar rusak (broken image).
 docker exec production-app-1 \
     php artisan storage:link --no-interaction
 
@@ -930,7 +930,7 @@ STEP 5: config/route/view cache
 ```
 
 > [!WARNING]
-> **JANGAN jalankan `key:generate` di production yang sudah berjalan** kecuali Anda yakin belum ada data terenkripsi. Mengganti APP_KEY akan membuat semua data yang di-encrypt dengan key lama tidak bisa di-decrypt — termasuk session aktif pengguna, password reset tokens, dan data medis terenkripsi.
+> **JANGAN jalankan `key:generate` di production yang sudah berjalan** kecuali Anda yakin belum ada data terenkripsi. Mengganti APP_KEY akan membuat semua data yang di-encrypt dengan key lama tidak bisa di-decrypt - termasuk session aktif pengguna, password reset tokens, dan data medis terenkripsi.
 
 ---
 
@@ -978,7 +978,7 @@ File referensi: [`deployment/production/docker-entrypoint.sh`](../deployment/pro
 | **CI/CD pipeline** | Otomatis, auditable | Membutuhkan infrastruktur CI/CD |
 | **Entrypoint (dipilih)** | Otomatis, self-contained | Migration berjalan setiap container start (idempoten karena Laravel migration tracking) |
 
-Laravel migration bersifat **idempoten** — menjalankan `migrate` berulang kali tidak mengubah apapun jika semua migration sudah dijalankan. Ini aman untuk diletakkan di entrypoint.
+Laravel migration bersifat **idempoten** - menjalankan `migrate` berulang kali tidak mengubah apapun jika semua migration sudah dijalankan. Ini aman untuk diletakkan di entrypoint.
 
 ---
 
@@ -1061,4 +1061,4 @@ docker exec production-app-1 supervisorctl status
 
 ---
 
-> **Dokumen selanjutnya:** [05-monitoring-dan-backup-strategy.md](./05-monitoring-dan-backup-strategy.md) — Setup Grafana Loki untuk log audit medis, metrik sistem ringan, dan backup PostgreSQL terenkripsi harian.
+> **Dokumen selanjutnya:** [05-monitoring-dan-backup-strategy.md](./05-monitoring-dan-backup-strategy.md) - Setup Grafana Loki untuk log audit medis, metrik sistem ringan, dan backup PostgreSQL terenkripsi harian.

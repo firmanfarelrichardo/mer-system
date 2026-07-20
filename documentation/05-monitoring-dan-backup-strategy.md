@@ -1,6 +1,6 @@
-# 05 — Monitoring, Log Audit & Backup Strategy
+# 05 - Monitoring, Log Audit & Backup Strategy
 
-> **Sistem**: Medication Error Reporting (MER) — Rumah Sakit  
+> **Sistem**: Medication Error Reporting (MER) - Rumah Sakit  
 > **Klasifikasi**: HIGH-RISK (Data Medis Sensitif / PHI)  
 > **Spesifikasi VPS**: 2 Core CPU, 8GB RAM, 100GB SSD  
 > **Prasyarat**: Dokumen [01](./01-arsitektur-dan-hardening-os.md) s/d [04](./04-nginx-waf-dan-laravel.md) sudah dilaksanakan
@@ -15,8 +15,8 @@
 3. [Uptime Kuma (Uptime & Health Monitoring)](#3-uptime-kuma-uptime--health-monitoring)
 4. [Netdata (Lightweight System Metrics)](#4-netdata-lightweight-system-metrics)
 5. [Log Audit Medis di Laravel](#5-log-audit-medis-di-laravel)
-6. [Sentry — Exception & Error Tracking](#6-sentry--exception--error-tracking)
-7. [Backup Strategy — PostgreSQL Terenkripsi](#7-backup-strategy--postgresql-terenkripsi)
+6. [Sentry - Exception & Error Tracking](#6-sentry--exception--error-tracking)
+7. [Backup Strategy - PostgreSQL Terenkripsi](#7-backup-strategy--postgresql-terenkripsi)
 8. [Skrip Backup Otomatis Harian](#8-skrip-backup-otomatis-harian)
 9. [Restore Prosedur](#9-restore-prosedur)
 10. [Verifikasi](#10-verifikasi)
@@ -53,7 +53,7 @@ Mengingat aplikasi `production` berstatus *live* dan menangani data medis (*High
 
 **Versi Formal:** ELK Stack (Elasticsearch, Logstash, Kibana) membutuhkan minimal 4GB RAM hanya untuk Elasticsearch saja. Pada VPS dengan 8GB RAM yang sudah menjalankan PostgreSQL, Redis, PHP-FPM, dan Nginx, menggunakan ELK akan menyebabkan resource contention dan OOM (Out of Memory) kills.
 
-**Versi Sederhana:** ELK seperti mobil mewah — fitur lengkap tapi boros bensin. VPS kita hanya punya tangki bensin kecil (8GB RAM). Kita pilih motor irit (Loki + Promtail) yang tetap bisa mengantarkan kita ke tujuan yang sama: melihat log terpusat.
+**Versi Sederhana:** ELK seperti mobil mewah - fitur lengkap tapi boros bensin. VPS kita hanya punya tangki bensin kecil (8GB RAM). Kita pilih motor irit (Loki + Promtail) yang tetap bisa mengantarkan kita ke tujuan yang sama: melihat log terpusat.
 
 ### Stack Monitoring yang Dipilih
 
@@ -76,7 +76,7 @@ Mengingat aplikasi `production` berstatus *live* dan menangani data medis (*High
 
 **Versi Sederhana:** Loki seperti sistem arsip rumah sakit. Bukan menyimpan fotokopi setiap halaman rekam medis (full-text index), tapi hanya katalog kartu (label index). Saat butuh rekam medis tertentu, baru buka lemari yang tepat berdasarkan katalog.
 
-### Docker Compose — Monitoring Stack
+### Docker Compose - Monitoring Stack
 
 > **Lokasi file:** `/var/www/mer-system/production/deployment/production/docker-compose.monitoring.yml`
 
@@ -91,7 +91,7 @@ Mengingat aplikasi `production` berstatus *live* dan menangani data medis (*High
 
 services:
   # -------------------------------------------
-  # Grafana Loki — Log Aggregation Engine
+  # Grafana Loki - Log Aggregation Engine
   # -------------------------------------------
   loki:
     image: grafana/loki:2.9.4
@@ -113,7 +113,7 @@ services:
           memory: 64M
 
   # -------------------------------------------
-  # Promtail — Log Collector
+  # Promtail - Log Collector
   # Membaca log dari Docker containers dan file sistem,
   # lalu mengirimnya ke Loki.
   # -------------------------------------------
@@ -139,7 +139,7 @@ services:
           memory: 32M
 
   # -------------------------------------------
-  # Grafana — Dashboard & Visualization
+  # Grafana - Dashboard & Visualization
   # -------------------------------------------
   grafana:
     image: grafana/grafana:10.3.1
@@ -165,7 +165,7 @@ services:
           memory: 64M
 
   # -------------------------------------------
-  # Uptime Kuma — Health & Uptime Monitoring
+  # Uptime Kuma - Health & Uptime Monitoring
   # -------------------------------------------
   uptime-kuma:
     image: louislam/uptime-kuma:1
@@ -235,7 +235,7 @@ schema_config:
         period: 24h
 
 limits_config:
-  # Retensi log 30 hari — cukup untuk audit trail medis bulanan.
+  # Retensi log 30 hari - cukup untuk audit trail medis bulanan.
   # Log lebih lama diarsip melalui backup script.
   retention_period: 720h
   ingestion_rate_mb: 4
@@ -391,7 +391,7 @@ ssh -L 3000:127.0.0.1:3000 -L 3001:127.0.0.1:3001 -p 49152 mer_ops@<IP_VPS_ANDA>
 #   Uptime Kuma: http://localhost:3001
 ```
 
-### Setup Grafana — Tambahkan Loki sebagai Data Source
+### Setup Grafana - Tambahkan Loki sebagai Data Source
 
 1. Login Grafana (`admin` / password dari env var)
 2. Navigasi: **Connections > Data sources > Add data source**
@@ -559,7 +559,7 @@ Log ini otomatis dikumpulkan oleh Promtail (via Docker container log atau file m
 
 ---
 
-## 6. Sentry — Exception & Error Tracking
+## 6. Sentry - Exception & Error Tracking
 
 ### Mengapa Sentry Berbeda dari Loki?
 
@@ -622,7 +622,7 @@ return [
 
 ---
 
-## 7. Backup Strategy — PostgreSQL Terenkripsi
+## 7. Backup Strategy - PostgreSQL Terenkripsi
 
 ### Prinsip Backup 3-2-1
 
@@ -682,7 +682,7 @@ DB_DATABASE=$(grep "^DB_DATABASE=" "$ENV_FILE" | cut -d= -f2 | tr -d '"' | tr -d
 DB_USERNAME=$(grep "^DB_USERNAME=" "$ENV_FILE" | cut -d= -f2 | tr -d '"' | tr -d "'")
 DB_PASSWORD=$(grep "^DB_PASSWORD=" "$ENV_FILE" | cut -d= -f2 | tr -d '"' | tr -d "'")
 
-# Key enkripsi — disimpan di file terpisah dengan permission ketat.
+# Key enkripsi - disimpan di file terpisah dengan permission ketat.
 # File ini harus dibuat manual saat setup awal:
 #   openssl rand -base64 32 > /opt/mer-system/.backup-encryption-key
 #   chmod 600 /opt/mer-system/.backup-encryption-key
@@ -747,12 +747,12 @@ rm -f "${BACKUP_DIR}/mer_db_${TIMESTAMP}.sql.gz"
 ENCRYPTED_SIZE=$(du -h "$BACKUP_PATH" | cut -f1)
 log "Step 2/4: Enkripsi selesai. Ukuran final: $ENCRYPTED_SIZE"
 
-# Step 3: Rotasi — hapus backup lebih lama dari RETENTION_DAYS hari
+# Step 3: Rotasi - hapus backup lebih lama dari RETENTION_DAYS hari
 log "Step 3/4: Rotasi backup (retensi ${RETENTION_DAYS} hari)..."
 DELETED_COUNT=$(find "$BACKUP_DIR" -name "mer_db_*.sql.gz.enc" -mtime +${RETENTION_DAYS} -delete -printf '%f\n' | wc -l)
 log "Step 3/4: $DELETED_COUNT backup lama dihapus."
 
-# Step 4: Upload ke offsite storage (opsional — perlu setup rclone)
+# Step 4: Upload ke offsite storage (opsional - perlu setup rclone)
 # Jika rclone sudah dikonfigurasi, uncomment blok berikut:
 # log "Step 4/4: Mengupload ke offsite storage..."
 # rclone copy "$BACKUP_PATH" remote:mer-backups/database/ --log-file="$LOG_FILE" --log-level INFO
@@ -819,7 +819,7 @@ cat /var/log/mer-system/backup.log
 ```bash
 # === Prosedur Restore Database ===
 
-# Variabel — sesuaikan dengan backup yang ingin di-restore
+# Variabel - sesuaikan dengan backup yang ingin di-restore
 BACKUP_FILE="/var/www/mer-system/shared/backups/mer_db_20260314_020000.sql.gz.enc"
 ENCRYPTION_KEY_FILE="/opt/mer-system/.backup-encryption-key"
 
@@ -957,8 +957,8 @@ rclone copy /var/www/mer-system/shared/backups/ mer-offsite:mer-backups/database
 
 > **Dokumentasi selesai.** Kelima file dokumentasi mencakup seluruh siklus deployment dari hardening OS hingga monitoring dan backup:
 >
-> 1. [01-arsitektur-dan-hardening-os.md](./01-arsitektur-dan-hardening-os.md) — Fondasi keamanan server
-> 2. [02-cloudflare-dan-edge-security.md](./02-cloudflare-dan-edge-security.md) — Perlindungan tepi
-> 3. [03-docker-production-staging.md](./03-docker-production-staging.md) — Containerization & isolasi
-> 4. [04-nginx-waf-dan-laravel.md](./04-nginx-waf-dan-laravel.md) — Web server & aplikasi
-> 5. [05-monitoring-dan-backup-strategy.md](./05-monitoring-dan-backup-strategy.md) — Observability & disaster recovery
+> 1. [01-arsitektur-dan-hardening-os.md](./01-arsitektur-dan-hardening-os.md) - Fondasi keamanan server
+> 2. [02-cloudflare-dan-edge-security.md](./02-cloudflare-dan-edge-security.md) - Perlindungan tepi
+> 3. [03-docker-production-staging.md](./03-docker-production-staging.md) - Containerization & isolasi
+> 4. [04-nginx-waf-dan-laravel.md](./04-nginx-waf-dan-laravel.md) - Web server & aplikasi
+> 5. [05-monitoring-dan-backup-strategy.md](./05-monitoring-dan-backup-strategy.md) - Observability & disaster recovery

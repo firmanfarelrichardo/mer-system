@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Model JenisKesalahan — maps to `master.jenis_kesalahan`.
+ * Model JenisKesalahan - maps to `master.jenis_kesalahan`.
  *
  * Master data untuk jenis/tipe kesalahan obat yang muncul
  * sebagai checkbox di formulir pelaporan insiden Nakes.

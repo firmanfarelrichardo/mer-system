@@ -86,7 +86,7 @@ services:
 
   # -------------------------------------------
   # PostgreSQL 16 Database
-  # Port di-bind ke 127.0.0.1 (loopback) — BUKAN 0.0.0.0.
+  # Port di-bind ke 127.0.0.1 (loopback) - BUKAN 0.0.0.0.
   # Akses remote via SSH Tunnel saja.
   # -------------------------------------------
   db:

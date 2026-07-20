@@ -44,7 +44,7 @@ class CatatLogAktivitasJob implements ShouldQueue
     public array $backoff = [5, 15, 30];
 
     /**
-     * Queue khusus untuk audit — pisahkan dari job bisnis utama.
+     * Queue khusus untuk audit - pisahkan dari job bisnis utama.
      */
     public string $queue = 'audit';
 

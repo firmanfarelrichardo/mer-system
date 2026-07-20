@@ -9,7 +9,7 @@ use App\Models\Peran;
 use Illuminate\Database\Seeder;
 
 /**
- * PeranSeeder — Seeds all application roles for the default tenant.
+ * PeranSeeder - Seeds all application roles for the default tenant.
  *
  * Role names are sourced from the Peran model constants so that
  * this seeder and the codebase never drift out of sync.

@@ -10,7 +10,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Master Unit Kerja — Sistem MER')
+@section('judul', 'Master Unit Kerja - Sistem MER')
 
 @php
     $modalAwalBuka = $errors->any();
@@ -21,7 +21,7 @@
 @section('konten')
 
     {{-- ================================================================
-         WRAPPER ALPINE — mengelola state modal
+         WRAPPER ALPINE - mengelola state modal
          ================================================================ --}}
     {{-- x-data pakai single-quote agar @json() (output double-quote) aman di dalam atribut --}}
     <div x-data='{
@@ -168,7 +168,7 @@
                             <tr class="transition-colors hover:bg-slate-50/50">
                                 <td class="px-5 py-3 font-mono text-xs font-medium text-slate-700">{{ $unit->kode_unit }}</td>
                                 <td class="px-5 py-3 font-medium text-slate-800">{{ $unit->nama_unit }}</td>
-                                <td class="px-5 py-3 text-slate-500">{{ $unit->keterangan ?? '—' }}</td>
+                                <td class="px-5 py-3 text-slate-500">{{ $unit->keterangan ?? '-' }}</td>
                                 <td class="px-5 py-3 text-xs text-slate-600">
                                     <span class="block">{{ $unit->created_at?->format('d M Y') }}</span>
                                     <span class="text-slate-500">{{ $unit->created_at?->format('H:i:s') }}</span>
@@ -216,7 +216,7 @@
     </div>
 
     {{-- ================================================================
-         MODAL — Tambah / Edit Unit Kerja
+         MODAL - Tambah / Edit Unit Kerja
          ================================================================ --}}
     <div
         x-show="modalBuka"

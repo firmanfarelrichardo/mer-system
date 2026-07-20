@@ -30,7 +30,7 @@ schema_config:
         period: 24h
 
 limits_config:
-  # Retensi log 30 hari — cukup untuk audit trail medis bulanan.
+  # Retensi log 30 hari - cukup untuk audit trail medis bulanan.
   # Log lebih lama diarsip melalui backup script.
   retention_period: 720h
   ingestion_rate_mb: 4

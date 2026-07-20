@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Tambahkan kolom jabatan dan tanggal_bergabung_unit ke akun.pengguna.
  *
- * jabatan              — jabatan / posisi pengguna di unit kerja (opsional).
- * tanggal_bergabung_unit — tanggal bergabung ke unit saat ini (opsional).
+ * jabatan              - jabatan / posisi pengguna di unit kerja (opsional).
+ * tanggal_bergabung_unit - tanggal bergabung ke unit saat ini (opsional).
  */
 return new class extends Migration
 {

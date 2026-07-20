@@ -8,7 +8,7 @@ use App\Models\FaktorPenyebab;
 use App\Services\AuditLogService;
 
 /**
- * Observer FaktorPenyebab — mencatat audit log secara otomatis
+ * Observer FaktorPenyebab - mencatat audit log secara otomatis
  * setiap kali record faktor penyebab dibuat, diubah, atau dihapus.
  */
 class FaktorPenyebabObserver

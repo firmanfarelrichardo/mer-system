@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Repository TipeCedera — akses data ke tabel `master.tipe_cedera`.
+ * Repository TipeCedera - akses data ke tabel `master.tipe_cedera`.
  *
  * Layer ini hanya bertanggung jawab pada query & persistensi.
  * TIDAK boleh mengandung logika bisnis apapun.
