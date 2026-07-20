@@ -9,7 +9,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Repository UnitKerja — akses data ke tabel `master.unit_kerja`.
+ * Repository UnitKerja - akses data ke tabel `master.unit_kerja`.
  *
  * Layer ini hanya bertanggung jawab pada query & persistensi.
  * TIDAK boleh mengandung logika bisnis apapun.

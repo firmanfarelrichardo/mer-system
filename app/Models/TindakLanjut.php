@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Model TindakLanjut — memetakan tabel `pelaporan.tindak_lanjut`.
+ * Model TindakLanjut - memetakan tabel `pelaporan.tindak_lanjut`.
  *
  * Merepresentasikan satu catatan umpan balik / tindak lanjut
  * yang diberikan oleh Kepala Ruangan atau Komite terhadap insiden.
@@ -95,7 +95,7 @@ class TindakLanjut extends Model
             'investigasi'   => 'Investigasi',
             'tindak_lanjut' => 'Tindak Lanjut',
             'selesai'       => 'Selesai',
-            default         => $this->status_baru ?? '—',
+            default         => $this->status_baru ?? '-',
         };
     }
 

@@ -9,7 +9,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Repository KategoriKesalahan — akses data ke tabel `master.kategori_kesalahan`.
+ * Repository KategoriKesalahan - akses data ke tabel `master.kategori_kesalahan`.
  *
  * Layer ini hanya bertanggung jawab pada query & persistensi.
  * TIDAK boleh mengandung logika bisnis apapun.

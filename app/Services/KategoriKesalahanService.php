@@ -11,7 +11,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Service KategoriKesalahan — logika bisnis manajemen kategori kesalahan.
+ * Service KategoriKesalahan - logika bisnis manajemen kategori kesalahan.
  *
  * Menjembatani Controller ↔ Repository dengan menambahkan:
  *   - Transaksi database
@@ -49,7 +49,7 @@ class KategoriKesalahanService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Buat Kategori
+     | Command - Buat Kategori
      | ----------------------------------------------------------------*/
 
     /**
@@ -64,7 +64,7 @@ class KategoriKesalahanService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Perbarui Kategori
+     | Command - Perbarui Kategori
      | ----------------------------------------------------------------*/
 
     /**
@@ -78,7 +78,7 @@ class KategoriKesalahanService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Hapus Kategori
+     | Command - Hapus Kategori
      | ----------------------------------------------------------------*/
 
     /**

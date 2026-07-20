@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
 /**
- * InsidenFactory — menghasilkan data insiden tiruan yang realistis.
+ * InsidenFactory - menghasilkan data insiden tiruan yang realistis.
  *
  * Properti yang diisi:
  *   - tenant_id          : ID tenant default
@@ -106,7 +106,7 @@ class InsidenFactory extends Factory
 
     public function definition(): array
     {
-        // Dapatkan tenant default — cache agar tidak query berulang.
+        // Dapatkan tenant default - cache agar tidak query berulang.
         $tenant = Organisasi::where('kode_organisasi', 'default')->first();
         $tenantId = $tenant?->id ?? 1;
 
@@ -148,7 +148,7 @@ class InsidenFactory extends Factory
     }
 
     // ----------------------------------------------------------------
-    // States — buat factory lebih fleksibel saat dipakai di tempat lain
+    // States - buat factory lebih fleksibel saat dipakai di tempat lain
     // ----------------------------------------------------------------
 
     /**
@@ -168,7 +168,7 @@ class InsidenFactory extends Factory
     }
 
     /**
-     * State: insiden dengan tipe KTD (tingkat cedera tertinggi—sangat kritis).
+     * State: insiden dengan tipe KTD (tingkat cedera tertinggi-sangat kritis).
      */
     public function ktd(): static
     {

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Model KategoriKesalahan — maps to `master.kategori_kesalahan`.
+ * Model KategoriKesalahan - maps to `master.kategori_kesalahan`.
  *
  * Tabel ini hanya memiliki `created_at` (immutable setelah dibuat
  * di tingkat skema DB), namun di level aplikasi kita izinkan
@@ -25,7 +25,7 @@ class KategoriKesalahan extends Model
     protected $keyType = 'int';
 
     /**
-     * Skema hanya punya `created_at` — tidak ada `updated_at`.
+     * Skema hanya punya `created_at` - tidak ada `updated_at`.
      */
     public const UPDATED_AT = null;
 

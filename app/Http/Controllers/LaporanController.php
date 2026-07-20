@@ -32,7 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
- * LaporanController — menangani CRUD laporan insiden medication error.
+ * LaporanController - menangani CRUD laporan insiden medication error.
  *
  * Prinsip DRY (Don't Repeat Yourself):
  *   - SATU controller untuk SEMUA peran (Nakes, Karu, Komite, Direktur).
@@ -42,12 +42,12 @@ use Illuminate\View\View;
  *   - View yang sama merender UI secara kondisional via @can / @if.
  *
  * Fitur:
- *   1. Index     — daftar laporan + statistik (scoped per peran)
- *   2. Buat      — formulir multi-step
- *   3. Simpan    — simpan laporan baru
- *   4. Tampil    — detail laporan + histori tindak lanjut
- *   5. TindakLanjut — ubah status + catatan (Karu & Komite only)
- *   6. Tandai Dibaca — tandai laporan sudah dibaca
+ *   1. Index     - daftar laporan + statistik (scoped per peran)
+ *   2. Buat      - formulir multi-step
+ *   3. Simpan    - simpan laporan baru
+ *   4. Tampil    - detail laporan + histori tindak lanjut
+ *   5. TindakLanjut - ubah status + catatan (Karu & Komite only)
+ *   6. Tandai Dibaca - tandai laporan sudah dibaca
  */
 class LaporanController extends Controller
 {
@@ -63,7 +63,7 @@ class LaporanController extends Controller
     ) {}
 
     /* ==================================================================
-     | INDEX — Daftar Laporan & Statistik (hanya yang sudah di-submit)
+     | INDEX - Daftar Laporan & Statistik (hanya yang sudah di-submit)
      | =================================================================*/
 
     /**
@@ -119,7 +119,7 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | BUAT — Formulir Pembuatan Laporan
+     | BUAT - Formulir Pembuatan Laporan
      | =================================================================*/
 
     /**
@@ -145,7 +145,7 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | SIMPAN — Proses & Simpan Laporan Baru
+     | SIMPAN - Proses & Simpan Laporan Baru
      | =================================================================*/
 
     /**
@@ -175,7 +175,7 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | AUTO-SAVE — Simpan Draf Otomatis via AJAX/Fetch (Background)
+     | AUTO-SAVE - Simpan Draf Otomatis via AJAX/Fetch (Background)
      | =================================================================*/
 
     /**
@@ -183,7 +183,7 @@ class LaporanController extends Controller
      *
      * Endpoint ini dipanggil oleh Alpine.js autoSaveForm() setiap kali
      * Nakes berhenti mengetik (debounce 2 detik). Menerima data parsial
-     * tanpa validasi ketat — tujuannya mencegah data hilang.
+     * tanpa validasi ketat - tujuannya mencegah data hilang.
      *
      * Anti-spam: LaporanService->autoSave() menggunakan saveQuietly()
      * pada UPDATE sehingga InsidenObserver tidak terpicu berulang kali.
@@ -220,7 +220,7 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | DRAF — Daftar Draf Laporan (Nakes Only)
+     | DRAF - Daftar Draf Laporan (Nakes Only)
      | =================================================================*/
 
     /**
@@ -240,7 +240,7 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | RIWAYAT SAYA — Laporan yang Dibuat Sendiri (Kepala Ruangan)
+     | RIWAYAT SAYA - Laporan yang Dibuat Sendiri (Kepala Ruangan)
      | =================================================================*/
 
     /**
@@ -293,7 +293,7 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | EDIT — Form Edit Draf (Nakes melanjutkan pengisian)
+     | EDIT - Form Edit Draf (Nakes melanjutkan pengisian)
      | =================================================================*/
 
     /**
@@ -349,7 +349,7 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | TAMPIL — Detail Laporan + Histori Tindak Lanjut
+     | TAMPIL - Detail Laporan + Histori Tindak Lanjut
      | =================================================================*/
 
     /**
@@ -417,7 +417,7 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | TINDAK LANJUT — Ubah Status + Catatan (Karu & Komite Only)
+     | TINDAK LANJUT - Ubah Status + Catatan (Karu & Komite Only)
      | =================================================================*/
 
     /**
@@ -432,7 +432,7 @@ class LaporanController extends Controller
         $insiden  = Insiden::findOrFail($laporan);
         $pengguna = Auth::user();
 
-        // Otorisasi via Policy — menolak Direktur & Nakes.
+        // Otorisasi via Policy - menolak Direktur & Nakes.
         $this->authorize('tindakLanjut', $insiden);
 
         // Validasi input.
@@ -463,7 +463,7 @@ class LaporanController extends Controller
             ]);
         });
 
-        // Dispatch event — listener akan mengirim notifikasi sesuai state-routing.
+        // Dispatch event - listener akan mengirim notifikasi sesuai state-routing.
         InsidenStatusBerubah::dispatch($insiden->fresh(), $data['status_baru'], $pengguna);
 
         return back()->with('sukses', 'Tindak lanjut berhasil disimpan.');
@@ -489,7 +489,7 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | CETAK PDF — Stream PDF Laporan ke Browser
+     | CETAK PDF - Stream PDF Laporan ke Browser
      | =================================================================*/
 
     /**
@@ -506,7 +506,7 @@ class LaporanController extends Controller
             'left'   => (float) $request->query('ml', 1.0),
         ];
 
-        // Skala cetak (%) — opsional via query string: ?s=90  (default 100)
+        // Skala cetak (%) - opsional via query string: ?s=90  (default 100)
         $scale = (int) $request->query('s', 100);
         $scale = max(50, min(150, $scale)); // clamp 50–150 %
 
@@ -520,13 +520,13 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | ESKALASI KE DIREKTUR — Toggle Eskalasi (Komite Only)
+     | ESKALASI KE DIREKTUR - Toggle Eskalasi (Komite Only)
      | =================================================================*/
 
     /**
      * Toggle status eskalasi laporan ke Direktur.
      *
-     * Dilindungi oleh InsidenPolicy@eskalasi — hanya Komite yang diizinkan.
+     * Dilindungi oleh InsidenPolicy@eskalasi - hanya Komite yang diizinkan.
      */
     public function eskalasi(Request $permintaan, string $laporan): RedirectResponse
     {
@@ -548,7 +548,7 @@ class LaporanController extends Controller
             if ($direktur->isNotEmpty()) {
                 Notification::send($direktur, new InsidenNotifikasi(
                     insiden:   $insiden,
-                    judul:     'Eskalasi — Butuh Arahan Eksekutif',
+                    judul:     'Eskalasi - Butuh Arahan Eksekutif',
                     pesan:     "Laporan insiden {$insiden->nomor_laporan} ({$insiden->labelTipeInsiden()}) membutuhkan arahan/kebijakan eksekutif Direktur. Komite telah mengeskalasikan laporan ini kepada Anda.",
                     tipe:      'tindakan',
                     ikonWarna: 'bg-amber-50 text-amber-500',
@@ -564,13 +564,13 @@ class LaporanController extends Controller
     }
 
     /* ==================================================================
-     | SOLUSI DIREKTUR — Arahan / Feedback Eksekutif (Direktur Only)
+     | SOLUSI DIREKTUR - Arahan / Feedback Eksekutif (Direktur Only)
      | =================================================================*/
 
     /**
      * Simpan arahan/solusi eksekutif dari Direktur.
      *
-     * Dilindungi oleh InsidenPolicy@solusiDirektur — hanya Direktur yang
+     * Dilindungi oleh InsidenPolicy@solusiDirektur - hanya Direktur yang
      * diizinkan, dan HANYA jika laporan sudah dieskalasikan oleh Komite.
      */
     public function solusiDirektur(Request $permintaan, string $laporan): RedirectResponse

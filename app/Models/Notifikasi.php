@@ -7,7 +7,7 @@ namespace App\Models;
 use Illuminate\Notifications\DatabaseNotification;
 
 /**
- * Model Notifikasi — extends DatabaseNotification Laravel.
+ * Model Notifikasi - extends DatabaseNotification Laravel.
  *
  * Mengarahkan ke tabel `akun.notifikasi` (PostgreSQL schema)
  * alih-alih tabel default `notifications`.

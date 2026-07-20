@@ -16,11 +16,11 @@ use Database\Seeders\Concerns\NormalizesUnitKerjaNames;
 use Illuminate\Support\Facades\DB;
 
 /**
- * LaporanService — orkestrasi bisnis logik penyimpanan laporan insiden.
+ * LaporanService - orkestrasi bisnis logik penyimpanan laporan insiden.
  *
  * Mendukung dua mode:
  *   - Simpan Draf: status = 'DRAF', tanpa notifikasi. Nomor laporan INC sudah
- *     digenerate sejak pertama kali dibuat — status-lah yang membedakan draf
+ *     digenerate sejak pertama kali dibuat - status-lah yang membedakan draf
  *     dengan laporan terkirim, bukan prefix di nomor_laporan.
  *   - Kirim Laporan: status = 'kasus_baru', dengan notifikasi ke Kepala Ruangan.
  *
@@ -108,7 +108,7 @@ class LaporanService
                 }
             } else {
                 // ── CREATE: Laporan baru ────────────────────────────
-                // Selalu generate INC-... sejak awal — baik draf maupun kirim langsung.
+                // Selalu generate INC-... sejak awal - baik draf maupun kirim langsung.
                 // Status (DRAF vs kasus_baru) sudah membedakan keduanya; nomor
                 // laporan tidak perlu prefix berbeda.
                 $dataInsiden['nomor_laporan'] = Insiden::generateNomorLaporan($pengguna->tenant_id);
@@ -146,7 +146,7 @@ class LaporanService
      * Auto-save laporan insiden di background (AJAX).
      *
      * Perbedaan dengan save():
-     *   - Selalu status DRAF — tidak pernah submit.
+     *   - Selalu status DRAF - tidak pernah submit.
      *   - UPDATE menggunakan saveQuietly() agar InsidenObserver tidak dipicu
      *     (mencegah spam audit log setiap 2 detik).
      *   - Audit log HANYA dicatat pada CREATE pertama, bukan pada update berikutnya.
@@ -221,7 +221,7 @@ class LaporanService
             } else {
                 // ── CREATE: Draf baru ────────────────────────────────
                 // Biarkan Observer `created` terpicu untuk audit log pertama kali.
-                // Nomor INC-... digenerate langsung — auto-save pun sudah mendapat
+                // Nomor INC-... digenerate langsung - auto-save pun sudah mendapat
                 // nomor laporan final; tidak ada tempat untuk prefix DRAF-.
                 $dataInsiden['nomor_laporan'] = Insiden::generateNomorLaporan($pengguna->tenant_id);
 
@@ -263,7 +263,7 @@ class LaporanService
      * Generate PDF rekapitulasi laporan insiden berdasarkan rentang tanggal.
      *
      * - Hanya insiden yang sudah dikirim (bukan DRAF).
-     * - Orientasi kertas: portrait (default) atau landscape — dikendalikan
+     * - Orientasi kertas: portrait (default) atau landscape - dikendalikan
      *   oleh parameter $orientation agar hasilnya fleksibel.
      * - Jika tidak ada data pada rentang tersebut, abort 404.
      *

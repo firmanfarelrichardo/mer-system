@@ -10,10 +10,10 @@ use App\Models\Peran;
 use Illuminate\Database\Seeder;
 
 /**
- * PenggunaSeeder — Seeds test user accounts for every application role.
+ * PenggunaSeeder - Seeds test user accounts for every application role.
  *
  * ┌─────────────────────────────────────────────────────────────┐
- * │  CREDENTIAL REFERENCE — DEVELOPMENT / STAGING ONLY         │
+ * │  CREDENTIAL REFERENCE - DEVELOPMENT / STAGING ONLY         │
  * │  Remove this seeder from production or guard it with        │
  * │  `if (app()->isLocal()) { ... }` inside DatabaseSeeder.     │
  * ├────────────────┬──────────────────────────────┬────────────┤
@@ -36,7 +36,7 @@ class PenggunaSeeder extends Seeder
      */
     private function userDefinitions(int $tenantId): array
     {
-        // Plain-text password — the Pengguna model's `hashed` cast on `kata_sandi`
+        // Plain-text password - the Pengguna model's `hashed` cast on `kata_sandi`
         // will call Hash::make() automatically on Eloquent create/update.
         // Do NOT pre-hash here; that would cause a double-bcrypt.
         $devPassword = 'password';

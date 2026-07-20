@@ -9,7 +9,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Daftar Kepala Ruangan — Sistem MER')
+@section('judul', 'Daftar Kepala Ruangan - Sistem MER')
 
 @section('konten')
 
@@ -77,7 +77,7 @@
 
                             {{-- NIP --}}
                             <td class="px-5 py-3 font-mono text-xs text-slate-500">
-                                {{ $unit->karu?->nomor_induk ?? '—' }}
+                                {{ $unit->karu?->nomor_induk ?? '-' }}
                             </td>
 
                             {{-- Status --}}

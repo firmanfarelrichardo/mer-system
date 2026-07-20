@@ -15,18 +15,18 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 /**
- * DashboardController — "Morning Briefing" / Action Center.
+ * DashboardController - "Morning Briefing" / Action Center.
  *
- * SATU controller, SATU route, SATU view — konten di-render secara
+ * SATU controller, SATU route, SATU view - konten di-render secara
  * kondisional menggunakan Blade Components berdasarkan peran pengguna.
  *
  * ┌─────────────────────────┬──────────────────────────────────────────┐
  * │ Peran                   │ Fokus Dashboard                          │
  * ├─────────────────────────┼──────────────────────────────────────────┤
- * │ Nakes                   │ Reassurance & Edukasi — rekap pribadi.   │
- * │ Kepala Ruangan (Karu)   │ To-Do & SLA Alerts — unit kerjanya.     │
- * │ Komite                  │ Radar & Bottleneck — seluruh RS.        │
- * │ Direktur                │ Executive Vitals — read-only.           │
+ * │ Nakes                   │ Reassurance & Edukasi - rekap pribadi.   │
+ * │ Kepala Ruangan (Karu)   │ To-Do & SLA Alerts - unit kerjanya.     │
+ * │ Komite                  │ Radar & Bottleneck - seluruh RS.        │
+ * │ Direktur                │ Executive Vitals - read-only.           │
  * └─────────────────────────┴──────────────────────────────────────────┘
  *
  * Prinsip:
@@ -45,7 +45,7 @@ class DashboardController extends Controller
         $pengguna = Auth::user();
         $tenantId = $pengguna->tenant_id;
 
-        // Kirim data spesifik sesuai peran — hierarki tertinggi diutamakan.
+        // Kirim data spesifik sesuai peran - hierarki tertinggi diutamakan.
         $data = match (true) {
             $pengguna->memilikiPeran(Peran::DIREKTUR)        => $this->dataDirektur($tenantId),
             $pengguna->memilikiPeran(Peran::KOMITE)          => $this->dataKomite($tenantId),
@@ -57,7 +57,7 @@ class DashboardController extends Controller
     }
 
     /* ==================================================================
-     | DATA BUILDERS — Satu method per peran (DRY: masing-masing
+     | DATA BUILDERS - Satu method per peran (DRY: masing-masing
      | hanya menyiapkan data yang benar-benar dibutuhkan view-nya).
      | ================================================================*/
 
@@ -111,7 +111,7 @@ class DashboardController extends Controller
             ->where('tgl_lapor', '<', Carbon::now()->subHours(24))
             ->count();
 
-        // 5 tindak lanjut terbaru di unit ini — timeline ringkas.
+        // 5 tindak lanjut terbaru di unit ini - timeline ringkas.
         $aktivitasTerbaru = TindakLanjut::whereHas('insiden', function ($q) use ($tenantId, $unitId, $namaUnit) {
                 $q->where('tenant_id', $tenantId)
                   ->where(fn ($sq) => $sq->where('unit_id', $unitId)->orWhere('nama_unit_kerja', $namaUnit));
@@ -204,7 +204,7 @@ class DashboardController extends Controller
             default              => 'aman',
         };
 
-        // Rata-rata waktu respons (jam) — dari tgl_lapor ke tindak lanjut pertama.
+        // Rata-rata waktu respons (jam) - dari tgl_lapor ke tindak lanjut pertama.
         // Menggunakan sub-query untuk efisiensi pada dataset besar.
         $rataResponsJam = TindakLanjut::join('pelaporan.insiden as i', 'i.id', '=', 'pelaporan.tindak_lanjut.insiden_id')
             ->where('i.tenant_id', $tenantId)

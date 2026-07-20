@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Repository TindakanIntervensi — akses data ke tabel `master.tindakan_intervensi`.
+ * Repository TindakanIntervensi - akses data ke tabel `master.tindakan_intervensi`.
  *
  * Layer ini hanya bertanggung jawab pada query & persistensi.
  * TIDAK boleh mengandung logika bisnis apapun.

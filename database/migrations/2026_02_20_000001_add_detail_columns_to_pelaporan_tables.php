@@ -43,7 +43,7 @@ return new class extends Migration
             $table->text('catatan');
 
             $table->timestamp('created_at')->useCurrent();
-            // Tidak ada updated_at — tabel ini bersifat append-only.
+            // Tidak ada updated_at - tabel ini bersifat append-only.
         });
     }
 

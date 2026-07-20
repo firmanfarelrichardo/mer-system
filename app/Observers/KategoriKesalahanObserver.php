@@ -8,7 +8,7 @@ use App\Models\KategoriKesalahan;
 use App\Services\AuditLogService;
 
 /**
- * Observer KategoriKesalahan — mencatat audit log secara otomatis
+ * Observer KategoriKesalahan - mencatat audit log secara otomatis
  * setiap kali record kategori kesalahan dibuat, diubah, atau dihapus.
  */
 class KategoriKesalahanObserver

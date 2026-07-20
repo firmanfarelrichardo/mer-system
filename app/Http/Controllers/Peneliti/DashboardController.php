@@ -11,7 +11,7 @@ use App\Services\PenggunaService;
 use Illuminate\Contracts\View\View;
 
 /**
- * Controller Dashboard Peneliti — ringkasan sistem & laporan terbaru.
+ * Controller Dashboard Peneliti - ringkasan sistem & laporan terbaru.
  *
  * Dashboard ini ditampilkan saat peneliti dalam mode penuh (belum memilih
  * simulasi peran via "Lihat Sebagai"). Menampilkan statistik pengguna

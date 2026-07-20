@@ -1,28 +1,28 @@
 {{--
 |--------------------------------------------------------------------------
-| Formulir Lanjutkan Draf Laporan — Multi-Step Wizard
+| Formulir Lanjutkan Draf Laporan - Multi-Step Wizard
 |--------------------------------------------------------------------------
 | Halaman formulir 4 tahap untuk melanjutkan draf laporan insiden:
-|   1. Data Demografis   — data pasien, lokasi, waktu, jenis insiden
-|   2. Detail Insiden     — klasifikasi kesalahan, cedera, faktor, intervensi
-|   3. Kronologi Kejadian — narasi kronologi, disclaimer non-hukum
-|   4. Konfirmasi         — ringkasan & persetujuan sebelum kirim
+|   1. Data Demografis   - data pasien, lokasi, waktu, jenis insiden
+|   2. Detail Insiden     - klasifikasi kesalahan, cedera, faktor, intervensi
+|   3. Kronologi Kejadian - narasi kronologi, disclaimer non-hukum
+|   4. Konfirmasi         - ringkasan & persetujuan sebelum kirim
 |
 | Variabel dari controller:
-|   $insiden  — Insiden (model draf dengan relasi detailPasien)
-|   $pengguna — Pengguna (auth user)
+|   $insiden  - Insiden (model draf dengan relasi detailPasien)
+|   $pengguna - Pengguna (auth user)
 |--------------------------------------------------------------------------
 --}}
 
 @extends('layouts.app')
 
-@section('judul', 'Lanjutkan Draf — Sistem MER')
+@section('judul', 'Lanjutkan Draf - Sistem MER')
 
 @section('konten')
 
     @php
         $pengguna = Auth::user();
-        $namaUnit = $pengguna->unitKerja?->nama_unit ?? '—';
+        $namaUnit = $pengguna->unitKerja?->nama_unit ?? '-';
         $detail   = $insiden->detailPasien;
 
         // ── Opsi-opsi form (sama dengan buat.blade.php) ──────────────
@@ -111,7 +111,7 @@
             <div>
                 <h1 class="text-2xl font-bold text-slate-800">Lanjutkan Draf Laporan</h1>
                 <p class="mt-1 text-sm text-slate-400">
-                    Melanjutkan pengisian draf — ID:
+                    Melanjutkan pengisian draf - ID:
                     <span class="font-mono text-xs font-semibold text-slate-500">{{ $insiden->nomor_laporan }}</span>
                 </p>
             </div>
@@ -176,7 +176,7 @@
              ============================================================ --}}
         <div id="step-1" class="step-panel">
             <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian A — Data Demografis</h2>
+                <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian A - Data Demografis</h2>
                 <p class="mb-6 text-sm text-slate-400">Lengkapi data dasar pasien dan kejadian</p>
 
                 <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -316,7 +316,7 @@
              ============================================================ --}}
         <div id="step-2" class="step-panel hidden">
             <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian B — Karakteristik Insiden</h2>
+                <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian B - Karakteristik Insiden</h2>
                 <p class="mb-6 text-sm text-slate-400">Detail Tahapan, jenis kesalahan, cedera, faktor penyebab, dan intervensi pasien</p>
 
                 {{-- 1. Fase Kesalahan Obat --}}
@@ -346,7 +346,7 @@
                 <fieldset class="mb-6">
                     <legend class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">2</span>
-                        Details — Jenis Kesalahan <span class="text-red-500">*</span>
+                        Details - Jenis Kesalahan <span class="text-red-500">*</span>
                     </legend>
                     <p class="mb-3 text-xs text-slate-400">Pilih semua jenis kesalahan yang terjadi</p>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -375,7 +375,7 @@
                 <fieldset class="mb-6">
                     <legend class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">3</span>
-                        Injuries — Cedera yang Terjadi/Efek Kesalahan Pengobatan <span class="text-red-500">*</span>
+                        Injuries - Cedera yang Terjadi/Efek Kesalahan Pengobatan <span class="text-red-500">*</span>
                     </legend>
                     <p class="mb-3 text-xs text-slate-400">Pilih semua dampak cedera yang dialami pasien</p>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -407,7 +407,7 @@
                 <fieldset class="mb-6">
                     <legend class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">4</span>
-                        Contributing Factors — Faktor Penyebab <span class="text-red-500">*</span>
+                        Contributing Factors - Faktor Penyebab <span class="text-red-500">*</span>
                     </legend>
                     <p class="mb-3 text-xs text-slate-400">Pilih faktor-faktor yang berkontribusi terhadap insiden</p>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -436,7 +436,7 @@
                 <fieldset class="mb-6">
                     <legend class="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <span class="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">5</span>
-                        Patient Interventions — Intervensi Pasien <span class="text-red-500">*</span>
+                        Patient Interventions - Intervensi Pasien <span class="text-red-500">*</span>
                     </legend>
                     <p class="mb-3 text-xs text-slate-400">Pilih tindakan yang dilakukan terhadap pasien</p>
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
@@ -498,7 +498,7 @@
              ============================================================ --}}
         <div id="step-3" class="step-panel hidden">
             <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian C — Kronologi Kejadian</h2>
+                <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian C - Kronologi Kejadian</h2>
                 <p class="mb-6 text-sm text-slate-400">Ceritakan kronologi kejadian secara lengkap</p>
 
                 <div class="mb-6">
@@ -566,15 +566,15 @@
                     <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
                         <dl class="grid grid-cols-1 gap-y-2 text-sm sm:grid-cols-[auto_1fr] sm:gap-x-6">
                             <dt class="text-slate-400">Nama Pasien:</dt>
-                            <dd id="ringkasan-nama_pasien" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-nama_pasien" class="font-medium text-slate-700">-</dd>
                             <dt class="text-slate-400">No. Rekam Medis:</dt>
-                            <dd id="ringkasan-nomor_rekam_medis" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-nomor_rekam_medis" class="font-medium text-slate-700">-</dd>
                             <dt class="text-slate-400">Unit Kerja:</dt>
-                            <dd id="ringkasan-unit_kerja" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-unit_kerja" class="font-medium text-slate-700">-</dd>
                             <dt class="text-slate-400">Waktu Kejadian:</dt>
-                            <dd id="ringkasan-waktu_kejadian" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-waktu_kejadian" class="font-medium text-slate-700">-</dd>
                             <dt class="text-slate-400">Jenis Insiden:</dt>
-                            <dd id="ringkasan-jenis_insiden" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-jenis_insiden" class="font-medium text-slate-700">-</dd>
                         </dl>
                     </div>
                 </div>
@@ -588,19 +588,19 @@
                     <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
                         <dl class="grid grid-cols-1 gap-y-2 text-sm">
                             <dt class="text-slate-400">Jenis Kesalahan:</dt>
-                            <dd id="ringkasan-jenis_kesalahan" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-jenis_kesalahan" class="font-medium text-slate-700">-</dd>
                             <dt class="mt-1 text-slate-400">Cedera yang Terjadi:</dt>
-                            <dd id="ringkasan-cedera" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-cedera" class="font-medium text-slate-700">-</dd>
                             <dt class="mt-1 text-slate-400">Faktor Penyebab:</dt>
-                            <dd id="ringkasan-faktor_penyebab" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-faktor_penyebab" class="font-medium text-slate-700">-</dd>
                             <dt class="mt-1 text-slate-400">Intervensi Pasien:</dt>
-                            <dd id="ringkasan-intervensi_pasien" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-intervensi_pasien" class="font-medium text-slate-700">-</dd>
                             <dt class="mt-1 text-slate-400">Fase Kesalahan:</dt>
-                            <dd id="ringkasan-fase_kesalahan" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-fase_kesalahan" class="font-medium text-slate-700">-</dd>
                             <dt class="mt-1 text-slate-400">Obat Terlibat:</dt>
-                            <dd id="ringkasan-nama_obat" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-nama_obat" class="font-medium text-slate-700">-</dd>
                             <dt class="mt-1 text-slate-400">Dosis Obat:</dt>
-                            <dd id="ringkasan-dosis_obat" class="font-medium text-slate-700">—</dd>
+                            <dd id="ringkasan-dosis_obat" class="font-medium text-slate-700">-</dd>
                         </dl>
                     </div>
                 </div>
@@ -612,7 +612,7 @@
                         Kronologi Kejadian
                     </h3>
                     <div class="rounded-lg border border-slate-100 bg-slate-50 p-4">
-                        <p id="ringkasan-kronologi_kejadian" class="whitespace-pre-line text-sm text-slate-700">—</p>
+                        <p id="ringkasan-kronologi_kejadian" class="whitespace-pre-line text-sm text-slate-700">-</p>
                     </div>
                 </div>
 
@@ -774,7 +774,7 @@
     </form>
 
     {{-- ================================================================
-         JAVASCRIPT — Navigasi Multi-Step Wizard
+         JAVASCRIPT - Navigasi Multi-Step Wizard
          ================================================================ --}}
     {{-- Auto-save Alpine.js component --}}
     @php $autoSaveInsidenId = $insiden->id; @endphp
@@ -851,16 +851,16 @@
             function isiRingkasan() {
                 const form = document.getElementById('form-laporan');
 
-                const nilaiInput = (nama) => form.querySelector('[name="' + nama + '"]')?.value?.trim() || '—';
+                const nilaiInput = (nama) => form.querySelector('[name="' + nama + '"]')?.value?.trim() || '-';
 
                 const teksDropdown = (id) => {
                     const el = form.querySelector('#' + id);
-                    return el?.selectedOptions?.[0]?.text?.trim() || '—';
+                    return el?.selectedOptions?.[0]?.text?.trim() || '-';
                 };
 
                 const kumpulkanCheckbox = (nama) => {
                     const checked = form.querySelectorAll('[name="' + nama + '"]:checked');
-                    if (!checked.length) return '—';
+                    if (!checked.length) return '-';
                     return Array.from(checked).map(cb => {
                         const span = cb.closest('label')?.querySelector('span');
                         return span ? span.textContent.trim() : cb.value;
@@ -876,15 +876,15 @@
                 const tgl = nilaiInput('tanggal_kejadian');
                 const wkt = nilaiInput('waktu_kejadian');
                 const bulan = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
-                if (tgl !== '—') {
+                if (tgl !== '-') {
                     const [y, m, d] = tgl.split('-');
-                    setText('ringkasan-waktu_kejadian', d + ' ' + bulan[parseInt(m) - 1] + ' ' + y + (wkt !== '—' ? ' - ' + wkt : ''));
+                    setText('ringkasan-waktu_kejadian', d + ' ' + bulan[parseInt(m) - 1] + ' ' + y + (wkt !== '-' ? ' - ' + wkt : ''));
                 } else {
-                    setText('ringkasan-waktu_kejadian', '—');
+                    setText('ringkasan-waktu_kejadian', '-');
                 }
 
                 const jenisVal = nilaiRadio('jenis_insiden');
-                setText('ringkasan-jenis_insiden', jenisVal ? (labelJenisInsiden[jenisVal] || jenisVal) : '—');
+                setText('ringkasan-jenis_insiden', jenisVal ? (labelJenisInsiden[jenisVal] || jenisVal) : '-');
 
                 setText('ringkasan-jenis_kesalahan',   kumpulkanCheckbox('jenis_kesalahan[]'));
                 setText('ringkasan-cedera',            kumpulkanCheckbox('cedera[]'));
@@ -894,12 +894,12 @@
                 setText('ringkasan-dosis_obat',         nilaiInput('dosis_obat'));
 
                 const faseVal = nilaiRadio('fase_kesalahan');
-                setText('ringkasan-fase_kesalahan', faseVal ? (labelFaseKesalahan[faseVal] || faseVal) : '—');
+                setText('ringkasan-fase_kesalahan', faseVal ? (labelFaseKesalahan[faseVal] || faseVal) : '-');
 
                 setText('ringkasan-kronologi_kejadian', nilaiInput('kronologi_kejadian'));
 
                 const namaPelapor = nilaiInput('nama_pelapor');
-                if (namaPelapor !== '—' && namaPelapor !== '') {
+                if (namaPelapor !== '-' && namaPelapor !== '') {
                     setText('ringkasan-status-anonim', 'Pelaporan Teridentifikasi');
                     setText('ringkasan-info-anonim',   'Laporan ini dilaporkan oleh: ' + namaPelapor);
                 } else {

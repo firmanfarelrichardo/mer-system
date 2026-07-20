@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Service JenisKesalahan — logika bisnis manajemen jenis kesalahan obat.
+ * Service JenisKesalahan - logika bisnis manajemen jenis kesalahan obat.
  *
  * Menjembatani Controller ↔ Repository dengan menambahkan:
  *   - Transaksi database (ACID)

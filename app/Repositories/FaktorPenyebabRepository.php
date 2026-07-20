@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 /**
- * Repository FaktorPenyebab — akses data ke tabel `master.faktor_penyebab`.
+ * Repository FaktorPenyebab - akses data ke tabel `master.faktor_penyebab`.
  *
  * Layer ini hanya bertanggung jawab pada query & persistensi.
  * TIDAK boleh mengandung logika bisnis apapun.

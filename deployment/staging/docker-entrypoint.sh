@@ -42,11 +42,11 @@ fi
 # 2. Composer install (auto jika vendor belum ada)
 # -------------------------------------------
 if [ ! -f "vendor/autoload.php" ]; then
-    log_message "vendor/autoload.php not found — running composer install..."
+    log_message "vendor/autoload.php not found - running composer install..."
     composer install --no-interaction --prefer-dist --optimize-autoloader
     log_message "composer install complete"
 else
-    log_message "Vendor directory detected — skipping composer install"
+    log_message "Vendor directory detected - skipping composer install"
 fi
 
 # -------------------------------------------
@@ -54,11 +54,11 @@ fi
 # -------------------------------------------
 APP_KEY_VAL=$(grep "^APP_KEY=" .env 2>/dev/null | cut -d'=' -f2 | tr -d '\r')
 if [ -z "$APP_KEY_VAL" ]; then
-    log_message "APP_KEY is empty — generating application key..."
+    log_message "APP_KEY is empty - generating application key..."
     php artisan key:generate --no-interaction --force
     log_message "Application key generated"
 else
-    log_message "APP_KEY already set — skipping key:generate"
+    log_message "APP_KEY already set - skipping key:generate"
 fi
 
 # -------------------------------------------
@@ -70,7 +70,7 @@ php artisan cache:clear 2>/dev/null || true
 php artisan view:clear 2>/dev/null || true
 
 # -------------------------------------------
-# 5. Run database migrations (idempotent — aman dijalankan setiap start)
+# 5. Run database migrations (idempotent - aman dijalankan setiap start)
 #    depends_on healthcheck sudah menjamin DB siap sebelum ini berjalan
 # -------------------------------------------
 log_message "Running database migrations..."

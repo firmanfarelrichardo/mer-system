@@ -12,8 +12,8 @@ return [
     |--------------------------------------------------------------------------
     | Mode Asynchronous
     |--------------------------------------------------------------------------
-    | false (default): INSERT synchronous — mudah di-debug di local.
-    | true           : Dispatch ke queue 'audit' — wajib untuk production
+    | false (default): INSERT synchronous - mudah di-debug di local.
+    | true           : Dispatch ke queue 'audit' - wajib untuk production
     |                  agar respons user tidak tertahan oleh operasi DB.
     |
     | Prasyarat async: Redis aktif, queue worker berjalan di container app.

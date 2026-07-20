@@ -34,7 +34,7 @@ return new class extends Migration
     {
         Schema::table('audit.log_aktivitas', function (Blueprint $table): void {
 
-            // Kolom user_agent — menyimpan identifikasi browser/OS client
+            // Kolom user_agent - menyimpan identifikasi browser/OS client
             // VARCHAR(512): cukup untuk user agent paling panjang di dunia nyata
             // Nullable: log sistem (Observer) tidak memiliki HTTP context
             $table->string('user_agent', 512)->nullable()->after('alamat_ip');

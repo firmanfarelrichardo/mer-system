@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Service TindakanIntervensi — logika bisnis manajemen intervensi pasien.
+ * Service TindakanIntervensi - logika bisnis manajemen intervensi pasien.
  *
  * Menjembatani Controller ↔ Repository dengan menambahkan:
  *   - Transaksi database (ACID)
@@ -60,7 +60,7 @@ class IntervensiService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Buat
+     | Command - Buat
      | ----------------------------------------------------------------*/
 
     /**
@@ -76,7 +76,7 @@ class IntervensiService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Perbarui
+     | Command - Perbarui
      | ----------------------------------------------------------------*/
 
     /**
@@ -91,7 +91,7 @@ class IntervensiService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Toggle Aktif
+     | Command - Toggle Aktif
      | ----------------------------------------------------------------*/
 
     /**
@@ -103,7 +103,7 @@ class IntervensiService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Hapus (Soft Delete)
+     | Command - Hapus (Soft Delete)
      | ----------------------------------------------------------------*/
 
     /**

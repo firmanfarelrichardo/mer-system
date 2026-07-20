@@ -15,10 +15,10 @@ use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * StatistikController — Dashboard analitik insiden medication errors.
+ * StatistikController - Dashboard analitik insiden medication errors.
  *
  * ┌─────────────────────────────────────────────────────────────────┐
- * │  RBAC — Visibilitas Data & Filter                               │
+ * │  RBAC - Visibilitas Data & Filter                               │
  * ├─────────────────────────┬───────────────────────────────────────┤
  * │ Kepala Ruangan (karu)   │ Hanya unit kerjanya sendiri.          │
  * │                         │ Filter unit & grafik distribusi per   │
@@ -35,38 +35,38 @@ use Symfony\Component\HttpFoundation\Response;
  *   - Flag $bisaLihatSemua mengontrol visibilitas filter & grafik.
  *
  * Filter URL yang didukung:
- *   ?start_date   — Format: Y-m-d
- *   ?end_date     — Format: Y-m-d
- *   ?unit_kerja   — Nama unit (hanya aktif untuk direktur & komite)
- *   ?tipe_insiden — Salah satu dari: KPC, KNC, KTC, KTD, SENTINEL
+ *   ?start_date   - Format: Y-m-d
+ *   ?end_date     - Format: Y-m-d
+ *   ?unit_kerja   - Nama unit (hanya aktif untuk direktur & komite)
+ *   ?tipe_insiden - Salah satu dari: KPC, KNC, KTC, KTD, SENTINEL
  */
 class StatistikController extends Controller
 {
     // ----------------------------------------------------------------
-    // Konstanta — DRY untuk palet warna grafik Chart.js
+    // Konstanta - DRY untuk palet warna grafik Chart.js
     // ----------------------------------------------------------------
 
     /**
-     * Warna RGBA tiap tipe insiden — Semantic by severity.
+     * Warna RGBA tiap tipe insiden - Semantic by severity.
      *
-     * KPC (Potensial Cedera) → Biru     — Informasi
-     * KNC (Nyaris Cedera)    → Kuning   — Waspada
-     * KTC (Tidak Cedera)     → Oranye   — Peringatan
-     * KTD (Tidak Diharapkan) → Merah    — Kritis
-     * SENTINEL               → Merah Gelap — Sangat Kritis
+     * KPC (Potensial Cedera) → Biru     - Informasi
+     * KNC (Nyaris Cedera)    → Kuning   - Waspada
+     * KTC (Tidak Cedera)     → Oranye   - Peringatan
+     * KTD (Tidak Diharapkan) → Merah    - Kritis
+     * SENTINEL               → Merah Gelap - Sangat Kritis
      *
      * @var array<string, string>
      */
     private const WARNA_TIPE = [
-        'KPC'      => 'rgba(59,  130, 246, 0.85)',  // blue-500   — Informasi/Potensial
-        'KNC'      => 'rgba(234, 179,   8, 0.85)',  // yellow-500 — Waspada
-        'KTC'      => 'rgba(249, 115,  22, 0.85)',  // orange-500 — Peringatan
-        'KTD'      => 'rgba(220,  38,  38, 0.85)',  // red-600    — Kritis
-        'SENTINEL' => 'rgba(127,  29,  29, 0.92)',  // red-900    — Sangat Kritis
+        'KPC'      => 'rgba(59,  130, 246, 0.85)',  // blue-500   - Informasi/Potensial
+        'KNC'      => 'rgba(234, 179,   8, 0.85)',  // yellow-500 - Waspada
+        'KTC'      => 'rgba(249, 115,  22, 0.85)',  // orange-500 - Peringatan
+        'KTD'      => 'rgba(220,  38,  38, 0.85)',  // red-600    - Kritis
+        'SENTINEL' => 'rgba(127,  29,  29, 0.92)',  // red-900    - Sangat Kritis
     ];
 
     /**
-     * Warna RGBA tiap status insiden — Corporate blue palette.
+     * Warna RGBA tiap status insiden - Corporate blue palette.
      *
      * Menggunakan gradasi blue → indigo → violet → hijau sebagai
      * representasi alur penanganan (masuk → proses → selesai).
@@ -74,10 +74,10 @@ class StatistikController extends Controller
      * @var array<string, string>
      */
     private const WARNA_STATUS = [
-        'kasus_baru'    => 'rgba(59,  130, 246, 0.85)',  // blue-500   — Masuk
-        'investigasi'   => 'rgba(99,  102, 241, 0.85)',  // indigo-500 — Analisis
-        'tindak_lanjut' => 'rgba(139,  92, 246, 0.85)',  // violet-500 — Proses
-        'selesai'       => 'rgba(34,  197,  94, 0.85)',  // green-500  — Tuntas
+        'kasus_baru'    => 'rgba(59,  130, 246, 0.85)',  // blue-500   - Masuk
+        'investigasi'   => 'rgba(99,  102, 241, 0.85)',  // indigo-500 - Analisis
+        'tindak_lanjut' => 'rgba(139,  92, 246, 0.85)',  // violet-500 - Proses
+        'selesai'       => 'rgba(34,  197,  94, 0.85)',  // green-500  - Tuntas
     ];
 
     /** @var array<string, string>  Label tampilan tiap status. */
@@ -140,7 +140,7 @@ class StatistikController extends Controller
             $bisaLihatSemua,
         );
 
-        // Hitung semua data metrik — tiap kali clone agar query tidak tercampur.
+        // Hitung semua data metrik - tiap kali clone agar query tidak tercampur.
         $totalInsiden      = (clone $baseQuery)->count();
         $ringkasanAngka    = $this->hitungRingkasanAngka(clone $baseQuery, $totalInsiden);
         $trenBulanan       = $this->hitungTrenBulanan(clone $baseQuery);
@@ -174,7 +174,7 @@ class StatistikController extends Controller
     }
 
     // ----------------------------------------------------------------
-    // Private Helpers — Filter
+    // Private Helpers - Filter
     // ----------------------------------------------------------------
 
     /**
@@ -224,7 +224,7 @@ class StatistikController extends Controller
     }
 
     // ----------------------------------------------------------------
-    // Private Helpers — Kalkulasi Metrik
+    // Private Helpers - Kalkulasi Metrik
     // ----------------------------------------------------------------
 
     /** Verifikasi hak akses halaman statistik. */
@@ -439,7 +439,7 @@ class StatistikController extends Controller
      * Ambil daftar nama unit kerja untuk dropdown filter.
      *
      * Strategi dual-source (DRY fallback):
-     *   1. Utama  : master.unit_kerja — data master yang terkurasi.
+     *   1. Utama  : master.unit_kerja - data master yang terkurasi.
      *   2. Fallback: distinct nama_unit_kerja dari tabel insiden itu sendiri.
      *              Berguna saat master belum di-seed atau data demo dipakai.
      *

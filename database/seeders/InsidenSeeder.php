@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 /**
- * InsidenSeeder — 500 laporan insiden medication error selama tiga tahun (2024-2026).
+ * InsidenSeeder - 500 laporan insiden medication error selama tiga tahun (2024-2026).
  *
  * Urutan seed:
  *   1. Master data  : kategori_kesalahan, matriks_dampak/probabilitas
@@ -230,11 +230,11 @@ class InsidenSeeder extends Seeder
 
         // -- Matriks Dampak (1-5) --
         $dampakData = [
-            1 => 'Tidak signifikan — tidak ada cedera',
-            2 => 'Minor — cedera ringan, dapat pulih sendiri',
-            3 => 'Moderat — cedera memerlukan intervensi medis',
-            4 => 'Mayor — cedera berat / cacat permanen',
-            5 => 'Katastrofik — kematian pasien',
+            1 => 'Tidak signifikan - tidak ada cedera',
+            2 => 'Minor - cedera ringan, dapat pulih sendiri',
+            3 => 'Moderat - cedera memerlukan intervensi medis',
+            4 => 'Mayor - cedera berat / cacat permanen',
+            5 => 'Katastrofik - kematian pasien',
         ];
 
         $dampakList = [];
@@ -259,11 +259,11 @@ class InsidenSeeder extends Seeder
 
         // -- Matriks Probabilitas (1-5) --
         $probData = [
-            1 => 'Sangat jarang — < 1x setahun',
-            2 => 'Jarang — 1-2x setahun',
-            3 => 'Kadang-kadang — bulanan',
-            4 => 'Sering — mingguan',
-            5 => 'Hampir pasti — harian',
+            1 => 'Sangat jarang - < 1x setahun',
+            2 => 'Jarang - 1-2x setahun',
+            3 => 'Kadang-kadang - bulanan',
+            4 => 'Sering - mingguan',
+            5 => 'Hampir pasti - harian',
         ];
 
         $probabilitasList = [];
@@ -368,12 +368,12 @@ class InsidenSeeder extends Seeder
             $karuList[] = $k;
         }
 
-        // Komite — gunakan yang sudah ada dari PenggunaSeeder
+        // Komite - gunakan yang sudah ada dari PenggunaSeeder
         $komite = Pengguna::where('tenant_id', $tenantId)
             ->whereHas('peran', fn ($q) => $q->where('nama_peran', Peran::KOMITE))
             ->first();
 
-        // Admin — gunakan yang sudah ada
+        // Admin - gunakan yang sudah ada
         $admin = Pengguna::where('tenant_id', $tenantId)
             ->whereHas('peran', fn ($q) => $q->where('nama_peran', Peran::ADMIN))
             ->first();
@@ -382,7 +382,7 @@ class InsidenSeeder extends Seeder
     }
 
     /* ---------------------------------------------------------------
-     | 3-8. Core — Insiden + Relasi
+     | 3-8. Core - Insiden + Relasi
      | ------------------------------------------------------------*/
 
     private function seedInsiden(

@@ -8,7 +8,7 @@ use App\Models\UnitKerja;
 use App\Services\AuditLogService;
 
 /**
- * Observer UnitKerja — mencatat audit log secara otomatis
+ * Observer UnitKerja - mencatat audit log secara otomatis
  * setiap kali record unit kerja dibuat, diubah, atau dihapus.
  *
  * Decoupled dari Service agar logging terjadi di mana pun

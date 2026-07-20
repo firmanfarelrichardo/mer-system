@@ -19,14 +19,14 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 
 /**
- * KontrollerAuth — Menangani proses Masuk dan Keluar berbasis sesi.
+ * KontrollerAuth - Menangani proses Masuk dan Keluar berbasis sesi.
  *
  * Langkah keamanan yang diterapkan:
  *  1. Validasi input, captcha, dan pembatasan percobaan didelegasikan ke LoginRequest.
- *  2. Pencarian akun manual berdasarkan nomor_induk — aman untuk lingkungan multi-tenant.
- *  3. Pengecekan bendera `is_aktif` — akun nonaktif tidak dapat masuk.
- *  4. Perlindungan session fixation — ID sesi diperbarui setelah masuk berhasil.
- *  5. Keluar aman — sesi dihancurkan & token CSRF diperbarui.
+ *  2. Pencarian akun manual berdasarkan nomor_induk - aman untuk lingkungan multi-tenant.
+ *  3. Pengecekan bendera `is_aktif` - akun nonaktif tidak dapat masuk.
+ *  4. Perlindungan session fixation - ID sesi diperbarui setelah masuk berhasil.
+ *  5. Keluar aman - sesi dihancurkan & token CSRF diperbarui.
  *  6. Setiap peristiwa autentikasi dicatat untuk jejak audit.
  */
 class AuthController extends Controller
@@ -38,7 +38,7 @@ class AuthController extends Controller
     ) {}
 
     /* ==================================================================
-     | MASUK — Tampilkan Formulir
+     | MASUK - Tampilkan Formulir
      | ================================================================*/
 
     /**
@@ -50,7 +50,7 @@ class AuthController extends Controller
     }
 
     /* ==================================================================
-     | MASUK — Proses
+     | MASUK - Proses
      | ================================================================*/
 
     /**
@@ -58,7 +58,7 @@ class AuthController extends Controller
      *
      * Alur:
      *  1. LoginRequest memvalidasi input, captcha, dan memeriksa batas percobaan.
-     *  2. Cari pengguna berdasarkan nomor_induk secara manual — aman untuk
+     *  2. Cari pengguna berdasarkan nomor_induk secara manual - aman untuk
      *     lingkungan multi-tenant karena nomor_induk bisa sama antar tenant.
      *  3. Verifikasi kata sandi dengan Hash::check.
      *  4. Periksa status aktif akun.
@@ -127,7 +127,7 @@ class AuthController extends Controller
         }
 
         // ----------------------------------------------------------
-        // 5. Cek status aktif — akun nonaktif langsung ditolak.
+        // 5. Cek status aktif - akun nonaktif langsung ditolak.
         //    Throttle tetap dihitung agar tidak menjadi celah enumerasi akun.
         // ----------------------------------------------------------
         if (! $pengguna->is_aktif) {
@@ -151,7 +151,7 @@ class AuthController extends Controller
 
         // ----------------------------------------------------------
         // 6. Masukkan pengguna ke sesi.
-        //    session()->regenerate() mengganti ID sesi — mencegah serangan
+        //    session()->regenerate() mengganti ID sesi - mencegah serangan
         //    session fixation dari sesi yang dibuat sebelum login.
         // ----------------------------------------------------------
         Auth::login($pengguna);
@@ -246,7 +246,7 @@ class AuthController extends Controller
         // Hapus pengguna dari sesi
         Auth::logout();
 
-        // Hancurkan seluruh sesi — mencegah session fixation setelah keluar
+        // Hancurkan seluruh sesi - mencegah session fixation setelah keluar
         $permintaan->session()->invalidate();
 
         // Perbarui token CSRF agar token lama tidak dapat diputar ulang
@@ -306,7 +306,7 @@ class AuthController extends Controller
         $permintaan->session()->regenerateToken();
 
         // ----------------------------------------------------------
-        // 3. Kembalikan JSON — Alpine.js yang menangani redirect.
+        // 3. Kembalikan JSON - Alpine.js yang menangani redirect.
         // ----------------------------------------------------------
         return response()->json([
             'pesan'    => 'Anda telah logout otomatis karena tidak ada aktivitas selama 5 menit.',
@@ -335,7 +335,7 @@ class AuthController extends Controller
     }
 
     /* ==================================================================
-     | BANTUAN AKSES — Dynamic WhatsApp Redirect
+     | BANTUAN AKSES - Dynamic WhatsApp Redirect
      | ================================================================*/
 
     /**
@@ -378,7 +378,7 @@ class AuthController extends Controller
     }
 
     /* ==================================================================
-     | GANTI SANDI PAKSA — Tampilkan Formulir
+     | GANTI SANDI PAKSA - Tampilkan Formulir
      | ================================================================*/
 
     /**
@@ -390,7 +390,7 @@ class AuthController extends Controller
     }
 
     /* ==================================================================
-     | GANTI SANDI PAKSA — Proses
+     | GANTI SANDI PAKSA - Proses
      | ================================================================*/
 
     /**

@@ -11,15 +11,15 @@
 |   5. Aksi: Lihat, Tandai Dibaca, Hapus (berdasarkan peran)
 |
 | Variabel dari controller:
-|   $daftarLaporan — LengthAwarePaginator (Insiden with detailPasien)
-|   $statistik     — array [total, kasus_baru, sedang_diproses, selesai]
-|   $pengguna      — Pengguna (auth user)
+|   $daftarLaporan - LengthAwarePaginator (Insiden with detailPasien)
+|   $statistik     - array [total, kasus_baru, sedang_diproses, selesai]
+|   $pengguna      - Pengguna (auth user)
 |--------------------------------------------------------------------------
 --}}
 
 @extends('layouts.app')
 
-@section('judul', 'Riwayat Laporan — Sistem MER')
+@section('judul', 'Riwayat Laporan - Sistem MER')
 
 @section('konten')
 
@@ -230,13 +230,13 @@
 
                             {{-- Nama Pasien --}}
                             <td class="whitespace-nowrap px-4 py-3.5 font-medium text-slate-800 sm:px-5">
-                                {{ $laporan->detailPasien?->nama_pasien ?? '—' }}
+                                {{ $laporan->detailPasien?->nama_pasien ?? '-' }}
                             </td>
 
                             {{-- Unit Kerja (hanya untuk peran manajemen) --}}
                             @if (! $pengguna->memilikiPeran('Nakes'))
                                 <td class="hidden whitespace-nowrap px-4 py-3.5 text-slate-500 md:table-cell sm:px-5">
-                                    {{ $laporan->nama_unit_kerja ?? $laporan->unitKerja?->nama_unit ?? '—' }}
+                                    {{ $laporan->nama_unit_kerja ?? $laporan->unitKerja?->nama_unit ?? '-' }}
                                 </td>
                             @endif
 
@@ -246,18 +246,18 @@
                                     <span class="block text-xs font-medium text-slate-700">{{ $laporan->tgl_kejadian->format('d M Y') }}</span>
                                     <span class="block text-xs text-slate-400">{{ $laporan->tgl_kejadian->format('H:i') }}</span>
                                 @else
-                                    <span class="text-slate-500">—</span>
+                                    <span class="text-slate-500">-</span>
                                 @endif
                             </td>
 
-                            {{-- Tgl Dilaporkan — hanya untuk Nakes --}}
+                            {{-- Tgl Dilaporkan - hanya untuk Nakes --}}
                             @if ($pengguna->memilikiPeran('Nakes'))
                                 <td class="hidden whitespace-nowrap px-4 py-3.5 lg:table-cell sm:px-5">
                                     @if ($laporan->tgl_lapor)
                                         <span class="block text-xs font-medium text-slate-700">{{ $laporan->tgl_lapor->format('d M Y, H:i:s') }}</span>
                                         <span class="block text-xs text-slate-400">{{ $laporan->tgl_lapor->diffForHumans() }}</span>
                                     @else
-                                        <span class="text-xs text-slate-400">—</span>
+                                        <span class="text-xs text-slate-400">-</span>
                                     @endif
                                 </td>
                             @endif
@@ -322,7 +322,7 @@
                                         Lihat
                                     </a>
 
-                                    {{-- Tombol Tandai Dibaca — untuk Kepala Ruangan / Komite / Admin --}}
+                                    {{-- Tombol Tandai Dibaca - untuk Kepala Ruangan / Komite / Admin --}}
                                     @if (!$laporan->sudah_dibaca && ($pengguna->memilikiPeran('Kepala Ruangan') || $pengguna->memilikiPeran('Komite') || $pengguna->memilikiPeran('Admin')))
                                         <form method="POST" action="{{ route('laporan.tandai-dibaca', $laporan->id) }}" class="inline">
                                             @csrf
@@ -339,7 +339,7 @@
                                         </form>
                                     @endif
 
-                                    {{-- Tombol Hapus — TIDAK tersedia untuk Nakes.
+                                    {{-- Tombol Hapus - TIDAK tersedia untuk Nakes.
                                          Hanya Kepala Ruangan / Komite / Admin yang bisa hapus,
                                          dan hanya jika status masih kasus_baru. --}}
                                     @if ($laporan->status_saat_ini === 'kasus_baru'

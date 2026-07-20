@@ -4,12 +4,12 @@
 |--------------------------------------------------------------------------
 | Partial reusable untuk satu item menu di sidebar.
 | Di-@include dari sidebar.blade.php dengan variabel:
-|   $label  — teks menu
-|   $route  — nama route (null = belum tersedia)
-|   $aktif  — array nama route untuk pencocokan halaman aktif
-|   $ikon   — SVG <path> d attribute
-|   $segera — bool, tampilkan badge "Segera" (opsional)
-|   $badge  — int, tampilkan badge angka (opsional)
+|   $label  - teks menu
+|   $route  - nama route (null = belum tersedia)
+|   $aktif  - array nama route untuk pencocokan halaman aktif
+|   $ikon   - SVG <path> d attribute
+|   $segera - bool, tampilkan badge "Segera" (opsional)
+|   $badge  - int, tampilkan badge angka (opsional)
 |--------------------------------------------------------------------------
 --}}
 

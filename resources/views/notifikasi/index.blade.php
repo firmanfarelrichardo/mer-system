@@ -5,8 +5,8 @@
 | Menampilkan daftar notifikasi pengguna (dibaca dan belum dibaca).
 |
 | Variabel dari controller:
-|   $daftarNotifikasi — LengthAwarePaginator<NotifikasiData>
-|   $belumDibaca      — int (jumlah notifikasi belum dibaca)
+|   $daftarNotifikasi - LengthAwarePaginator<NotifikasiData>
+|   $belumDibaca      - int (jumlah notifikasi belum dibaca)
 |
 | Konten notifikasi menyesuaikan per peran:
 |   - Nakes: notif status laporan sendiri
@@ -18,7 +18,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Notifikasi — Sistem MER')
+@section('judul', 'Notifikasi - Sistem MER')
 
 @section('konten')
 

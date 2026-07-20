@@ -19,7 +19,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Controller Manajemen Pengguna — CRUD akun pengguna oleh Admin.
+ * Controller Manajemen Pengguna - CRUD akun pengguna oleh Admin.
  *
  * Mengikuti alur: Controller → Service → Repository → Database
  * Data dikirim via DTO (PenggunaData) untuk kontrak yang bersih.
@@ -31,7 +31,7 @@ class PenggunaController extends Controller
     ) {}
 
     /* ------------------------------------------------------------------
-     | INDEX — Daftar Pengguna + Filter
+     | INDEX - Daftar Pengguna + Filter
      | ----------------------------------------------------------------*/
 
     /**
@@ -78,7 +78,7 @@ class PenggunaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | CREATE — Form Tambah Pengguna Baru
+     | CREATE - Form Tambah Pengguna Baru
      | ----------------------------------------------------------------*/
 
     /**
@@ -102,7 +102,7 @@ class PenggunaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | STORE — Simpan Pengguna Baru
+     | STORE - Simpan Pengguna Baru
      | ----------------------------------------------------------------*/
 
     /**
@@ -121,7 +121,7 @@ class PenggunaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | EDIT — Form Edit Pengguna
+     | EDIT - Form Edit Pengguna
      | ----------------------------------------------------------------*/
 
     /**
@@ -152,7 +152,7 @@ class PenggunaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | UPDATE — Perbarui Data Pengguna
+     | UPDATE - Perbarui Data Pengguna
      | ----------------------------------------------------------------*/
 
     /**
@@ -175,7 +175,7 @@ class PenggunaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | TOGGLE STATUS — Aktifkan / Non-aktifkan Akun
+     | TOGGLE STATUS - Aktifkan / Non-aktifkan Akun
      | ----------------------------------------------------------------*/
 
     /**

@@ -12,7 +12,7 @@ use Illuminate\Notifications\Notification;
  * Notification: InsidenNotifikasi
  *
  * Notifikasi database untuk setiap perubahan status insiden.
- * Hanya menggunakan channel 'database' — ditulis ke tabel `akun.notifikasi`.
+ * Hanya menggunakan channel 'database' - ditulis ke tabel `akun.notifikasi`.
  *
  * Payload `data` yang disimpan:
  *   - insiden_id   : ID insiden terkait

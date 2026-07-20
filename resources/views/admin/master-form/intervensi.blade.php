@@ -8,7 +8,7 @@
 
 @extends('layouts.app')
 
-@section('judul', 'Master Tindakan Intervensi — Sistem MER')
+@section('judul', 'Master Tindakan Intervensi - Sistem MER')
 
 @php
     $modalAwalBuka = $errors->any();

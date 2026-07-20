@@ -15,7 +15,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Controller Manajemen Kategori Kesalahan — CRUD master kategori oleh Admin.
+ * Controller Manajemen Kategori Kesalahan - CRUD master kategori oleh Admin.
  *
  * Alur: Controller → Service → Repository → Database
  * Audit log dicatat otomatis oleh Observer.
@@ -27,7 +27,7 @@ class KategoriController extends Controller
     ) {}
 
     /* ------------------------------------------------------------------
-     | INDEX — Daftar Kategori + Filter
+     | INDEX - Daftar Kategori + Filter
      | ----------------------------------------------------------------*/
 
     public function index(Request $request): View
@@ -44,7 +44,7 @@ class KategoriController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | CREATE — Form Tambah Kategori
+     | CREATE - Form Tambah Kategori
      | ----------------------------------------------------------------*/
 
     public function buat(): View
@@ -53,7 +53,7 @@ class KategoriController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | STORE — Simpan Kategori Baru
+     | STORE - Simpan Kategori Baru
      | ----------------------------------------------------------------*/
 
     public function simpan(SimpanKategoriRequest $request): RedirectResponse
@@ -69,7 +69,7 @@ class KategoriController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | EDIT — Form Edit Kategori
+     | EDIT - Form Edit Kategori
      | ----------------------------------------------------------------*/
 
     public function edit(int $kategori): View
@@ -83,7 +83,7 @@ class KategoriController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | UPDATE — Perbarui Data Kategori
+     | UPDATE - Perbarui Data Kategori
      | ----------------------------------------------------------------*/
 
     public function perbarui(PerbaruiKategoriRequest $request, int $kategori): RedirectResponse
@@ -102,7 +102,7 @@ class KategoriController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | DESTROY — Hapus Kategori (Permanent)
+     | DESTROY - Hapus Kategori (Permanent)
      | ----------------------------------------------------------------*/
 
     public function hapus(int $kategori): RedirectResponse

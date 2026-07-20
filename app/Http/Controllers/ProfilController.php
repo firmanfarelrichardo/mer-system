@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * ProfilController — tampilan dan pembaruan profil mandiri.
+ * ProfilController - tampilan dan pembaruan profil mandiri.
  *
  * Semua peran yang terautentikasi dapat melihat dan mengedit profil
  * mereka sendiri. Field terlindungi (nomor_induk, email, unit, peran)

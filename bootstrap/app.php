@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // -----------------------------------------------------------------
-        // TrustProxies — Wajib dikonfigurasi agar Request::ip() mengembalikan
+        // TrustProxies - Wajib dikonfigurasi agar Request::ip() mengembalikan
         // IP asli pengguna, bukan IP container Nginx/Docker.
         //
         // $proxies = '*'  : percayai semua proxy (aman untuk internal Docker network
@@ -36,7 +36,7 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         // -----------------------------------------------------------------
-        // Alias Middleware — deklarasi alias agar dapat dipakai di route
+        // Alias Middleware - deklarasi alias agar dapat dipakai di route
         // tanpa menulis FQCN penuh.
         // -----------------------------------------------------------------
         $middleware->alias([

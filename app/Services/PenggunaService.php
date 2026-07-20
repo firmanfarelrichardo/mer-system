@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Service Pengguna — logika bisnis manajemen akun pengguna.
+ * Service Pengguna - logika bisnis manajemen akun pengguna.
  *
  * Menjembatani Controller ↔ Repository dengan menambahkan:
  *   - Validasi bisnis
@@ -52,7 +52,7 @@ class PenggunaService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Buat Pengguna
+     | Command - Buat Pengguna
      | ----------------------------------------------------------------*/
 
     /**
@@ -90,7 +90,7 @@ class PenggunaService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Perbarui Pengguna
+     | Command - Perbarui Pengguna
      | ----------------------------------------------------------------*/
 
     /**
@@ -136,7 +136,7 @@ class PenggunaService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Perbarui Profil Mandiri (self-service)
+     | Command - Perbarui Profil Mandiri (self-service)
      | ----------------------------------------------------------------*/
 
     /**
@@ -175,7 +175,7 @@ class PenggunaService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Ubah Status Aktif (Soft-toggle)
+     | Command - Ubah Status Aktif (Soft-toggle)
      | ----------------------------------------------------------------*/
 
     /**
@@ -199,7 +199,7 @@ class PenggunaService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Reset Kata Sandi
+     | Command - Reset Kata Sandi
      | ----------------------------------------------------------------*/
 
     /**
@@ -221,7 +221,7 @@ class PenggunaService
     }
 
     /* ------------------------------------------------------------------
-     | Command — Reset Kata Sandi Darurat (Emergency Password Reset)
+     | Command - Reset Kata Sandi Darurat (Emergency Password Reset)
      | ----------------------------------------------------------------*/
 
     /**

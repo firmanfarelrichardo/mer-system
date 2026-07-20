@@ -14,7 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Controller Manajemen Tipe Cedera — CRUD master tipe cedera oleh Admin.
+ * Controller Manajemen Tipe Cedera - CRUD master tipe cedera oleh Admin.
  *
  * Alur: Controller → DTO → Service → Repository → Database
  * Audit log dicatat otomatis oleh Observer.
@@ -26,7 +26,7 @@ class TipeCederaController extends Controller
     ) {}
 
     /* ------------------------------------------------------------------
-     | INDEX — Daftar Tipe Cedera + Filter
+     | INDEX - Daftar Tipe Cedera + Filter
      | ----------------------------------------------------------------*/
 
     public function index(Request $request): View
@@ -43,7 +43,7 @@ class TipeCederaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | STORE — Simpan Tipe Cedera Baru
+     | STORE - Simpan Tipe Cedera Baru
      | ----------------------------------------------------------------*/
 
     public function simpan(SimpanMasterFormRequest $request): RedirectResponse
@@ -59,7 +59,7 @@ class TipeCederaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | UPDATE — Perbarui Data Tipe Cedera
+     | UPDATE - Perbarui Data Tipe Cedera
      | ----------------------------------------------------------------*/
 
     public function perbarui(SimpanMasterFormRequest $request, int $id): RedirectResponse
@@ -78,7 +78,7 @@ class TipeCederaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | TOGGLE — Ubah Status Aktif/Nonaktif
+     | TOGGLE - Ubah Status Aktif/Nonaktif
      | ----------------------------------------------------------------*/
 
     public function toggleAktif(int $id): RedirectResponse
@@ -97,7 +97,7 @@ class TipeCederaController extends Controller
     }
 
     /* ------------------------------------------------------------------
-     | DESTROY — Hapus Tipe Cedera (Soft Delete)
+     | DESTROY - Hapus Tipe Cedera (Soft Delete)
      | ----------------------------------------------------------------*/
 
     public function hapus(int $id): RedirectResponse
