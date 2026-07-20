@@ -358,10 +358,40 @@ class LaporanController extends Controller
      * Memuat relasi detailPasien, pelapor, unitKerja, dan tindakLanjut
      * agar view dapat menampilkan data lengkap termasuk histori tindak lanjut.
      */
-    public function tampil(Request $permintaan, string $laporan): View
+    public function tampil(Request $permintaan, string $laporan): View|RedirectResponse
     {
+        /** @var \App\Models\Pengguna $pengguna */
         $pengguna = Auth::user();
 
+        // 1. Cek apakah dengan peran aktif saat ini, pengguna bisa mengakses laporan
+        $bisaAkses = Insiden::where('id', $laporan)->untukPeran($pengguna)->exists();
+
+        if (! $bisaAkses) {
+            // 2. Jika tidak bisa, periksa apakah pengguna punya peran lain yang bisa mengakses
+            // (Kasus: Notifikasi masuk untuk peran Kepala Ruangan, tapi user sedang aktif sebagai Nakes)
+            if ($pengguna->bisaGantiPeran()) {
+                $peranAwal = $pengguna->peranAktif();
+                $peranTersedia = $pengguna->peranYangDapatDipilih();
+
+                foreach ($peranTersedia as $peranCek) {
+                    if ($peranCek === $peranAwal) continue;
+                    
+                    $pengguna->setPeranAktif($peranCek);
+                    if (Insiden::where('id', $laporan)->untukPeran($pengguna)->exists()) {
+                        return redirect()->route('laporan.tampil', $laporan)
+                            ->with('sukses', "Sistem otomatis menyesuaikan peran Anda menjadi {$peranCek} untuk mengakses laporan ini.");
+                    }
+                }
+                
+                // Kembalikan ke peran awal jika ternyata tidak ada satupun yang punya akses
+                $pengguna->setPeranAktif($peranAwal);
+            }
+
+            // Laporan tidak ada atau memang dilarang
+            abort(404);
+        }
+
+        // 3. Muat data lengkap karena sudah dipastikan punya akses
         $insiden = Insiden::with([
                 'detailPasien',
                 'pelapor',
