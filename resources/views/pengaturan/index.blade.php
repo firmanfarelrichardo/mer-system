@@ -130,7 +130,7 @@
                            class="h-5 w-5 rounded border-slate-300 text-brand focus:ring-brand/50">
                 </label>
 
-                {{-- Toggle: Email --}}
+                {{-- TODO: Fitur email belum diaktifkan, disembunyikan sementara.
                 <label class="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50 px-4 py-3">
                     <div>
                         <p class="text-sm font-medium text-slate-700">Notifikasi Email</p>
@@ -138,7 +138,8 @@
                     </div>
                     <input type="checkbox" name="notif_email" value="1"
                            class="h-5 w-5 rounded border-slate-300 text-brand focus:ring-brand/50">
-                </label>
+                </label> 
+                --}}
 
                 <div class="pt-2">
                     <button type="submit"
