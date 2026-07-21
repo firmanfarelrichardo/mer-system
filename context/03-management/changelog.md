@@ -1,3 +1,4 @@
+
 # Changelog Context
 
 Dokumen ini adalah riwayat perubahan khusus folder `context/`. Semua waktu menggunakan **WIB (UTC+07:00)** dan dicatat dengan format `YYYY-MM-DD HH:MM:SS WIB`.
@@ -10,6 +11,26 @@ Dokumen ini adalah riwayat perubahan khusus folder `context/`. Semua waktu mengg
 - Jangan mencatat data pasien, kredensial, token, atau informasi rahasia dalam changelog.
 
 ## Riwayat
+
+### 2026-07-21 21:12:00 WIB
+
+- **Restrukturisasi besar folder `context/`** — reorganisasi seluruh isi agar terstruktur, scalable, dan multi-agent ready.
+- Perubahan struktur:
+  - Membuat subfolder kategori: `01-project/`, `02-development/`, `03-management/`, `04-agent-output/`
+  - Memindahkan semua file ke subfolder yang sesuai
+  - Menghapus folder lama `Output Agent/` (kosong, nama tidak filesystem-friendly)
+  - Menghapus semua file lama di root `context/`
+- File baru:
+  - `README.md` — index/manifest dan panduan navigasi untuk AI agent
+  - `CONTRIBUTING.md` — panduan kontribusi dokumentasi context
+  - `01-project/tech-stack.md` — stack teknologi, dependencies, dan mapping source code
+  - `02-development/coding-conventions.md` — konvensi kode dan penamaan MER System
+  - `04-agent-output/.gitkeep` — placeholder agar folder ter-track git
+- File diperbaiki:
+  - `currenct-progress.md` → `03-management/current-progress.md` (fix typo nama file, hapus catatan internal tentang typo, update referensi)
+  - `system-instructions.md` → `02-development/system-instructions.md` (fix broken references ke path baru, tambah tabel navigasi cepat)
+- Referensi eksternal diperbarui:
+  - `PRD.md` section 8 — link diperbarui ke path baru
 
 ### 2026-07-21 19:50:08–19:50:10 WIB
 

@@ -105,8 +105,15 @@ Dokumen ini adalah sumber kebutuhan produk tingkat tinggi. Detail implementasi, 
 
 ## 8. Tautan konteks implementasi
 
-- [Arsitektur](context/architecture.md)
-- [Skema basis data](context/database-schema.md)
-- [Alur fitur per pemangku kepentingan](context/stakeholder-features-flow.md)
-- [Backlog](context/task-backlog.md)
-- [Panduan pengujian](context/testing-guide.md)
+- [Index & Navigasi Context](context/README.md)
+- [Arsitektur](context/01-project/architecture.md)
+- [Skema basis data](context/01-project/database-schema.md)
+- [Stack teknologi](context/01-project/tech-stack.md)
+- [Alur fitur per pemangku kepentingan](context/01-project/stakeholder-features-flow.md)
+- [Instruksi sistem untuk AI agent](context/02-development/system-instructions.md)
+- [Konvensi kode](context/02-development/coding-conventions.md)
+- [Panduan pengujian](context/02-development/testing-guide.md)
+- [Panduan code review](context/02-development/code-review.md)
+- [Backlog](context/03-management/task-backlog.md)
+- [Log keputusan](context/03-management/decisions-log.md)
+- [Progres saat ini](context/03-management/current-progress.md)

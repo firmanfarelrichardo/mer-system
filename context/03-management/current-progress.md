@@ -1,6 +1,7 @@
 # Progres Saat Ini
 
-> Catatan: nama file sengaja mengikuti struktur yang diminta (`currenct-progress.md`). Perbarui dokumen ini pada akhir pekerjaan besar agar agent berikutnya memiliki titik mulai yang akurat.
+> Snapshot status repository dan titik mulai untuk sesi kerja berikutnya.
+> Perbarui dokumen ini pada akhir pekerjaan besar agar agent berikutnya memiliki titik mulai yang akurat.
 
 ## Snapshot repository
 
@@ -13,8 +14,12 @@
 | Artefak | Status | Fungsi |
 | --- | --- | --- |
 | `PRD.md` | Selesai | Kebutuhan produk dan kriteria penerimaan. |
-| `context/architecture.md` | Selesai | Batas komponen dan arsitektur. |
-| `context/*.md` | Selesai | Memori operasional/teknis untuk AI agent. |
+| `context/01-project/architecture.md` | Selesai | Batas komponen dan arsitektur. |
+| `context/01-project/tech-stack.md` | Selesai | Stack teknologi dan mapping source code. |
+| `context/02-development/coding-conventions.md` | Selesai | Konvensi kode dan penamaan. |
+| `context/README.md` | Selesai | Index/manifest dan navigasi. |
+| `context/CONTRIBUTING.md` | Selesai | Panduan kontribusi dokumentasi. |
+| `context/**/*.md` | Selesai | Memori operasional/teknis untuk AI agent. |
 
 ## Fokus lanjutan yang layak
 
@@ -26,7 +31,7 @@
 
 ## Cara melanjutkan dengan aman
 
-- Baca `context/system-instructions.md`, lalu dokumen yang relevan dengan tugas.
+- Baca `context/README.md` untuk navigasi, lalu `context/02-development/system-instructions.md`, lalu dokumen yang relevan dengan tugas.
 - Mulai dari `git status --short`, bukan dari asumsi snapshot ini.
 - Untuk perubahan perilaku, cari pemakaian status/peran dengan `rg` dan tambahkan test sebelum/bersamaan dengan perubahan.
 - Jangan menjalankan perintah reset/fresh migration atau pembersihan volume tanpa persetujuan eksplisit karena dapat menghapus data.

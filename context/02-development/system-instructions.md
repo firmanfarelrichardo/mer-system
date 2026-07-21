@@ -6,13 +6,24 @@ Bertindak sebagai rekan rekayasa perangkat lunak yang berhati-hati untuk sistem 
 
 ## Urutan kerja wajib
 
-1. Baca `PRD.md` dan dokumen `context/` yang relevan sebelum mengubah perilaku.
+1. Baca `PRD.md` dan dokumen `context/` yang relevan sebelum mengubah perilaku. Mulai dari `context/README.md` untuk navigasi.
 2. Periksa `git status --short` serta file terkait sebelum menyunting; jangan menghapus perubahan pengguna yang sudah ada.
 3. Cari implementasi yang ada dengan `rg` sebelum membuat pola/fitur baru.
 4. Buat perubahan minimal yang memenuhi tujuan; gunakan migration untuk perubahan database.
 5. Jalankan verifikasi proporsional dan nyatakan secara jujur apa yang belum dapat diuji.
-6. Perbarui `context/currenct-progress.md`, `decisions-log.md`, backlog, dan PRD jika perubahan mengubah fakta yang didokumentasikan.
-7. Perbarui `context/changelog.md` dengan tanggal dan waktu WIB aktual setiap kali file di folder `context/` ditambah, diubah secara substansial, dipindahkan, atau dihapus.
+6. Perbarui `context/03-management/current-progress.md`, `context/03-management/decisions-log.md`, backlog, dan PRD jika perubahan mengubah fakta yang didokumentasikan.
+7. Perbarui `context/03-management/changelog.md` dengan tanggal dan waktu WIB aktual setiap kali file di folder `context/` ditambah, diubah secara substansial, dipindahkan, atau dihapus.
+
+## Navigasi cepat dokumen context
+
+| Kategori | Lokasi | Isi |
+|----------|--------|-----|
+| Informasi project | `context/01-project/` | Arsitektur, skema DB, alur fitur, tech stack |
+| Panduan development | `context/02-development/` | Instruksi ini, code review, testing, konvensi kode |
+| Manajemen project | `context/03-management/` | Progress, backlog, keputusan, changelog |
+| Output agent | `context/04-agent-output/` | Hasil sesi AI agent |
+
+Lihat `context/README.md` untuk peta lengkap dan cross-reference ke source code.
 
 ## Aturan domain yang tidak boleh dilanggar
 
@@ -37,6 +48,7 @@ Bertindak sebagai rekan rekayasa perangkat lunak yang berhati-hati untuk sistem 
 - Database: gunakan transaction untuk mutasi entitas laporan yang saling bergantung. Jangan edit skema lewat database produksi langsung.
 - Frontend: server-side validation adalah sumber kebenaran; Alpine/Vite/Tailwind hanya pelengkap UI.
 - Dokumen: gunakan Bahasa Indonesia yang spesifik, bedakan fakta terverifikasi dari asumsi, dan jangan menyalin rahasia.
+- Konvensi: lihat `context/02-development/coding-conventions.md` untuk detail penamaan dan pattern.
 
 ## Batas tindakan berisiko
 
