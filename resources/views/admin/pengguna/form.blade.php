@@ -270,4 +270,44 @@
         </div>
     </form>
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const roleRadios = document.querySelectorAll('input[name="peran_ids[]"]');
+            const unitSelect = document.getElementById('unit_id');
+            const unitWrapper = unitSelect.closest('div'); // The wrapping div
+            
+            // Peran yang tidak memiliki unit kerja spesifik (bisa disesuaikan dengan ID dari database)
+            // Sebaiknya kita cek berdasarkan label teksnya untuk keandalan
+            function updateUnitKerjaVisibility() {
+                let shouldDisable = false;
+                
+                roleRadios.forEach(radio => {
+                    if (radio.checked) {
+                        const labelText = radio.parentElement.textContent.trim().toLowerCase();
+                        if (labelText === 'admin' || labelText === 'komite' || labelText === 'direktur') {
+                            shouldDisable = true;
+                        }
+                    }
+                });
+                
+                if (shouldDisable) {
+                    unitSelect.value = '';
+                    unitSelect.disabled = true;
+                    unitSelect.classList.add('bg-slate-100', 'cursor-not-allowed');
+                    unitWrapper.style.opacity = '0.5';
+                } else {
+                    unitSelect.disabled = false;
+                    unitSelect.classList.remove('bg-slate-100', 'cursor-not-allowed');
+                    unitWrapper.style.opacity = '1';
+                }
+            }
+            
+            roleRadios.forEach(radio => {
+                radio.addEventListener('change', updateUnitKerjaVisibility);
+            });
+            
+            // Run on load
+            updateUnitKerjaVisibility();
+        });
+    </script>
 @endsection

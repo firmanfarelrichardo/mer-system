@@ -76,7 +76,7 @@ echo -e "  Timestamp  : $(date '+%Y-%m-%d %H:%M:%S %Z')"
 step "Step 1/6 - git pull origin main"
 # cd ke root project (2 level di atas deployment/production/)
 cd "$(dirname "$(dirname "$SCRIPT_DIR")")"
-git pull origin main
+git pull origin production
 success "Kode berhasil diperbarui dari branch main"
 
 # Kembali ke direktori deployment/production untuk docker compose commands

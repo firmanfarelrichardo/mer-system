@@ -42,11 +42,11 @@ COMPOSE_PROJECT="mer-system"
 DC="docker compose -p ${COMPOSE_PROJECT} --project-directory ${COMPOSE_DIR}"
 
 # Container names
-APP_CONTAINER="mer-app-dev"
-WEB_CONTAINER="mer-web-dev"
-VITE_CONTAINER="mer-vite-dev"
-DB_CONTAINER="mer-db-dev"
-REDIS_CONTAINER="mer-redis-dev"
+APP_CONTAINER="mer-app-staging"
+WEB_CONTAINER="mer-web-staging"
+VITE_CONTAINER="mer-vite-staging"
+DB_CONTAINER="mer-db-staging"
+REDIS_CONTAINER="mer-redis-staging"
 
 # ---------------------------------------------------------------------------
 # Helper: cek apakah container MILIK PROJECT INI sedang running
@@ -1279,7 +1279,7 @@ while true; do
                 # Filter hanya volume milik project ini
                 VOLUME_NAME=$(docker volume ls \
                     --filter "label=com.docker.compose.project=${COMPOSE_PROJECT}" \
-                    --filter "name=mer-db-data" \
+                    --filter "name=staging-db-data" \
                     --format '{{.Name}}')
                 if [ -n "$VOLUME_NAME" ]; then
                     docker volume rm "$VOLUME_NAME" 2>/dev/null \
