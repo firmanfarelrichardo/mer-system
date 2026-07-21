@@ -13,7 +13,7 @@ Artisan::command('pengguna:export-production {--path= : Lokasi file .xls output,
     $path = $this->option('path') ?: 'storage/app/exports/pengguna-production-'.now()->format('Ymd-His').'.xls';
     $fullPath = Str::startsWith($path, '/') ? $path : base_path($path);
 
-    if (! str_ends_with(strtolower(qr$fullPath), '.xls')) {
+    if (! str_ends_with(strtolower($fullPath), '.xls')) {
         $this->error('Path output harus menggunakan ekstensi .xls');
 
         return self::FAILURE;

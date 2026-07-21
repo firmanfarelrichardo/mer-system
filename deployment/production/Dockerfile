@@ -128,12 +128,11 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 9000
 
-# HEALTHCHECK menggunakan php-fpm-healthcheck (dari package fcgi) karena
-# memberikan check yang sesungguhnya ke PHP-FPM status endpoint,
-# lebih akurat dibanding sekedar TCP check.
+# HEALTHCHECK menggunakan cgi-fcgi secara langsung karena
+# memberikan check yang sesungguhnya ke PHP-FPM status endpoint.
 # start-period=60s memberi waktu cukup untuk entrypoint (migrate, cache, sync assets).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD php-fpm-healthcheck || exit 1
+    CMD SCRIPT_NAME=/ping SCRIPT_FILENAME=/ping REQUEST_METHOD=GET cgi-fcgi -bind -connect 127.0.0.1:9000 || exit 1
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 # Supervisord sebagai PID 1 menggantikan php-fpm langsung.
