@@ -380,7 +380,7 @@ test_endpoint() {
 
     echo ""
     echo -e "${YELLOW}Access URLs:${NC}"
-    echo -e "  ${CYAN}Application:${NC}     http://<IP_VPS>:$APP_PORT"
+    echo -e "  ${CYAN}Application:${NC}     http://localhost:$APP_PORT"
     echo -e "  ${CYAN}PostgreSQL:${NC}      localhost:$DB_PORT"
     echo -e "  ${CYAN}Redis:${NC}           localhost:$REDIS_PORT"
     echo ""
@@ -822,7 +822,7 @@ while true; do
             echo -e "${GREEN}✓ Development environment started!${NC}"
             echo ""
             echo -e "${YELLOW}Services:${NC}"
-            echo -e "  App (Nginx):    http://<IP_VPS>:$APP_PORT"
+            echo -e "  App (Nginx):    http://localhost:$APP_PORT"
             echo -e "  PostgreSQL:     localhost:5433 (via SSH)"
             echo -e "  Redis:          localhost:6379 (via SSH)"
             echo ""

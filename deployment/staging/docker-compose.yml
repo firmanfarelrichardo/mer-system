@@ -6,9 +6,10 @@
 # di mer-staging-network yang tidak bisa berkomunikasi
 # dengan mer-prod-network.
 #
-# AKSES: Nginx staging di-bind ke port 8080.
-# Anda dapat mengakses staging dari browser melalui:
-#   http://<IP_VPS>:8080
+# AKSES: Nginx staging di-bind ke 127.0.0.1:8080.
+# Untuk mengakses staging dari browser lokal, gunakan SSH Tunnel:
+#   ssh -L 8080:127.0.0.1:8080 mer_ops@<IP_VPS>
+#   Lalu buka: http://localhost:8080
 # ===========================================
 
 services:
@@ -62,7 +63,7 @@ services:
     container_name: mer-web-staging
     restart: unless-stopped
     ports:
-      - "${APP_PORT:-8080}:80"
+      - "127.0.0.1:${APP_PORT:-8080}:80"
     volumes:
       - ../../public:/var/www/html/public:ro
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
