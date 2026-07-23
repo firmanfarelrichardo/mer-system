@@ -161,3 +161,53 @@ Artisan::command('pengguna:export-production {--path= : Lokasi file .xls output,
 
     return self::SUCCESS;
 })->purpose('Ekspor seluruh data pengguna production ke file Excel .xls');
+
+// -----------------------------------------------------------------------------
+// Data Management Commands (Used by deploy.sh menu)
+// -----------------------------------------------------------------------------
+
+Artisan::command('data:reset-db', function () {
+    $this->call('migrate:fresh', ['--seed' => true]);
+    $this->info('Database reset and seeded successfully.');
+})->purpose('Reset the entire database and run seeders');
+
+Artisan::command('data:reset-laporan', function () {
+    DB::statement('TRUNCATE TABLE pelaporan.insiden CASCADE');
+    $this->info('Seluruh data laporan (insiden) telah dihapus.');
+})->purpose('Mengosongkan seluruh data laporan');
+
+Artisan::command('data:reset-user', function () {
+    // Gunakan Eloquent agar menjalankan SoftDeletes dan menghindari Foreign Key Violation
+    $admin = App\Models\Pengguna::where('username', 'admin')->first();
+    $adminId = $admin ? $admin->id : 0;
+    
+    $deleted = App\Models\Pengguna::where('id', '!=', $adminId)->delete();
+    $this->info("Berhasil menghapus (soft-delete) {$deleted} user (Admin utama dipertahankan).");
+})->purpose('Menghapus seluruh user kecuali admin utama');
+
+Artisan::command('data:delete-laporan {nomor}', function ($nomor) {
+    // Gunakan Eloquent agar menjalankan SoftDeletes
+    $insiden = App\Models\Insiden::where('nomor_laporan', $nomor)->first();
+    if ($insiden) {
+        $insiden->delete();
+        $this->info("Laporan dengan Nomor {$nomor} berhasil dihapus (soft-delete).");
+    } else {
+        $this->error("Laporan dengan Nomor {$nomor} tidak ditemukan.");
+    }
+})->purpose('Menghapus satu laporan spesifik berdasarkan Nomor Laporan');
+
+Artisan::command('data:delete-user {username}', function ($username) {
+    // Gunakan Eloquent agar menjalankan SoftDeletes
+    $user = App\Models\Pengguna::where('username', $username)->first();
+    if (!$user) {
+        $this->error("User dengan username '{$username}' tidak ditemukan.");
+        return;
+    }
+    if ($user->username === 'admin') {
+        $this->error("Akses ditolak: Tidak dapat menghapus admin utama.");
+        return;
+    }
+    
+    $user->delete();
+    $this->info("User dengan username '{$username}' berhasil dihapus (soft-delete).");
+})->purpose('Menghapus satu user spesifik berdasarkan Username');

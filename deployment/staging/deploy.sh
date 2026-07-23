@@ -136,9 +136,16 @@ show_menu() {
     echo -e "  ${YELLOW}60)${NC} Show Detected Gateway IP"
     echo -e "  ${GREEN}61)${NC} Auto-Update DB_HOST to WSL Gateway IP"
     echo ""
+    echo -e "  ${CYAN}--- Data Management ---${NC}"
+    echo -e "  ${RED}70)${NC} Reset Seluruh Database (Migrate Fresh + Seed)"
+    echo -e "  ${RED}71)${NC} Reset Seluruh Laporan (Hapus Semua Laporan)"
+    echo -e "  ${RED}72)${NC} Reset Seluruh User (Kecuali Admin)"
+    echo -e "  ${YELLOW}73)${NC} Hapus Laporan Spesifik (Berdasarkan Nomor Laporan)"
+    echo -e "  ${YELLOW}74)${NC} Hapus User Spesifik (Berdasarkan Username)"
+    echo ""
     echo -e "  ${RED}0)${NC} Exit"
     echo ""
-    echo -n "Pilihan [0-61]: "
+    echo -n "Pilihan [0-74]: "
 }
 
 # Function to show container status
@@ -1420,6 +1427,55 @@ while true; do
             ;;
         61)
             update_db_host_ip
+            ;;
+
+        70)
+            echo ""
+            echo -e "${RED}WARNING: Ini akan mereset SELURUH database dan mengisi data dummy awal!${NC}"
+            read -p "Type 'RESET' to confirm (or anything else to cancel): " confirm
+            if [ "$confirm" = "RESET" ]; then
+                $DOCKER_EXEC "$APP_CONTAINER" php artisan data:reset-db
+            fi
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+        71)
+            echo ""
+            echo -e "${RED}WARNING: Ini akan menghapus SELURUH data laporan!${NC}"
+            read -p "Type 'HAPUS' to confirm (or anything else to cancel): " confirm
+            if [ "$confirm" = "HAPUS" ]; then
+                $DOCKER_EXEC "$APP_CONTAINER" php artisan data:reset-laporan
+            fi
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+        72)
+            echo ""
+            echo -e "${RED}WARNING: Ini akan menghapus SELURUH user (kecuali admin)!${NC}"
+            read -p "Type 'HAPUS' to confirm (or anything else to cancel): " confirm
+            if [ "$confirm" = "HAPUS" ]; then
+                $DOCKER_EXEC "$APP_CONTAINER" php artisan data:reset-user
+            fi
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+        73)
+            echo ""
+            read -p "Masukkan Nomor Laporan yang akan dihapus: " laporan_id
+            if [ -n "$laporan_id" ]; then
+                $DOCKER_EXEC "$APP_CONTAINER" php artisan data:delete-laporan "$laporan_id"
+            fi
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+        74)
+            echo ""
+            read -p "Masukkan Username dari User yang akan dihapus: " user_id
+            if [ -n "$user_id" ]; then
+                $DOCKER_EXEC "$APP_CONTAINER" php artisan data:delete-user "$user_id"
+            fi
+            echo ""
+            read -p "Press Enter to continue..."
             ;;
 
         0)
