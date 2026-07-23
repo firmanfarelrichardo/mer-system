@@ -380,8 +380,7 @@ test_endpoint() {
 
     echo ""
     echo -e "${YELLOW}Access URLs:${NC}"
-    echo -e "  ${CYAN}Application:${NC}     http://localhost:$APP_PORT"
-    echo -e "  ${CYAN}Vite HMR:${NC}        http://localhost:$VITE_PORT"
+    echo -e "  ${CYAN}Application:${NC}     http://<IP_VPS>:$APP_PORT"
     echo -e "  ${CYAN}PostgreSQL:${NC}      localhost:$DB_PORT"
     echo -e "  ${CYAN}Redis:${NC}           localhost:$REDIS_PORT"
     echo ""
@@ -823,10 +822,9 @@ while true; do
             echo -e "${GREEN}✓ Development environment started!${NC}"
             echo ""
             echo -e "${YELLOW}Services:${NC}"
-            echo -e "  App (Nginx):    http://localhost:$APP_PORT"
-            echo -e "  Vite HMR:       http://localhost:$VITE_PORT"
-            echo -e "  PostgreSQL:     localhost:5433"
-            echo -e "  Redis:          localhost:6379"
+            echo -e "  App (Nginx):    http://<IP_VPS>:$APP_PORT"
+            echo -e "  PostgreSQL:     localhost:5433 (via SSH)"
+            echo -e "  Redis:          localhost:6379 (via SSH)"
             echo ""
             read -p "Press Enter to continue..."
             ;;
@@ -1148,44 +1146,21 @@ while true; do
         # -------------------------------------------------------------------
         30)
             echo ""
-            if ! docker ps \
-                --filter "label=com.docker.compose.project=${COMPOSE_PROJECT}" \
-                --filter "name=^${VITE_CONTAINER}$" \
-                --format '{{.Names}}' | grep -q "."; then
-                echo -e "${RED}✗ Vite container is not running!${NC}"
-                echo -e "${YELLOW}Start the environment first (Option 1)${NC}"
-                echo ""
-                read -p "Press Enter to continue..."
-                continue
-            fi
-
-            echo -e "${GREEN}Running NPM Install (via Vite container)...${NC}"
-            echo -e "${CYAN}Container: ${VITE_CONTAINER}${NC}"
+            echo -e "${GREEN}Running NPM Install (via temporary Node container)...${NC}"
             echo ""
-            docker exec "$VITE_CONTAINER" npm install
+            docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd)/../..:/var/www/html" -w /var/www/html node:20-alpine npm install
             echo ""
             echo -e "${GREEN}✓ NPM install complete${NC}"
             read -p "Press Enter to continue..."
             ;;
         31)
             echo ""
-            if ! docker ps \
-                --filter "label=com.docker.compose.project=${COMPOSE_PROJECT}" \
-                --filter "name=^${VITE_CONTAINER}$" \
-                --format '{{.Names}}' | grep -q "."; then
-                echo -e "${RED}✗ Vite container is not running!${NC}"
-                echo -e "${YELLOW}Start the environment first (Option 1)${NC}"
-                echo ""
-                read -p "Press Enter to continue..."
-                continue
-            fi
-
-            echo -e "${GREEN}Running NPM Build (via Vite container)...${NC}"
-            echo -e "${CYAN}This will build production assets with Vite${NC}"
+            echo -e "${GREEN}Running NPM Build (via temporary Node container)...${NC}"
+            echo -e "${CYAN}This will compile Vite assets (CSS/JS) into public/build${NC}"
             echo ""
-            docker exec "$VITE_CONTAINER" npm run build
+            docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd)/../..:/var/www/html" -w /var/www/html node:20-alpine npm run build
             echo ""
-            echo -e "${GREEN}✓ Build complete - assets ready for production${NC}"
+            echo -e "${GREEN}✓ Build complete - CSS/JS assets are ready!${NC}"
             read -p "Press Enter to continue..."
             ;;
 
