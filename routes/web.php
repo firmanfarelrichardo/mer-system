@@ -338,6 +338,9 @@ Route::middleware(['auth'])->group(function (): void {
     Route::get('/pengaturan', [PengaturanController::class, 'index'])
         ->name('pengaturan.index');
 
+    Route::put('/pengaturan/sandi', [PengaturanController::class, 'updatePassword'])
+        ->name('pengaturan.sandi.update');
+
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])
         ->name('notifikasi.index');
 
