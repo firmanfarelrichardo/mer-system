@@ -294,7 +294,10 @@ class Pengguna extends Authenticatable
         // Jika ada active_role di sesi DAN pengguna berhak switch
         if (session()->has('active_role') && $this->bisaGantiPeran()) {
             $activeRole = session('active_role');
-            if ($this->punyaPeranDiDb($activeRole)) {
+            // Validasi via peranYangDapatDipilih() — bukan punyaPeranDiDb().
+            // Peneliti dapat simulasi semua peran meski tidak ada di DB;
+            // dual-role tetap tervalidasi karena daftar ini mencakup peran DB mereka.
+            if (in_array($activeRole, $this->peranYangDapatDipilih(), true)) {
                 return $activeRole;
             }
         }

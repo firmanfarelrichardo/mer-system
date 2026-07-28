@@ -172,6 +172,13 @@ class Insiden extends Model
         // Selalu batasi ke tenant pengguna (multi-tenant safety).
         $query->where($this->qualifyColumn('tenant_id'), $pengguna->tenant_id);
 
+        // Peneliti mode penuh: akses seluruh data tenant (termasuk DRAF)
+        // untuk keperluan penelitian. Saat simulasi peran, memilikiPeran()
+        // sudah session-aware sehingga branch di bawah yang akan aktif.
+        if ($pengguna->isPeneliti() && $pengguna->peranAktif() === Peran::PENELITI) {
+            return $query;
+        }
+
         // Admin, Komite, dan Direktur: lihat SEMUA laporan tenant (kecuali DRAF).
         if (
             $pengguna->memilikiPeran(Peran::ADMIN)
