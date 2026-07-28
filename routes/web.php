@@ -291,6 +291,8 @@ Route::middleware(['auth'])->group(function (): void {
 
     Route::get('/laporan/draf', [LaporanController::class, 'draf'])
         ->name('laporan.draf');
+    Route::delete('/laporan/draf/{insiden}', [LaporanController::class, 'hapusDraf'])
+        ->name('laporan.draf.hapus');
 
     // Riwayat laporan milik pengguna sendiri (digunakan Kepala Ruangan sebagai pelapor).
     Route::get('/laporan/saya', [LaporanController::class, 'riwayatSaya'])
@@ -335,6 +337,9 @@ Route::middleware(['auth'])->group(function (): void {
 
     Route::get('/pengaturan', [PengaturanController::class, 'index'])
         ->name('pengaturan.index');
+
+    Route::put('/pengaturan/sandi', [PengaturanController::class, 'updatePassword'])
+        ->name('pengaturan.sandi.update');
 
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])
         ->name('notifikasi.index');

@@ -42,11 +42,11 @@ COMPOSE_PROJECT="mer-system"
 DC="docker compose -p ${COMPOSE_PROJECT} --project-directory ${COMPOSE_DIR}"
 
 # Container names
-APP_CONTAINER="mer-app-dev"
-WEB_CONTAINER="mer-web-dev"
-VITE_CONTAINER="mer-vite-dev"
-DB_CONTAINER="mer-db-dev"
-REDIS_CONTAINER="mer-redis-dev"
+APP_CONTAINER="mer-app-staging"
+WEB_CONTAINER="mer-web-staging"
+VITE_CONTAINER="mer-vite-staging"
+DB_CONTAINER="mer-db-staging"
+REDIS_CONTAINER="mer-redis-staging"
 
 # ---------------------------------------------------------------------------
 # Helper: cek apakah container MILIK PROJECT INI sedang running
@@ -136,9 +136,16 @@ show_menu() {
     echo -e "  ${YELLOW}60)${NC} Show Detected Gateway IP"
     echo -e "  ${GREEN}61)${NC} Auto-Update DB_HOST to WSL Gateway IP"
     echo ""
+    echo -e "  ${CYAN}--- Data Management ---${NC}"
+    echo -e "  ${RED}70)${NC} Reset Seluruh Database (Migrate Fresh + Seed)"
+    echo -e "  ${RED}71)${NC} Reset Seluruh Laporan (Hapus Semua Laporan)"
+    echo -e "  ${RED}72)${NC} Reset Seluruh User (Kecuali Admin)"
+    echo -e "  ${YELLOW}73)${NC} Hapus Laporan Spesifik (Berdasarkan Nomor Laporan)"
+    echo -e "  ${YELLOW}74)${NC} Hapus User Spesifik (Berdasarkan Username)"
+    echo ""
     echo -e "  ${RED}0)${NC} Exit"
     echo ""
-    echo -n "Pilihan [0-61]: "
+    echo -n "Pilihan [0-74]: "
 }
 
 # Function to show container status
@@ -374,7 +381,6 @@ test_endpoint() {
     echo ""
     echo -e "${YELLOW}Access URLs:${NC}"
     echo -e "  ${CYAN}Application:${NC}     http://localhost:$APP_PORT"
-    echo -e "  ${CYAN}Vite HMR:${NC}        http://localhost:$VITE_PORT"
     echo -e "  ${CYAN}PostgreSQL:${NC}      localhost:$DB_PORT"
     echo -e "  ${CYAN}Redis:${NC}           localhost:$REDIS_PORT"
     echo ""
@@ -817,9 +823,8 @@ while true; do
             echo ""
             echo -e "${YELLOW}Services:${NC}"
             echo -e "  App (Nginx):    http://localhost:$APP_PORT"
-            echo -e "  Vite HMR:       http://localhost:$VITE_PORT"
-            echo -e "  PostgreSQL:     localhost:5433"
-            echo -e "  Redis:          localhost:6379"
+            echo -e "  PostgreSQL:     localhost:5433 (via SSH)"
+            echo -e "  Redis:          localhost:6379 (via SSH)"
             echo ""
             read -p "Press Enter to continue..."
             ;;
@@ -1141,44 +1146,21 @@ while true; do
         # -------------------------------------------------------------------
         30)
             echo ""
-            if ! docker ps \
-                --filter "label=com.docker.compose.project=${COMPOSE_PROJECT}" \
-                --filter "name=^${VITE_CONTAINER}$" \
-                --format '{{.Names}}' | grep -q "."; then
-                echo -e "${RED}✗ Vite container is not running!${NC}"
-                echo -e "${YELLOW}Start the environment first (Option 1)${NC}"
-                echo ""
-                read -p "Press Enter to continue..."
-                continue
-            fi
-
-            echo -e "${GREEN}Running NPM Install (via Vite container)...${NC}"
-            echo -e "${CYAN}Container: ${VITE_CONTAINER}${NC}"
+            echo -e "${GREEN}Running NPM Install (via temporary Node container)...${NC}"
             echo ""
-            docker exec "$VITE_CONTAINER" npm install
+            docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd)/../..:/var/www/html" -w /var/www/html node:20-alpine npm install
             echo ""
             echo -e "${GREEN}✓ NPM install complete${NC}"
             read -p "Press Enter to continue..."
             ;;
         31)
             echo ""
-            if ! docker ps \
-                --filter "label=com.docker.compose.project=${COMPOSE_PROJECT}" \
-                --filter "name=^${VITE_CONTAINER}$" \
-                --format '{{.Names}}' | grep -q "."; then
-                echo -e "${RED}✗ Vite container is not running!${NC}"
-                echo -e "${YELLOW}Start the environment first (Option 1)${NC}"
-                echo ""
-                read -p "Press Enter to continue..."
-                continue
-            fi
-
-            echo -e "${GREEN}Running NPM Build (via Vite container)...${NC}"
-            echo -e "${CYAN}This will build production assets with Vite${NC}"
+            echo -e "${GREEN}Running NPM Build (via temporary Node container)...${NC}"
+            echo -e "${CYAN}This will compile Vite assets (CSS/JS) into public/build${NC}"
             echo ""
-            docker exec "$VITE_CONTAINER" npm run build
+            docker run --rm -u "$(id -u):$(id -g)" -v "$(pwd)/../..:/var/www/html" -w /var/www/html node:20-alpine npm run build
             echo ""
-            echo -e "${GREEN}✓ Build complete - assets ready for production${NC}"
+            echo -e "${GREEN}✓ Build complete - CSS/JS assets are ready!${NC}"
             read -p "Press Enter to continue..."
             ;;
 
@@ -1279,7 +1261,7 @@ while true; do
                 # Filter hanya volume milik project ini
                 VOLUME_NAME=$(docker volume ls \
                     --filter "label=com.docker.compose.project=${COMPOSE_PROJECT}" \
-                    --filter "name=mer-db-data" \
+                    --filter "name=staging-db-data" \
                     --format '{{.Name}}')
                 if [ -n "$VOLUME_NAME" ]; then
                     docker volume rm "$VOLUME_NAME" 2>/dev/null \
@@ -1420,6 +1402,55 @@ while true; do
             ;;
         61)
             update_db_host_ip
+            ;;
+
+        70)
+            echo ""
+            echo -e "${RED}WARNING: Ini akan mereset SELURUH database dan mengisi data dummy awal!${NC}"
+            read -p "Type 'RESET' to confirm (or anything else to cancel): " confirm
+            if [ "$confirm" = "RESET" ]; then
+                $DOCKER_EXEC "$APP_CONTAINER" php artisan data:reset-db
+            fi
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+        71)
+            echo ""
+            echo -e "${RED}WARNING: Ini akan menghapus SELURUH data laporan!${NC}"
+            read -p "Type 'HAPUS' to confirm (or anything else to cancel): " confirm
+            if [ "$confirm" = "HAPUS" ]; then
+                $DOCKER_EXEC "$APP_CONTAINER" php artisan data:reset-laporan
+            fi
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+        72)
+            echo ""
+            echo -e "${RED}WARNING: Ini akan menghapus SELURUH user (kecuali admin)!${NC}"
+            read -p "Type 'HAPUS' to confirm (or anything else to cancel): " confirm
+            if [ "$confirm" = "HAPUS" ]; then
+                $DOCKER_EXEC "$APP_CONTAINER" php artisan data:reset-user
+            fi
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+        73)
+            echo ""
+            read -p "Masukkan Nomor Laporan yang akan dihapus: " laporan_id
+            if [ -n "$laporan_id" ]; then
+                $DOCKER_EXEC "$APP_CONTAINER" php artisan data:delete-laporan "$laporan_id"
+            fi
+            echo ""
+            read -p "Press Enter to continue..."
+            ;;
+        74)
+            echo ""
+            read -p "Masukkan Username dari User yang akan dihapus: " user_id
+            if [ -n "$user_id" ]; then
+                $DOCKER_EXEC "$APP_CONTAINER" php artisan data:delete-user "$user_id"
+            fi
+            echo ""
+            read -p "Press Enter to continue..."
             ;;
 
         0)

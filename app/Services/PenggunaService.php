@@ -61,9 +61,19 @@ class PenggunaService
     public function buat(PenggunaData $dto): Pengguna
     {
         return DB::transaction(function () use ($dto): Pengguna {
+            $unitId = $dto->unit_id;
+            
+            // Periksa peran jika mengandung Admin, Komite, atau Direktur, set unit_id ke null
+            if (! empty($dto->peran_ids)) {
+                $namaPeranTerpilih = \App\Models\Peran::whereIn('id', $dto->peran_ids)->pluck('nama_peran')->toArray();
+                if (count(array_intersect([\App\Models\Peran::ADMIN, \App\Models\Peran::KOMITE, \App\Models\Peran::DIREKTUR], $namaPeranTerpilih)) > 0) {
+                    $unitId = null;
+                }
+            }
+
             $pengguna = $this->repository->buat([
                 'tenant_id'    => $dto->tenant_id,
-                'unit_id'      => $dto->unit_id,
+                'unit_id'      => $unitId,
                 'nomor_induk'  => $dto->nomor_induk,
                 'username'     => $dto->username ?: null,
                 'email'        => $dto->email,
@@ -101,13 +111,23 @@ class PenggunaService
         return DB::transaction(function () use ($pengguna, $dto): Pengguna {
             $dataLama = $pengguna->load('peran')->toArray();
 
+            $unitId = $dto->unit_id;
+            
+            // Periksa peran jika mengandung Admin, Komite, atau Direktur, set unit_id ke null
+            if (! empty($dto->peran_ids)) {
+                $namaPeranTerpilih = \App\Models\Peran::whereIn('id', $dto->peran_ids)->pluck('nama_peran')->toArray();
+                if (count(array_intersect([\App\Models\Peran::ADMIN, \App\Models\Peran::KOMITE, \App\Models\Peran::DIREKTUR], $namaPeranTerpilih)) > 0) {
+                    $unitId = null;
+                }
+            }
+
             $atribut = [
                 'nama_lengkap' => $dto->nama_lengkap,
                 'nomor_induk'  => $dto->nomor_induk,
                 'email'        => $dto->email,
                 'nomor_hp'     => $dto->nomor_hp,
                 'alamat'       => $dto->alamat,
-                'unit_id'      => $dto->unit_id,
+                'unit_id'      => $unitId,
                 'is_aktif'     => $dto->is_aktif,
                 'username'     => $dto->username ?: null,
             ];

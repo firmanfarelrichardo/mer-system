@@ -239,6 +239,39 @@ class LaporanController extends Controller
         return view('laporan.draf', compact('daftarDraf', 'pengguna'));
     }
 
+    /**
+     * Hapus draf laporan secara permanen (force delete).
+     */
+    public function hapusDraf(Insiden $insiden): \Illuminate\Http\RedirectResponse
+    {
+        $pengguna = Auth::user();
+
+        abort_if($insiden->tenant_id !== $pengguna->tenant_id, 404);
+        abort_if($insiden->pelapor_id !== $pengguna->id, 403, 'Anda tidak berhak menghapus draf ini.');
+        abort_if($insiden->status_saat_ini !== 'DRAF', 400, 'Hanya draf yang dapat dihapus.');
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($insiden) {
+            // Hapus detail pasien jika ada
+            if ($insiden->detailPasien) {
+                $insiden->detailPasien()->forceDelete();
+            }
+            
+            // Hapus insiden secara permanen
+            $insiden->forceDelete();
+            
+            app(\App\Services\AuditLogService::class)->catat(
+                namaTabel: 'pelaporan.insiden',
+                aksi:      'DELETE_DRAF',
+                idData:    $insiden->id,
+                dataLama:  $insiden->toArray(),
+            );
+        });
+
+        return redirect()
+            ->route('laporan.draf')
+            ->with('sukses', 'Draf laporan berhasil dihapus.');
+    }
+
     /* ==================================================================
      | RIWAYAT SAYA - Laporan yang Dibuat Sendiri (Kepala Ruangan)
      | =================================================================*/

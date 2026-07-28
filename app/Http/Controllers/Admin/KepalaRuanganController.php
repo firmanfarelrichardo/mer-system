@@ -109,8 +109,8 @@ class KepalaRuanganController extends Controller
             $karuPeran = Peran::where('nama_peran', Peran::KEPALA_RUANGAN)->first();
 
             // Jika unit sudah punya Karu, cabut peran lama terlebih dahulu (flow "Ganti")
-            $karuLama = $unit->kepalaRuangan();
-            if ($karuLama) {
+            $karuLamaSemua = $unit->pengguna()->whereHas('peran', fn ($q) => $q->where('nama_peran', Peran::KEPALA_RUANGAN))->get();
+            foreach ($karuLamaSemua as $karuLama) {
                 $karuLama->peran()->detach($karuPeran->id);
 
                 $this->auditLog->catat(
