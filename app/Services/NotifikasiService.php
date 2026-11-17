@@ -41,8 +41,10 @@ class NotifikasiService
 
     /**
      * Tandai satu notifikasi sebagai dibaca dan kembalikan URL tujuan.
+     * Jika laporan yang dirujuk tidak ditemukan, hapus notifikasi bodong/yatim
+     * dan kembalikan null agar controller dapat melakukan graceful redirect.
      *
-     * @return string|null URL tujuan, atau null jika notifikasi tidak ditemukan.
+     * @return string|null URL tujuan, atau null jika notifikasi/laporan tidak ditemukan.
      */
     public function bacaDanArahkan(Pengguna $pengguna, string $notifikasiId): ?string
     {
@@ -52,9 +54,36 @@ class NotifikasiService
             return null;
         }
 
+        // Jika notifikasi merujuk ke insiden tertentu, pastikan datanya masih ada
+        if ($notif->insidenId !== null) {
+            $insiden = \App\Models\Insiden::find($notif->insidenId);
+            if (! $insiden) {
+                // Hapus notifikasi bodong/yatim ini agar tidak muncul lagi
+                $this->repository->hapus($pengguna, $notifikasiId);
+
+                return null;
+            }
+        }
+
         $this->repository->tandaiDibaca($pengguna, $notifikasiId);
 
         return $notif->urlTujuan;
+    }
+
+    /**
+     * Hapus satu notifikasi.
+     */
+    public function hapus(Pengguna $pengguna, string $notifikasiId): bool
+    {
+        return $this->repository->hapus($pengguna, $notifikasiId);
+    }
+
+    /**
+     * Bersihkan notifikasi yatim (laporan sudah tidak ada).
+     */
+    public function bersihkanNotifikasiYatim(?Pengguna $pengguna = null): int
+    {
+        return $this->repository->bersihkanNotifikasiYatim($pengguna);
     }
 
     /**

@@ -16,7 +16,7 @@ Artisan::command('pengguna:export-production {--path= : Lokasi file .xls output,
     if (! str_ends_with(strtolower($fullPath), '.xls')) {
         $this->error('Path output harus menggunakan ekstensi .xls');
 
-        return self::FAILURE;
+        return \Illuminate\Console\Command::FAILURE;
     }
 
     $directory = dirname($fullPath);
@@ -24,7 +24,7 @@ Artisan::command('pengguna:export-production {--path= : Lokasi file .xls output,
     if (! is_dir($directory) && ! mkdir($directory, 0755, true) && ! is_dir($directory)) {
         $this->error("Gagal membuat folder output: {$directory}");
 
-        return self::FAILURE;
+        return \Illuminate\Console\Command::FAILURE;
     }
 
     $handle = fopen($fullPath, 'wb');
@@ -32,7 +32,7 @@ Artisan::command('pengguna:export-production {--path= : Lokasi file .xls output,
     if ($handle === false) {
         $this->error("Gagal membuat file output: {$fullPath}");
 
-        return self::FAILURE;
+        return \Illuminate\Console\Command::FAILURE;
     }
 
     $writeCell = static function ($handle, mixed $value): void {
@@ -159,12 +159,18 @@ Artisan::command('pengguna:export-production {--path= : Lokasi file .xls output,
     $this->info("Berhasil mengekspor {$jumlah} pengguna.");
     $this->line("File: {$fullPath}");
 
-    return self::SUCCESS;
+    return \Illuminate\Console\Command::SUCCESS;
 })->purpose('Ekspor seluruh data pengguna production ke file Excel .xls');
 
 // -----------------------------------------------------------------------------
 // Data Management Commands (Used by deploy.sh menu)
 // -----------------------------------------------------------------------------
+
+Artisan::command('notifikasi:bersihkan', function () {
+    $service  = app(\App\Services\NotifikasiService::class);
+    $terhapus = $service->bersihkanNotifikasiYatim();
+    $this->info("Pembersihan notifikasi selesai: {$terhapus} notifikasi bodong/yatim berhasil dihapus.");
+})->purpose('Membersihkan notifikasi bodong/yatim yang merujuk pada laporan tidak valid');
 
 Artisan::command('data:reset-db', function () {
     $this->call('migrate:fresh', ['--seed' => true]);
@@ -173,7 +179,12 @@ Artisan::command('data:reset-db', function () {
 
 Artisan::command('data:reset-laporan', function () {
     DB::statement('TRUNCATE TABLE pelaporan.insiden CASCADE');
-    $this->info('Seluruh data laporan (insiden) telah dihapus.');
+    try {
+        app(\App\Services\NotifikasiService::class)->bersihkanNotifikasiYatim();
+    } catch (\Throwable) {
+        // Abaikan jika tabel notifikasi belum ada
+    }
+    $this->info('Seluruh data laporan (insiden) dan notifikasi terkait telah dihapus.');
 })->purpose('Mengosongkan seluruh data laporan');
 
 Artisan::command('data:reset-user', function () {

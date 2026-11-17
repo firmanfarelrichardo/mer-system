@@ -52,7 +52,7 @@ class NotifikasiController extends Controller
 
         if (! $url) {
             return redirect()->route('notifikasi.index')
-                ->with('galat', 'Notifikasi tidak ditemukan.');
+                ->with('peringatan', 'Laporan tidak ditemukan atau telah dihapus. Notifikasi telah dibersihkan.');
         }
 
         return redirect($url);
