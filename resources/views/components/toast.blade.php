@@ -75,11 +75,12 @@
 {{-- Flash server → toast (dijalankan setelah Alpine siap) --}}
 @php
     $toastFlash = [
-        'sukses'  => 'sukses',
-        'error'   => 'error',
-        'galat'   => 'error',
-        'warning' => 'warning',
-        'info'    => 'info',
+        'sukses'     => 'sukses',
+        'error'      => 'error',
+        'galat'      => 'error',
+        'warning'    => 'warning',
+        'peringatan' => 'warning',
+        'info'       => 'info',
     ];
 @endphp
 <script>
