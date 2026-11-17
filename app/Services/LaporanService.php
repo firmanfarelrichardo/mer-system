@@ -316,6 +316,6 @@ class LaporanService
             ->where('nama_unit', $namaKanonis)
             ->first();
 
-        return [$unit?->id, $unit?->nama_unit ?? $namaKanonis];
+        return [$unit?->id, $unit !== null ? $unit->nama_unit : $namaKanonis];
     }
 }

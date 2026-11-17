@@ -43,6 +43,32 @@
         // ---------- Master data checkbox dikirim dari Controller ----------
         // $masterJenisKesalahan, $masterTipeCedera, $masterFaktorPenyebab, $masterIntervensi
         // masing-masing berisi Collection of Eloquent model (kolom: id, nama, is_aktif).
+
+        // Deteksi tahap awal dari error validasi (jika ada kegagalan submit)
+        $tahapAwal = 1;
+        if ($errors->any()) {
+            $step1Fields = ['nama_pasien', 'nomor_rekam_medis', 'unit_kerja', 'tanggal_kejadian', 'waktu_kejadian', 'jenis_insiden', 'nama_pelapor', 'kontak_pelapor'];
+            $step2Fields = [
+                'fase_kesalahan',
+                'jenis_kesalahan', 'jenis_kesalahan.*', 'jenis_kesalahan_lainnya',
+                'cedera', 'cedera.*', 'cedera_lainnya',
+                'faktor_penyebab', 'faktor_penyebab.*', 'faktor_penyebab_lainnya',
+                'intervensi_pasien', 'intervensi_pasien.*', 'intervensi_pasien_lainnya',
+                'nama_obat', 'dosis_obat'
+            ];
+            $step3Fields = ['kronologi_kejadian', 'pernyataan_kronologi'];
+            $step4Fields = ['konfirmasi_kirim'];
+
+            if ($errors->hasAny($step1Fields)) {
+                $tahapAwal = 1;
+            } elseif ($errors->hasAny($step2Fields)) {
+                $tahapAwal = 2;
+            } elseif ($errors->hasAny($step3Fields)) {
+                $tahapAwal = 3;
+            } elseif ($errors->hasAny($step4Fields)) {
+                $tahapAwal = 4;
+            }
+        }
     @endphp
 
     {{-- ================================================================
@@ -59,26 +85,26 @@
     <div id="step-indicator" class="mb-8">
         <div class="flex justify-between w-full max-w-3xl mx-auto px-2 sm:px-0">
             @foreach (['Data Demografis', 'Detail Insiden', 'Kronologi', 'Konfirmasi'] as $i => $label)
-                <div class="relative flex flex-col items-center flex-1">
+                <div class="relative flex flex-col items-center flex-1 cursor-pointer" onclick="lompatKeTahap({{ $i + 1 }})">
                     @if ($i < 3)
                         <!-- Inline style ensures the gap and vertical center work perfectly everywhere -->
                         <div id="step-line-{{ $i + 1 }}"
-                             class="absolute h-0.5 bg-slate-200 transition-colors duration-300"
+                             class="absolute h-0.5 {{ ($i + 1) < $tahapAwal ? 'bg-brand' : 'bg-slate-200' }} transition-colors duration-300"
                              style="top: 20px; left: calc(50% + 24px); width: calc(100% - 48px); z-index: 0;"></div>
                     @endif
                     <div id="step-circle-{{ $i + 1 }}"
                          class="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 text-sm font-bold transition-all duration-300
-                                {{ $i === 0
+                                {{ ($i + 1) <= $tahapAwal
                                     ? 'border-brand bg-brand text-white'
                                     : 'border-slate-300 bg-white text-slate-400' }}">
-                        <span class="step-number">{{ $i + 1 }}</span>
-                        <svg class="step-check hidden h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <span class="step-number {{ ($i + 1) < $tahapAwal ? 'hidden' : '' }}">{{ $i + 1 }}</span>
+                        <svg class="step-check {{ ($i + 1) < $tahapAwal ? '' : 'hidden' }} h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
                         </svg>
                     </div>
                     <span id="step-label-{{ $i + 1 }}"
                           class="mt-2 px-1 text-center text-[10px] sm:text-xs font-medium leading-tight transition-colors duration-300
-                                 {{ $i === 0 ? 'text-brand' : 'text-slate-400' }}">
+                                 {{ ($i + 1) <= $tahapAwal ? 'text-brand' : 'text-slate-400' }}">
                         {{ $label }}
                     </span>
                 </div>
@@ -91,7 +117,7 @@
          ================================================================ --}}
     @if ($errors->any())
         <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-4">
-            <p class="mb-2 text-sm font-semibold text-red-700">Terdapat kesalahan pada formulir:</p>
+            <p class="mb-2 text-sm font-semibold text-red-700">Terdapat kesalahan pada formulir (Tahap {{ $tahapAwal }}):</p>
             <ul class="list-inside list-disc space-y-1 text-sm text-red-600">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -109,7 +135,7 @@
         {{-- ============================================================
              TAHAP 1: DATA DEMOGRAFIS
              ============================================================ --}}
-        <div id="step-1" class="step-panel">
+        <div id="step-1" class="step-panel {{ $tahapAwal === 1 ? '' : 'hidden' }}">
             <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian A - Data Demografis</h2>
                 <p class="mb-6 text-sm text-slate-400">Lengkapi data dasar pasien dan kejadian</p>
@@ -249,7 +275,7 @@
         {{-- ============================================================
              TAHAP 2: DETAIL INSIDEN
              ============================================================ --}}
-        <div id="step-2" class="step-panel hidden">
+        <div id="step-2" class="step-panel {{ $tahapAwal === 2 ? '' : 'hidden' }}">
             <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian B - Karakteristik Insiden</h2>
                 <p class="mb-6 text-sm text-slate-400">Detail Tahapan, jenis kesalahan, cedera, faktor penyebab, dan intervensi pasien</p>
@@ -304,6 +330,9 @@
                     @error('jenis_kesalahan')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
+                    @error('jenis_kesalahan_lainnya')
+                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
                 </fieldset>
 
                 {{-- 3. Cedera yang Terjadi --}}
@@ -336,6 +365,9 @@
                     @error('cedera')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
+                    @error('cedera_lainnya')
+                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
                 </fieldset>
 
                 {{-- 4. Faktor Penyebab --}}
@@ -365,6 +397,9 @@
                     @error('faktor_penyebab')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
+                    @error('faktor_penyebab_lainnya')
+                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
                 </fieldset>
 
                 {{-- 5. Intervensi Pasien --}}
@@ -392,6 +427,9 @@
                                       placeholder:text-slate-300 focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20">
                     </div>
                     @error('intervensi_pasien')
+                        <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
+                    @enderror
+                    @error('intervensi_pasien_lainnya')
                         <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                     @enderror
                 </fieldset>
@@ -431,7 +469,7 @@
         {{-- ============================================================
              TAHAP 3: KRONOLOGI KEJADIAN
              ============================================================ --}}
-        <div id="step-3" class="step-panel hidden">
+        <div id="step-3" class="step-panel {{ $tahapAwal === 3 ? '' : 'hidden' }}">
             <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 class="mb-1 text-lg font-bold text-slate-800">Bagian C - Kronologi Kejadian</h2>
                 <p class="mb-6 text-sm text-slate-400">Ceritakan kronologi kejadian secara lengkap</p>
@@ -487,7 +525,7 @@
         {{-- ============================================================
              TAHAP 4: KONFIRMASI
              ============================================================ --}}
-        <div id="step-4" class="step-panel hidden">
+        <div id="step-4" class="step-panel {{ $tahapAwal === 4 ? '' : 'hidden' }}">
             <div class="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                 <h2 class="mb-1 text-lg font-bold text-slate-800">Ringkasan Laporan</h2>
                 <p class="mb-6 text-sm text-slate-400">Periksa kembali informasi laporan sebelum dikirim</p>
@@ -604,7 +642,8 @@
                 {{-- Kiri: Tombol Kembali --}}
                 <div class="flex shrink-0">
                     <button type="button" id="btn-kembali"
-                            class="hidden items-center justify-center gap-1 sm:gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-2 sm:px-5 sm:py-2.5
+                            style="display: {{ $tahapAwal > 1 ? 'inline-flex' : 'none' }}"
+                            class="{{ $tahapAwal > 1 ? 'inline-flex' : 'hidden' }} items-center justify-center gap-1 sm:gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-2 sm:px-5 sm:py-2.5
                                    text-[11px] sm:text-sm font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50 shrink-0"
                             onclick="ubahTahap(-1)">
                         <svg class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
@@ -655,7 +694,8 @@
                     </button>
 
                     <button type="button" id="btn-selanjutnya"
-                            class="inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-lg bg-brand px-2 py-2 sm:px-5 sm:py-2.5 text-[11px] sm:text-sm font-medium
+                            style="display: {{ $tahapAwal < 4 ? 'inline-flex' : 'none' }}"
+                            class="{{ $tahapAwal < 4 ? 'inline-flex' : 'hidden' }} items-center justify-center gap-1 sm:gap-1.5 rounded-lg bg-brand px-2 py-2 sm:px-5 sm:py-2.5 text-[11px] sm:text-sm font-medium
                                    text-white shadow-sm transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2
                                    focus:ring-brand/50 focus:ring-offset-2 shrink-0"
                             onclick="ubahTahap(1)">
@@ -666,7 +706,8 @@
                     </button>
 
                     <button type="submit" name="action" value="kirim_laporan" id="btn-kirim"
-                            class="hidden items-center justify-center gap-1 sm:gap-1.5 rounded-lg bg-brand px-2 py-2 sm:px-5 sm:py-2.5 text-[11px] sm:text-sm font-medium
+                            style="display: {{ $tahapAwal === 4 ? 'inline-flex' : 'none' }}"
+                            class="{{ $tahapAwal === 4 ? 'inline-flex' : 'hidden' }} items-center justify-center gap-1 sm:gap-1.5 rounded-lg bg-brand px-2 py-2 sm:px-5 sm:py-2.5 text-[11px] sm:text-sm font-medium
                                    text-white shadow-sm transition-colors hover:bg-brand-hover focus:outline-none focus:ring-2
                                    focus:ring-brand/50 focus:ring-offset-2 shrink-0">
                         Kirim Laporan
@@ -719,13 +760,138 @@
         (() => {
             'use strict';
 
-            /** Tahap aktif saat ini (1-based). */
-            let tahapAktif = 1;
+            /** Tahap aktif saat ini (1-based), disesuaikan dengan error server jika ada. */
+            let tahapAktif = {{ $tahapAwal }};
             const TOTAL_TAHAP = 4;
 
             /** Label referensi untuk ringkasan. */
             const labelJenisInsiden  = @json(collect($jenisInsiden)->mapWithKeys(fn($v, $k) => [$k => $v['label']]));
             const labelFaseKesalahan = @json($faseKesalahan);
+
+            /**
+             * Menampilkan tahap tertentu secara langsung.
+             * @param {number} tahapBaru - Nomor tahap (1..TOTAL_TAHAP)
+             */
+            window.tampilkanTahap = function(tahapBaru) {
+                if (tahapBaru < 1 || tahapBaru > TOTAL_TAHAP) return;
+
+                // Isi ringkasan saat masuk ke step konfirmasi.
+                if (tahapBaru === TOTAL_TAHAP) isiRingkasan();
+
+                for (let s = 1; s <= TOTAL_TAHAP; s++) {
+                    const el = document.getElementById('step-' + s);
+                    if (el) {
+                        if (s === tahapBaru) {
+                            el.classList.remove('hidden');
+                        } else {
+                            el.classList.add('hidden');
+                        }
+                    }
+                }
+
+                perbaruiIndikator(tahapBaru);
+                tahapAktif = tahapBaru;
+
+                // Atur visibilitas tombol.
+                const btnKembali     = document.getElementById('btn-kembali');
+                const btnSelanjutnya = document.getElementById('btn-selanjutnya');
+                const btnKirim       = document.getElementById('btn-kirim');
+
+                if (btnKembali) {
+                    btnKembali.style.display = tahapAktif > 1 ? 'inline-flex' : 'none';
+                    btnKembali.classList.toggle('hidden', tahapAktif <= 1);
+                }
+                if (btnSelanjutnya) {
+                    btnSelanjutnya.style.display = tahapAktif < TOTAL_TAHAP ? 'inline-flex' : 'none';
+                    btnSelanjutnya.classList.toggle('hidden', tahapAktif >= TOTAL_TAHAP);
+                }
+                if (btnKirim) {
+                    btnKirim.style.display = tahapAktif === TOTAL_TAHAP ? 'inline-flex' : 'none';
+                    btnKirim.classList.toggle('hidden', tahapAktif !== TOTAL_TAHAP);
+                }
+
+                const stepIndicator = document.getElementById('step-indicator');
+                if (stepIndicator) {
+                    stepIndicator.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+
+            /**
+             * Validasi client-side untuk tahap tertentu sebelum melangkah maju.
+             */
+            function validasiTahap(tahap) {
+                const form = document.getElementById('form-laporan');
+                if (!form) return true;
+
+                let valid = true;
+                let elPertama = null;
+
+                const tandai = (el, isValid) => {
+                    if (!el) return;
+                    if (!isValid) {
+                        valid = false;
+                        if (!elPertama) elPertama = el;
+                        el.classList.add('border-red-500', 'ring-1', 'ring-red-500');
+                    } else {
+                        el.classList.remove('border-red-500', 'ring-1', 'ring-red-500');
+                    }
+                };
+
+                if (tahap === 1) {
+                    ['nama_pasien', 'nomor_rekam_medis', 'unit_kerja', 'tanggal_kejadian', 'waktu_kejadian'].forEach(name => {
+                        const input = form.querySelector(`[name="${name}"]`);
+                        tandai(input, input && input.value.trim() !== '');
+                    });
+
+                    const jenis = form.querySelector('input[name="jenis_insiden"]:checked');
+                    const fieldsetJenis = form.querySelector('#step-1 fieldset');
+                    if (!jenis && fieldsetJenis) {
+                        tandai(fieldsetJenis, false);
+                    } else if (fieldsetJenis) {
+                        tandai(fieldsetJenis, true);
+                    }
+                } else if (tahap === 2) {
+                    const fase = form.querySelector('input[name="fase_kesalahan"]:checked');
+                    const fieldsetFase = form.querySelector('#step-2 fieldset');
+                    if (!fase && fieldsetFase) {
+                        tandai(fieldsetFase, false);
+                    } else if (fieldsetFase) {
+                        tandai(fieldsetFase, true);
+                    }
+
+                    const cekKategori = (cbName, lainnyaName) => {
+                        const adaCb = form.querySelectorAll(`input[name="${cbName}"]:checked`).length > 0;
+                        const lainnyaInput = form.querySelector(`input[name="${lainnyaName}"]`);
+                        const adaLainnya = lainnyaInput && lainnyaInput.value.trim() !== '';
+                        const ok = adaCb || adaLainnya;
+                        if (lainnyaInput) {
+                            tandai(lainnyaInput, ok);
+                        }
+                        return ok;
+                    };
+
+                    cekKategori('jenis_kesalahan[]', 'jenis_kesalahan_lainnya');
+                    cekKategori('cedera[]', 'cedera_lainnya');
+                    cekKategori('faktor_penyebab[]', 'faktor_penyebab_lainnya');
+                    cekKategori('intervensi_pasien[]', 'intervensi_pasien_lainnya');
+
+                    const obat = form.querySelector('input[name="nama_obat"]');
+                    tandai(obat, obat && obat.value.trim() !== '');
+                } else if (tahap === 3) {
+                    const kronologi = form.querySelector('textarea[name="kronologi_kejadian"]');
+                    tandai(kronologi, kronologi && kronologi.value.trim() !== '');
+
+                    const pernyataan = form.querySelector('input[name="pernyataan_kronologi"]');
+                    tandai(pernyataan, pernyataan && pernyataan.checked);
+                }
+
+                if (!valid && elPertama) {
+                    elPertama.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    elPertama.focus?.();
+                }
+
+                return valid;
+            }
 
             /**
              * Mengubah tahap aktif wizard.
@@ -735,25 +901,20 @@
                 const tahapBaru = tahapAktif + arah;
                 if (tahapBaru < 1 || tahapBaru > TOTAL_TAHAP) return;
 
-                // Isi ringkasan saat masuk ke step konfirmasi.
-                if (tahapBaru === TOTAL_TAHAP) isiRingkasan();
-
-                // Sembunyikan panel lama, tampilkan panel baru.
-                document.getElementById('step-' + tahapAktif).classList.add('hidden');
-                document.getElementById('step-' + tahapBaru).classList.remove('hidden');
-
-                perbaruiIndikator(tahapBaru);
-                tahapAktif = tahapBaru;
-
-                // Atur visibilitas tombol.
-                document.getElementById('btn-kembali').style.display     = tahapAktif > 1 ? 'inline-flex' : 'none';
-                document.getElementById('btn-selanjutnya').style.display  = tahapAktif < TOTAL_TAHAP ? 'inline-flex' : 'none';
-                document.getElementById('btn-kirim').style.display        = tahapAktif === TOTAL_TAHAP ? 'inline-flex' : 'none';
-
-                const stepIndicator = document.getElementById('step-indicator');
-                if (stepIndicator) {
-                    stepIndicator.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (arah > 0 && !validasiTahap(tahapAktif)) {
+                    return;
                 }
+
+                window.tampilkanTahap(tahapBaru);
+            };
+
+            /**
+             * Navigasi langsung ke tahap tertentu via klik step indicator.
+             */
+            window.lompatKeTahap = function(target) {
+                if (target < 1 || target > TOTAL_TAHAP || target === tahapAktif) return;
+                if (target > tahapAktif && !validasiTahap(tahapAktif)) return;
+                window.tampilkanTahap(target);
             };
 
             /** Perbarui tampilan step indicator. */
@@ -761,6 +922,8 @@
                 for (let i = 1; i <= TOTAL_TAHAP; i++) {
                     const lingkaran = document.getElementById('step-circle-' + i);
                     const label     = document.getElementById('step-label-'  + i);
+                    if (!lingkaran || !label) continue;
+
                     const nomor     = lingkaran.querySelector('.step-number');
                     const centang   = lingkaran.querySelector('.step-check');
 
@@ -778,8 +941,8 @@
                         + (selesai || aktif ? 'text-brand' : 'text-slate-400');
 
                     // Nomor vs centang.
-                    nomor.classList.toggle('hidden', selesai);
-                    centang.classList.toggle('hidden', !selesai);
+                    if (nomor) nomor.classList.toggle('hidden', selesai);
+                    if (centang) centang.classList.toggle('hidden', !selesai);
 
                     // Garis penghubung.
                     if (i < TOTAL_TAHAP) {
@@ -800,6 +963,7 @@
             /** Isi seluruh ringkasan (step 4) dari data form. */
             function isiRingkasan() {
                 const form = document.getElementById('form-laporan');
+                if (!form) return;
 
                 const nilaiInput = (nama) => form.querySelector('[name="' + nama + '"]')?.value?.trim() || '-';
 
@@ -808,13 +972,17 @@
                     return el?.selectedOptions?.[0]?.text?.trim() || '-';
                 };
 
-                const kumpulkanCheckbox = (nama) => {
-                    const checked = form.querySelectorAll('[name="' + nama + '"]:checked');
-                    if (!checked.length) return '-';
-                    return Array.from(checked).map(cb => {
+                const kumpulkanPilihan = (namaCb, namaLainnya) => {
+                    const checked = form.querySelectorAll('[name="' + namaCb + '"]:checked');
+                    const items = Array.from(checked).map(cb => {
                         const span = cb.closest('label')?.querySelector('span');
                         return span ? span.textContent.trim() : cb.value;
-                    }).join(', ');
+                    });
+                    const lainnya = form.querySelector('[name="' + namaLainnya + '"]')?.value?.trim();
+                    if (lainnya) {
+                        items.push(lainnya);
+                    }
+                    return items.length ? items.join(', ') : '-';
                 };
 
                 const nilaiRadio = (nama) => form.querySelector('[name="' + nama + '"]:checked')?.value || null;
@@ -838,10 +1006,10 @@
                 setText('ringkasan-jenis_insiden', jenisVal ? (labelJenisInsiden[jenisVal] || jenisVal) : '-');
 
                 // Detail Insiden.
-                setText('ringkasan-jenis_kesalahan',   kumpulkanCheckbox('jenis_kesalahan[]'));
-                setText('ringkasan-cedera',            kumpulkanCheckbox('cedera[]'));
-                setText('ringkasan-faktor_penyebab',   kumpulkanCheckbox('faktor_penyebab[]'));
-                setText('ringkasan-intervensi_pasien',  kumpulkanCheckbox('intervensi_pasien[]'));
+                setText('ringkasan-jenis_kesalahan',   kumpulkanPilihan('jenis_kesalahan[]', 'jenis_kesalahan_lainnya'));
+                setText('ringkasan-cedera',            kumpulkanPilihan('cedera[]', 'cedera_lainnya'));
+                setText('ringkasan-faktor_penyebab',   kumpulkanPilihan('faktor_penyebab[]', 'faktor_penyebab_lainnya'));
+                setText('ringkasan-intervensi_pasien',  kumpulkanPilihan('intervensi_pasien[]', 'intervensi_pasien_lainnya'));
                 setText('ringkasan-nama_obat',          nilaiInput('nama_obat'));
                 setText('ringkasan-dosis_obat',         nilaiInput('dosis_obat'));
 
@@ -867,6 +1035,22 @@
                 const el = document.getElementById(id);
                 if (el) el.textContent = teks;
             }
+
+            // Inisialisasi awal saat halaman selesai dimuat.
+            document.addEventListener('DOMContentLoaded', () => {
+                perbaruiIndikator(tahapAktif);
+                if (tahapAktif === TOTAL_TAHAP) {
+                    isiRingkasan();
+                }
+                @if ($errors->any())
+                    const errorEl = document.querySelector('#step-' + tahapAktif + ' .text-red-500, #step-' + tahapAktif + ' [class*="border-red"]');
+                    if (errorEl) {
+                        setTimeout(() => {
+                            errorEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 150);
+                    }
+                @endif
+            });
         })();
     </script>
 @endsection

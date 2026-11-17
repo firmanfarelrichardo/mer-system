@@ -73,5 +73,37 @@ class InsidenObserver
             idData:    $insiden->id,
             dataLama:  $insiden->toArray(),
         );
+
+        $this->hapusNotifikasiTerkait($insiden);
+    }
+
+    /**
+     * Setelah insiden dihapus secara permanen (force delete).
+     */
+    public function forceDeleted(Insiden $insiden): void
+    {
+        $this->hapusNotifikasiTerkait($insiden);
+    }
+
+    /**
+     * Hapus notifikasi yang merujuk pada insiden yang dihapus.
+     */
+    private function hapusNotifikasiTerkait(Insiden $insiden): void
+    {
+        try {
+            \App\Models\Notifikasi::chunk(100, function ($notifikasiList) use ($insiden): void {
+                foreach ($notifikasiList as $notif) {
+                    $data         = $notif->data;
+                    $insidenId    = isset($data['insiden_id']) ? (int) $data['insiden_id'] : null;
+                    $nomorLaporan = $data['nomor_laporan'] ?? null;
+
+                    if ($insidenId === (int) $insiden->id || ($nomorLaporan && $nomorLaporan === $insiden->nomor_laporan)) {
+                        $notif->delete();
+                    }
+                }
+            });
+        } catch (\Throwable) {
+            // Abaikan jika tabel notifikasi belum ada
+        }
     }
 }
